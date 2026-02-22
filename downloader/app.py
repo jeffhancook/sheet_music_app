@@ -1,5 +1,6 @@
 import os
 import uuid
+import time
 import subprocess
 import threading
 from pathlib import Path
@@ -10,6 +11,10 @@ app = Flask(__name__)
 
 DOWNLOADS_DIR = Path(__file__).parent / "downloads"
 DOWNLOADS_DIR.mkdir(exist_ok=True)
+
+# Use yt-dlp via the venv's Python interpreter
+VENV_PYTHON = str(Path(__file__).resolve().parent / "venv" / "bin" / "python3")
+YTDLP_CMD = [VENV_PYTHON, "-m", "yt_dlp"]
 
 # In-memory job tracking
 jobs = {}
@@ -23,8 +28,7 @@ def run_download(job_id, url, format_type):
     try:
         if format_type == "audio":
             output_template = str(job_dir / "%(title)s.%(ext)s")
-            cmd = [
-                "yt-dlp",
+            cmd = YTDLP_CMD + [
                 "--no-playlist",
                 "-x",
                 "--audio-format", "mp3",
@@ -34,8 +38,7 @@ def run_download(job_id, url, format_type):
             ]
         else:
             output_template = str(job_dir / "%(title)s.%(ext)s")
-            cmd = [
-                "yt-dlp",
+            cmd = YTDLP_CMD + [
                 "--no-playlist",
                 "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
                 "--merge-output-format", "mp4",
@@ -45,6 +48,8 @@ def run_download(job_id, url, format_type):
 
         jobs[job_id]["status"] = "downloading"
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        elapsed = round(time.time() - jobs[job_id]["started_at"], 1)
+        jobs[job_id]["elapsed"] = elapsed
 
         if result.returncode != 0:
             jobs[job_id]["status"] = "failed"
@@ -84,7 +89,7 @@ def start_download():
         return jsonify({"error": "No URL provided"}), 400
 
     job_id = str(uuid.uuid4())
-    jobs[job_id] = {"status": "starting", "error": None, "filename": None, "filepath": None}
+    jobs[job_id] = {"status": "starting", "error": None, "filename": None, "filepath": None, "started_at": time.time(), "elapsed": 0}
 
     thread = threading.Thread(target=run_download, args=(job_id, url, format_type))
     thread.daemon = True
