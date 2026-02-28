@@ -1,11 +1,12 @@
 import os
 import uuid
 import time
+import shutil
 import subprocess
 import threading
 from pathlib import Path
 
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, after_this_request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
@@ -113,6 +114,19 @@ def download_file(job_id):
     job = jobs.get(job_id)
     if not job or job["status"] != "completed":
         return jsonify({"error": "File not ready"}), 404
+
+    @after_this_request
+    def cleanup(response):
+        """Delete the job files after serving them."""
+        try:
+            job_dir = DOWNLOADS_DIR / job_id
+            if job_dir.exists():
+                shutil.rmtree(job_dir)
+            jobs.pop(job_id, None)
+        except Exception:
+            pass
+        return response
+
     return send_file(job["filepath"], as_attachment=True, download_name=job["filename"])
 
 

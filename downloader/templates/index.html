@@ -17,9 +17,24 @@
             justify-content: center;
             line-height: 1.6;
             background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px),
-                repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px);
+                repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255, 40, 40, 0.025) 59px, rgba(255, 40, 40, 0.025) 60px),
+                repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255, 40, 40, 0.025) 59px, rgba(255, 40, 40, 0.025) 60px);
             position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle red radial glow behind terminal */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(255, 40, 40, 0.035) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* Scanline overlay */
@@ -57,6 +72,101 @@
             50% { box-shadow: 0 0 16px rgba(0, 255, 245, 0.6); }
         }
 
+        @keyframes float-up {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(15px) rotate(90deg); }
+            50% { transform: translateX(-10px) rotate(180deg); }
+            75% { transform: translateX(8px) rotate(270deg); }
+        }
+
+        @keyframes terminal-breathe {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 40, 40, 0.03), 0 0 40px rgba(255, 40, 40, 0.015); }
+            50% { box-shadow: 0 0 20px rgba(255, 40, 40, 0.05), 0 0 50px rgba(255, 40, 40, 0.025); }
+        }
+
+        /* ── Matrix Rain Canvas ── */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ── YouTube Logo ── */
+        .yt-logo {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 100;
+            opacity: 0.08;
+            transition: opacity 0.3s;
+        }
+
+        .yt-logo:hover {
+            opacity: 0.2;
+        }
+
+        /* Hide rain on narrow screens */
+        @media (max-width: 900px) {
+            .matrix-rain { display: none; }
+        }
+
+        /* ── Floating Particles ── */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float-up linear infinite;
+        }
+
+        .particle:nth-child(1) { width: 3px; height: 3px; background: rgba(255, 40, 40, 0.3); left: 10%; animation-duration: 12s; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 2px; height: 2px; background: rgba(255, 40, 40, 0.2); left: 25%; animation-duration: 16s; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 4px; height: 4px; background: rgba(255, 40, 40, 0.15); left: 40%; animation-duration: 14s; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 2px; height: 2px; background: rgba(255, 40, 40, 0.25); left: 55%; animation-duration: 18s; animation-delay: 1s; }
+        .particle:nth-child(5) { width: 3px; height: 3px; background: rgba(255, 40, 40, 0.2); left: 70%; animation-duration: 13s; animation-delay: 5s; }
+        .particle:nth-child(6) { width: 2px; height: 2px; background: rgba(255, 40, 40, 0.3); left: 85%; animation-duration: 15s; animation-delay: 3s; }
+        .particle:nth-child(7) { width: 3px; height: 3px; background: rgba(0, 255, 245, 0.15); left: 15%; animation-duration: 20s; animation-delay: 7s; }
+        .particle:nth-child(8) { width: 2px; height: 2px; background: rgba(0, 255, 245, 0.1); left: 90%; animation-duration: 17s; animation-delay: 6s; }
+
+        /* ── Floating geometric shapes ── */
+        .shapes {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border: 1px solid;
+            animation: drift 8s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) { width: 20px; height: 20px; border-color: rgba(255, 40, 40, 0.08); top: 15%; left: 8%; transform: rotate(45deg); animation-duration: 10s; }
+        .shape:nth-child(2) { width: 14px; height: 14px; border-color: rgba(255, 40, 40, 0.06); top: 70%; left: 5%; border-radius: 50%; animation-duration: 12s; animation-delay: 2s; }
+        .shape:nth-child(3) { width: 18px; height: 18px; border-color: rgba(255, 40, 40, 0.07); top: 30%; right: 8%; transform: rotate(45deg); animation-duration: 9s; animation-delay: 1s; }
+        .shape:nth-child(4) { width: 12px; height: 12px; border-color: rgba(0, 255, 245, 0.05); top: 75%; right: 10%; border-radius: 50%; animation-duration: 14s; animation-delay: 4s; }
+        .shape:nth-child(5) { width: 16px; height: 16px; border-color: rgba(255, 40, 40, 0.06); top: 50%; left: 3%; transform: rotate(45deg); animation-duration: 11s; animation-delay: 3s; }
+        .shape:nth-child(6) { width: 22px; height: 22px; border-color: rgba(255, 40, 40, 0.05); top: 20%; right: 4%; border-radius: 50%; animation-duration: 13s; animation-delay: 5s; }
+
         /* ── Home Button ── */
         .home-btn {
             position: fixed;
@@ -92,6 +202,8 @@
             width: 100%;
             max-width: 520px;
             padding: 2rem;
+            position: relative;
+            z-index: 2;
         }
 
         /* ── Terminal-style card wrapper ── */
@@ -101,6 +213,8 @@
             border-radius: 14px;
             overflow: hidden;
             position: relative;
+            z-index: 2;
+            animation: terminal-breathe 4s ease-in-out infinite;
         }
 
         /* Top accent line */
@@ -111,7 +225,7 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: linear-gradient(90deg, #00fff5, #ff00aa);
+            background: linear-gradient(90deg, #ff2828, #00fff5);
         }
 
         .terminal-bar {
@@ -155,7 +269,7 @@
             color: #fff;
         }
 
-        h1 .accent { color: #00fff5; }
+        h1 .accent { color: #ff2828; }
 
         .subtitle {
             text-align: center;
@@ -167,7 +281,7 @@
 
         .subtitle::after {
             content: "\25AE";
-            color: #00fff5;
+            color: #ff2828;
             animation: blink 1s step-end infinite;
             margin-left: 0.15em;
         }
@@ -193,8 +307,8 @@
         }
 
         input[type="text"]:focus {
-            border-color: #00fff5;
-            box-shadow: 0 0 10px rgba(0, 255, 245, 0.12);
+            border-color: #ff2828;
+            box-shadow: 0 0 10px rgba(255, 40, 40, 0.15);
         }
 
         input[type="text"]::placeholder {
@@ -222,15 +336,20 @@
         }
 
         .format-btn.active {
-            border-color: #00fff5;
-            color: #00fff5;
-            background: rgba(0, 255, 245, 0.05);
-            box-shadow: 0 0 8px rgba(0, 255, 245, 0.1);
+            border-color: #ff2828;
+            color: #ff4444;
+            background: rgba(255, 40, 40, 0.06);
+            box-shadow: 0 0 8px rgba(255, 40, 40, 0.12);
         }
 
-        .format-btn:hover:not(.active) {
+        .format-btn:hover:not(.active):not(:disabled) {
             border-color: #3f3f46;
             color: #71717a;
+        }
+
+        .format-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
         /* ── Buttons ── */
@@ -242,10 +361,10 @@
         .start-btn {
             flex: 1;
             padding: 0.75rem;
-            border: 1px solid #00fff5;
+            border: 1px solid #ff2828;
             border-radius: 8px;
-            background: rgba(0, 255, 245, 0.08);
-            color: #00fff5;
+            background: rgba(255, 40, 40, 0.08);
+            color: #ff4444;
             font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
             font-size: 0.95rem;
             font-weight: 600;
@@ -254,8 +373,8 @@
         }
 
         .start-btn:hover:not(:disabled) {
-            background: rgba(0, 255, 245, 0.15);
-            box-shadow: 0 0 15px rgba(0, 255, 245, 0.2);
+            background: rgba(255, 40, 40, 0.15);
+            box-shadow: 0 0 15px rgba(255, 40, 40, 0.25);
         }
 
         .start-btn:disabled {
@@ -321,7 +440,7 @@
 
         .progress-bar .fill {
             height: 100%;
-            background: linear-gradient(90deg, #00fff5, #ff00aa);
+            background: linear-gradient(90deg, #ff2828, #ff6644);
             border-radius: 1px;
             animation: progress 2s ease-in-out infinite;
         }
@@ -361,10 +480,86 @@
 
         .time-bar .fill {
             height: 100%;
-            background: linear-gradient(90deg, #00fff5, #ff00aa);
+            background: linear-gradient(90deg, #ff2828, #ff6644);
             border-radius: 2px;
             width: 0%;
             transition: width 1s linear;
+        }
+
+        /* ── Info Cards ── */
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+
+        .info-card {
+            border: 1px solid #1e1e22;
+            border-radius: 10px;
+            padding: 1rem;
+            background: rgba(17, 17, 19, 0.9);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .info-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 40, 40, 0.2), transparent);
+        }
+
+        .info-card h3 {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #ff4444;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.6rem;
+        }
+
+        .info-card ul {
+            list-style: none;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.7rem;
+            color: #52525b;
+            line-height: 1.9;
+        }
+
+        .info-card ul li::before {
+            content: ">";
+            color: #3f3f46;
+            margin-right: 0.4rem;
+        }
+
+        .info-card .highlight {
+            color: #71717a;
+        }
+
+        /* ── Keyboard hint ── */
+        .hint {
+            text-align: center;
+            margin-top: 1rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.65rem;
+            color: #27272a;
+        }
+
+        .hint kbd {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            border: 1px solid #27272a;
+            border-radius: 3px;
+            background: #18181b;
+            color: #3f3f46;
+            font-family: inherit;
+            font-size: inherit;
         }
 
         /* ── Responsive ── */
@@ -373,12 +568,38 @@
             .terminal-body { padding: 1.25rem; }
             h1 { font-size: 1.3rem; }
             .home-btn { top: 0.75rem; left: 0.75rem; font-size: 0.7rem; padding: 0.3rem 0.6rem; }
+            .info-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <a class="home-btn" href="/"><span class="arrow">&larr;</span> home</a>
+    <a class="home-btn" href="http://hanzchau.com"><span class="arrow">&larr;</span> home</a>
+
+    <!-- Matrix rain canvas -->
+    <canvas class="matrix-rain" id="matrixRain"></canvas>
+
+    <!-- Floating particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Floating shapes -->
+    <div class="shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
 
     <div class="container">
         <div class="terminal">
@@ -397,8 +618,8 @@
                 </div>
 
                 <div class="format-toggle">
-                    <button class="format-btn active" data-format="audio" onclick="setFormat('audio', this)">MP3</button>
-                    <button class="format-btn" data-format="video" onclick="setFormat('video', this)">MP4</button>
+                    <button class="format-btn active" data-format="audio" onclick="setFormat('audio', this)">Audio (MP3)</button>
+                    <button class="format-btn" data-format="video" onclick="setFormat('video', this)">Video (MP4)</button>
                 </div>
 
                 <div class="btn-row">
@@ -417,6 +638,35 @@
                 </div>
             </div>
         </div>
+
+        <div class="info-row">
+            <div class="info-card">
+                <h3>Supported</h3>
+                <ul>
+                    <li><span class="highlight">YouTube</span> videos</li>
+                    <li><span class="highlight">YouTube</span> shorts</li>
+                    <li><span class="highlight">YouTube</span> music</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>How it works</h3>
+                <ul>
+                    <li>Paste link, pick format</li>
+                    <li>Server fetches the file</li>
+                    <li>Save directly to disk</li>
+                </ul>
+            </div>
+        </div>
+
+        <p class="hint">press <kbd>Enter</kbd> to start download</p>
+    </div>
+
+    <!-- YouTube logo watermark -->
+    <div class="yt-logo">
+        <svg width="60" height="42" viewBox="0 0 60 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="42" rx="12" fill="#ff2828"/>
+            <path d="M24 12L40 21L24 30V12Z" fill="#0a0a0b"/>
+        </svg>
     </div>
 
     <script>
@@ -444,6 +694,7 @@
             startBtn.disabled = true;
             startBtn.textContent = 'processing...';
             dlBtn.disabled = true;
+            document.querySelectorAll('.format-btn').forEach(b => b.disabled = true);
             showStatus('Starting download...', '');
             document.getElementById('progressBar').classList.add('active');
             startTimer();
@@ -518,6 +769,7 @@
                     };
                     document.getElementById('startBtn').disabled = false;
                     document.getElementById('startBtn').textContent = 'run';
+                    document.querySelectorAll('.format-btn').forEach(b => b.disabled = false);
                 } else if (data.status === 'failed') {
                     clearInterval(pollInterval);
                     stopTimer(data.elapsed);
@@ -543,6 +795,7 @@
             document.getElementById('startBtn').textContent = 'run';
             document.getElementById('downloadBtn').disabled = true;
             document.getElementById('downloadBtn').onclick = null;
+            document.querySelectorAll('.format-btn').forEach(b => b.disabled = false);
         }
 
         function formatTime(seconds) {
@@ -578,6 +831,74 @@
         document.getElementById('urlInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') startDownload();
         });
+
+        // ── Matrix Rain ──
+        (function() {
+            const canvas = document.getElementById('matrixRain');
+            const ctx = canvas.getContext('2d');
+
+            const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF{}[]<>/\\|=+*&^%$#@!';
+            const fontSize = 13;
+            let columns, drops;
+            const edgeWidth = 160;
+
+            function init() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                columns = Math.floor(canvas.width / fontSize);
+                const maxRow = Math.floor(canvas.height / fontSize);
+                drops = [];
+                for (let i = 0; i < columns; i++) {
+                    drops[i] = Math.floor(Math.random() * maxRow);
+                }
+            }
+
+            function isInEdge(col) {
+                const x = col * fontSize;
+                return x < edgeWidth || x > canvas.width - edgeWidth;
+            }
+
+            function draw() {
+                ctx.fillStyle = 'rgba(10, 10, 11, 0.08)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    if (!isInEdge(i)) {
+                        drops[i] = 0;
+                        continue;
+                    }
+
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    const x = i * fontSize;
+                    const y = drops[i] * fontSize;
+
+                    // Head character — brighter
+                    ctx.fillStyle = 'rgba(255, 120, 120, 0.9)';
+                    ctx.shadowColor = 'rgba(255, 40, 40, 0.6)';
+                    ctx.shadowBlur = 8;
+                    ctx.fillText(char, x, y);
+
+                    // Trail characters — dimmer red
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = 'rgba(255, 40, 40, 0.25)';
+                    const trailChar = chars[Math.floor(Math.random() * chars.length)];
+                    if (drops[i] > 1) {
+                        ctx.fillText(trailChar, x, (drops[i] - 1) * fontSize);
+                    }
+
+                    drops[i]++;
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = Math.random() * -20;
+                    }
+                }
+            }
+
+            init();
+            setInterval(draw, 45);
+            window.addEventListener('resize', init);
+        })();
     </script>
 </body>
 </html>
