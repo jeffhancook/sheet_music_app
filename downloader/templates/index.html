@@ -3,39 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Downloader</title>
+    <title>Downloader // Han Chau</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f;
-            color: #e0e0e0;
+            background-color: #0a0a0b;
+            color: #d4d4d8;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            line-height: 1.6;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px),
+                repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px);
+            position: relative;
         }
 
+        /* Scanline overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 2px,
+                rgba(0, 0, 0, 0.06) 2px, rgba(0, 0, 0, 0.06) 4px
+            );
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes progress {
+            0% { width: 0%; margin-left: 0; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 245, 0.3); }
+            50% { box-shadow: 0 0 16px rgba(0, 255, 245, 0.6); }
+        }
+
+        /* ── Home Button ── */
+        .home-btn {
+            position: fixed;
+            top: 1.25rem;
+            left: 1.25rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.8rem;
+            color: #52525b;
+            text-decoration: none;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #1e1e22;
+            border-radius: 6px;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(8px);
+            transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .home-btn:hover {
+            color: #00fff5;
+            border-color: rgba(0, 255, 245, 0.3);
+            box-shadow: 0 0 12px rgba(0, 255, 245, 0.1);
+        }
+
+        .home-btn .arrow { transition: transform 0.2s; }
+        .home-btn:hover .arrow { transform: translateX(-2px); }
+
+        /* ── Container ── */
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 520px;
             padding: 2rem;
         }
 
+        /* ── Terminal-style card wrapper ── */
+        .terminal {
+            background: rgba(17, 17, 19, 0.9);
+            border: 1px solid #1e1e22;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Top accent line */
+        .terminal::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00fff5, #ff00aa);
+        }
+
+        .terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid #1e1e22;
+        }
+
+        .terminal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27272a;
+        }
+
+        .terminal-dot.r { background: #ff5f57; }
+        .terminal-dot.y { background: #febc2e; }
+        .terminal-dot.g { background: #28c840; }
+
+        .terminal-title {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.7rem;
+            color: #52525b;
+            margin-left: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .terminal-body {
+            padding: 1.75rem;
+        }
+
+        /* ── Header ── */
         h1 {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
             text-align: center;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
             color: #fff;
         }
 
+        h1 .accent { color: #00fff5; }
+
         .subtitle {
             text-align: center;
-            color: #888;
-            margin-bottom: 2rem;
+            color: #52525b;
+            font-size: 0.88rem;
+            margin-bottom: 1.75rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
         }
 
+        .subtitle::after {
+            content: "\25AE";
+            color: #00fff5;
+            animation: blink 1s step-end infinite;
+            margin-left: 0.15em;
+        }
+
+        /* ── Input ── */
         .input-group {
             display: flex;
             gap: 0.5rem;
@@ -45,23 +182,26 @@
         input[type="text"] {
             flex: 1;
             padding: 0.75rem 1rem;
-            border: 2px solid #333;
+            border: 1px solid #27272a;
             border-radius: 8px;
-            background: #1a1a1a;
+            background: #0a0a0b;
             color: #fff;
-            font-size: 1rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.85rem;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         input[type="text"]:focus {
-            border-color: #ff4444;
+            border-color: #00fff5;
+            box-shadow: 0 0 10px rgba(0, 255, 245, 0.12);
         }
 
         input[type="text"]::placeholder {
-            color: #555;
+            color: #3f3f46;
         }
 
+        /* ── Format Toggle ── */
         .format-toggle {
             display: flex;
             gap: 0.5rem;
@@ -70,49 +210,88 @@
         }
 
         .format-btn {
-            padding: 0.5rem 1.5rem;
-            border: 2px solid #333;
-            border-radius: 8px;
-            background: #1a1a1a;
-            color: #888;
-            font-size: 0.9rem;
+            padding: 0.45rem 1.25rem;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            background: transparent;
+            color: #52525b;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.78rem;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .format-btn.active {
-            border-color: #ff4444;
-            color: #fff;
-            background: #2a1a1a;
+            border-color: #00fff5;
+            color: #00fff5;
+            background: rgba(0, 255, 245, 0.05);
+            box-shadow: 0 0 8px rgba(0, 255, 245, 0.1);
         }
 
-        .format-btn:hover {
-            border-color: #ff4444;
+        .format-btn:hover:not(.active) {
+            border-color: #3f3f46;
+            color: #71717a;
         }
 
-        .download-btn {
-            width: 100%;
-            padding: 0.85rem;
-            border: none;
+        /* ── Buttons ── */
+        .btn-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .start-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #00fff5;
             border-radius: 8px;
-            background: #ff4444;
-            color: #fff;
-            font-size: 1.1rem;
+            background: rgba(0, 255, 245, 0.08);
+            color: #00fff5;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
 
-        .download-btn:hover {
-            background: #e03030;
+        .start-btn:hover:not(:disabled) {
+            background: rgba(0, 255, 245, 0.15);
+            box-shadow: 0 0 15px rgba(0, 255, 245, 0.2);
         }
 
-        .download-btn:disabled {
-            background: #333;
-            color: #666;
+        .start-btn:disabled {
+            border-color: #27272a;
+            background: transparent;
+            color: #3f3f46;
             cursor: not-allowed;
         }
 
+        .download-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.08);
+            color: #4ade80;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            background: rgba(34, 197, 94, 0.15);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+        }
+
+        .download-btn:disabled {
+            border-color: #27272a;
+            background: transparent;
+            color: #3f3f46;
+            cursor: not-allowed;
+        }
+
+        /* ── Status ── */
         .status {
             margin-top: 1.5rem;
             text-align: center;
@@ -120,63 +299,36 @@
         }
 
         .status-text {
-            color: #888;
-            font-size: 0.95rem;
+            color: #52525b;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.85rem;
         }
 
-        .status-text.error {
-            color: #ff4444;
-        }
-
-        .status-text.success {
-            color: #44cc44;
-        }
+        .status-text.error { color: #ff00aa; }
+        .status-text.success { color: #4ade80; }
 
         .progress-bar {
             width: 100%;
-            height: 4px;
-            background: #333;
-            border-radius: 2px;
+            height: 2px;
+            background: #1e1e22;
+            border-radius: 1px;
             margin-top: 0.75rem;
             overflow: hidden;
             display: none;
         }
 
-        .progress-bar.active {
-            display: block;
-        }
+        .progress-bar.active { display: block; }
 
         .progress-bar .fill {
             height: 100%;
-            background: #ff4444;
-            border-radius: 2px;
+            background: linear-gradient(90deg, #00fff5, #ff00aa);
+            border-radius: 1px;
             animation: progress 2s ease-in-out infinite;
         }
 
-        @keyframes progress {
-            0% { width: 0%; margin-left: 0; }
-            50% { width: 60%; margin-left: 20%; }
-            100% { width: 0%; margin-left: 100%; }
-        }
-
-        .download-link {
-            display: inline-block;
-            margin-top: 0.75rem;
-            padding: 0.6rem 1.5rem;
-            background: #44cc44;
-            color: #000;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-
-        .download-link:hover {
-            background: #33bb33;
-        }
-
         .timer {
-            font-size: 1.8rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 1.6rem;
             font-weight: 700;
             color: #fff;
             font-variant-numeric: tabular-nums;
@@ -184,65 +336,86 @@
             display: none;
         }
 
-        .timer.active {
-            display: block;
-        }
+        .timer.active { display: block; }
 
         .timer .label {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 400;
-            color: #888;
+            color: #52525b;
             margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
         .time-bar {
             width: 100%;
-            height: 6px;
-            background: #222;
-            border-radius: 3px;
+            height: 3px;
+            background: #1e1e22;
+            border-radius: 2px;
             margin-top: 0.5rem;
             overflow: hidden;
             display: none;
         }
 
-        .time-bar.active {
-            display: block;
-        }
+        .time-bar.active { display: block; }
 
         .time-bar .fill {
             height: 100%;
-            background: linear-gradient(90deg, #ff4444, #ff8844);
-            border-radius: 3px;
+            background: linear-gradient(90deg, #00fff5, #ff00aa);
+            border-radius: 2px;
             width: 0%;
             transition: width 1s linear;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .terminal-body { padding: 1.25rem; }
+            h1 { font-size: 1.3rem; }
+            .home-btn { top: 0.75rem; left: 0.75rem; font-size: 0.7rem; padding: 0.3rem 0.6rem; }
         }
     </style>
 </head>
 <body>
+
+    <a class="home-btn" href="/"><span class="arrow">&larr;</span> home</a>
+
     <div class="container">
-        <h1>Video Downloader</h1>
-        <p class="subtitle">Paste a YouTube URL to download video or audio</p>
-
-        <div class="input-group">
-            <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." autofocus>
-        </div>
-
-        <div class="format-toggle">
-            <button class="format-btn active" data-format="audio" onclick="setFormat('audio', this)">Audio (MP3)</button>
-            <button class="format-btn" data-format="video" onclick="setFormat('video', this)">Video (MP4)</button>
-        </div>
-
-        <button class="download-btn" id="downloadBtn" onclick="startDownload()">Download</button>
-
-        <div class="status">
-            <p class="status-text" id="statusText"></p>
-            <div class="progress-bar" id="progressBar"><div class="fill"></div></div>
-            <div class="timer" id="timer">
-                <div class="label">Elapsed time</div>
-                <span id="timerValue">0:00</span>
+        <div class="terminal">
+            <div class="terminal-bar">
+                <span class="terminal-dot r"></span>
+                <span class="terminal-dot y"></span>
+                <span class="terminal-dot g"></span>
+                <span class="terminal-title">downloader.exe</span>
             </div>
-            <div class="time-bar" id="timeBar"><div class="fill" id="timeBarFill"></div></div>
-            <div id="downloadLinkContainer"></div>
+            <div class="terminal-body">
+                <h1><span class="accent">&gt;</span> Downloader</h1>
+                <p class="subtitle">paste a url to grab video or audio</p>
+
+                <div class="input-group">
+                    <input type="text" id="urlInput" placeholder="https://youtube.com/watch?v=..." autofocus>
+                </div>
+
+                <div class="format-toggle">
+                    <button class="format-btn active" data-format="audio" onclick="setFormat('audio', this)">MP3</button>
+                    <button class="format-btn" data-format="video" onclick="setFormat('video', this)">MP4</button>
+                </div>
+
+                <div class="btn-row">
+                    <button class="start-btn" id="startBtn" onclick="startDownload()">run</button>
+                    <button class="download-btn" id="downloadBtn" disabled>save</button>
+                </div>
+
+                <div class="status">
+                    <p class="status-text" id="statusText"></p>
+                    <div class="progress-bar" id="progressBar"><div class="fill"></div></div>
+                    <div class="timer" id="timer">
+                        <div class="label">Elapsed</div>
+                        <span id="timerValue">0:00</span>
+                    </div>
+                    <div class="time-bar" id="timeBar"><div class="fill" id="timeBarFill"></div></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -266,16 +439,17 @@
                 return;
             }
 
-            const btn = document.getElementById('downloadBtn');
-            btn.disabled = true;
-            btn.textContent = 'Processing...';
+            const startBtn = document.getElementById('startBtn');
+            const dlBtn = document.getElementById('downloadBtn');
+            startBtn.disabled = true;
+            startBtn.textContent = 'processing...';
+            dlBtn.disabled = true;
             showStatus('Starting download...', '');
             document.getElementById('progressBar').classList.add('active');
-            document.getElementById('downloadLinkContainer').innerHTML = '';
             startTimer();
 
             try {
-                const resp = await fetch('/api/download', {
+                const resp = await fetch('api/download', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: url, format: selectedFormat })
@@ -284,7 +458,7 @@
 
                 if (data.error) {
                     showStatus(data.error, 'error');
-                    resetBtn();
+                    resetBtns();
                     return;
                 }
 
@@ -292,7 +466,7 @@
                 pollInterval = setInterval(checkStatus, 1500);
             } catch (e) {
                 showStatus('Failed to start download.', 'error');
-                resetBtn();
+                resetBtns();
             }
         }
 
@@ -300,7 +474,7 @@
             if (!currentJobId) return;
 
             try {
-                const resp = await fetch(`/api/status/${currentJobId}`);
+                const resp = await fetch(`api/status/${currentJobId}`);
                 const data = await resp.json();
 
                 if (data.status === 'downloading') {
@@ -308,22 +482,53 @@
                 } else if (data.status === 'completed') {
                     clearInterval(pollInterval);
                     stopTimer(data.elapsed);
-                    showStatus('Ready!', 'success');
+                    showStatus('Ready! Click save to get your file.', 'success');
                     document.getElementById('progressBar').classList.remove('active');
-                    document.getElementById('downloadLinkContainer').innerHTML =
-                        `<a class="download-link" href="/api/file/${currentJobId}">Save ${data.filename}</a>`;
-                    resetBtn();
+                    const dlBtn = document.getElementById('downloadBtn');
+                    dlBtn.disabled = false;
+                    dlBtn.onclick = async function() {
+                        const fileUrl = `api/file/${currentJobId}`;
+                        const ext = selectedFormat === 'audio' ? 'mp3' : 'mp4';
+                        const mimeType = selectedFormat === 'audio' ? 'audio/mpeg' : 'video/mp4';
+                        const suggestedName = (data.filename || `download.${ext}`);
+
+                        if (window.showSaveFilePicker) {
+                            try {
+                                const handle = await window.showSaveFilePicker({
+                                    suggestedName: suggestedName,
+                                    types: [{
+                                        description: ext.toUpperCase() + ' file',
+                                        accept: { [mimeType]: ['.' + ext] }
+                                    }]
+                                });
+                                showStatus('Saving file...', '');
+                                const resp = await fetch(fileUrl);
+                                const blob = await resp.blob();
+                                const writable = await handle.createWritable();
+                                await writable.write(blob);
+                                await writable.close();
+                                showStatus('File saved!', 'success');
+                                return;
+                            } catch (err) {
+                                if (err.name === 'AbortError') return;
+                            }
+                        }
+
+                        window.location.href = fileUrl;
+                    };
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('startBtn').textContent = 'run';
                 } else if (data.status === 'failed') {
                     clearInterval(pollInterval);
                     stopTimer(data.elapsed);
                     showStatus(data.error || 'Download failed.', 'error');
                     document.getElementById('progressBar').classList.remove('active');
-                    resetBtn();
+                    resetBtns();
                 }
             } catch (e) {
                 clearInterval(pollInterval);
                 showStatus('Lost connection to server.', 'error');
-                resetBtn();
+                resetBtns();
             }
         }
 
@@ -333,10 +538,11 @@
             el.className = 'status-text' + (type ? ' ' + type : '');
         }
 
-        function resetBtn() {
-            const btn = document.getElementById('downloadBtn');
-            btn.disabled = false;
-            btn.textContent = 'Download';
+        function resetBtns() {
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = 'run';
+            document.getElementById('downloadBtn').disabled = true;
+            document.getElementById('downloadBtn').onclick = null;
         }
 
         function formatTime(seconds) {
@@ -350,13 +556,12 @@
             document.getElementById('timer').classList.add('active');
             document.getElementById('timeBar').classList.add('active');
             document.getElementById('timerValue').textContent = '0:00';
-            document.getElementById('timer').querySelector('.label').textContent = 'Elapsed time';
+            document.getElementById('timer').querySelector('.label').textContent = 'Elapsed';
             document.getElementById('timeBarFill').style.width = '0%';
 
             timerInterval = setInterval(() => {
                 const elapsed = (Date.now() - startTime) / 1000;
                 document.getElementById('timerValue').textContent = formatTime(elapsed);
-                // Grow the bar gradually (caps at 100% around 5 min)
                 const pct = Math.min((elapsed / 300) * 100, 100);
                 document.getElementById('timeBarFill').style.width = pct + '%';
             }, 250);

@@ -6,8 +6,10 @@ import threading
 from pathlib import Path
 
 from flask import Flask, render_template, request, jsonify, send_file
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
 
 DOWNLOADS_DIR = Path(__file__).parent / "downloads"
 DOWNLOADS_DIR.mkdir(exist_ok=True)

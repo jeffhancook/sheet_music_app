@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Han Chau</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0a0a0b;
+      color: #d4d4d8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px),
+        repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px);
+      position: relative;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.06) 2px,
+        rgba(0, 0, 0, 0.06) 4px
+      );
+      animation: scanline 8s linear infinite;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ── Keyframes ── */
+    @keyframes glitch {
+      0%, 100% {
+        text-shadow: 2px 0 #00fff5, -2px 0 #ff00aa;
+        transform: translate(0);
+      }
+      20% {
+        text-shadow: -3px 0 #00fff5, 3px 0 #ff00aa;
+        transform: translate(-2px, 1px);
+      }
+      40% {
+        text-shadow: 3px 0 #00fff5, -3px 0 #ff00aa;
+        transform: translate(2px, -1px);
+      }
+      60% {
+        text-shadow: -1px 0 #00fff5, 1px 0 #ff00aa;
+        transform: translate(1px, 1px);
+      }
+      80% {
+        text-shadow: 2px 0 #00fff5, -2px 0 #ff00aa;
+        transform: translate(-1px, -1px);
+      }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    @keyframes scanline {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 100vh; }
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 6px rgba(34, 197, 94, 0.5), 0 0 12px rgba(34, 197, 94, 0.3); }
+      50% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.5); }
+    }
+
+    /* ── Nav ── */
+    .nav-btn {
+      position: fixed;
+      top: 1.25rem;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+      color: #52525b;
+      text-decoration: none;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid #1e1e22;
+      border-radius: 6px;
+      background: rgba(10, 10, 11, 0.8);
+      backdrop-filter: blur(8px);
+      transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .nav-btn:hover {
+      color: #00fff5;
+      border-color: rgba(0, 255, 245, 0.3);
+      box-shadow: 0 0 12px rgba(0, 255, 245, 0.1);
+    }
+
+    .nav-btn { right: 1.25rem; }
+    .nav-btn .arrow { transition: transform 0.2s; }
+    .nav-btn:hover .arrow { transform: translateX(2px); }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 6rem 1.5rem 2rem;
+      position: relative;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(0, 255, 245, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .name {
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      position: relative;
+      display: inline-block;
+      animation: glitch 3s infinite;
+      animation-timing-function: steps(1);
+    }
+
+    .name::before,
+    .name::after {
+      content: "Han Chau";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .name::before {
+      color: #00fff5;
+      z-index: -1;
+      clip-path: inset(0 0 60% 0);
+      animation: glitch 3s infinite reverse;
+      animation-timing-function: steps(1);
+    }
+
+    .name::after {
+      color: #ff00aa;
+      z-index: -1;
+      clip-path: inset(60% 0 0 0);
+      animation: glitch 3s infinite 0.5s;
+      animation-timing-function: steps(1);
+    }
+
+    .tagline {
+      margin-top: 0.75rem;
+      font-size: 1.15rem;
+      color: #71717a;
+      max-width: 440px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .tagline::after {
+      content: "\25AE";
+      color: #00fff5;
+      animation: blink 1s step-end infinite;
+      margin-left: 0.2em;
+    }
+
+    .divider {
+      width: 48px;
+      height: 3px;
+      background: linear-gradient(90deg, #00fff5, #ff00aa);
+      border-radius: 4px;
+      margin: 2.5rem auto 0;
+      box-shadow: 0 0 8px rgba(0, 255, 245, 0.4), 0 0 8px rgba(255, 0, 170, 0.4);
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .section-heading h2 {
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #00fff5;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      white-space: nowrap;
+    }
+
+    .section-heading .line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, #00fff5, transparent);
+      opacity: 0.3;
+    }
+
+    /* ── Project Cards ── */
+    .projects {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .project-card {
+      background: rgba(17, 17, 19, 0.9);
+      border: 1px solid #1e1e22;
+      border-radius: 14px;
+      padding: 1.75rem;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Neon gradient top accent */
+    .project-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #00fff5, #ff00aa);
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+
+    .project-card:hover {
+      border-color: #00fff5;
+      transform: translateY(-3px);
+      box-shadow:
+        0 0 15px rgba(0, 255, 245, 0.15),
+        0 0 30px rgba(0, 255, 245, 0.08),
+        0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .project-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .card-icon.red {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+    }
+
+    .card-title {
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f4f4f5;
+      margin-bottom: 0.15rem;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: #52525b;
+      font-weight: 500;
+    }
+
+    .card-description {
+      font-size: 0.9rem;
+      color: #71717a;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .tag {
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      background: rgba(0, 255, 245, 0.04);
+      color: #00fff5;
+      border: 1px solid rgba(0, 255, 245, 0.2);
+      letter-spacing: 0.02em;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #1e1e22;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    .status-text {
+      color: #4ade80;
+    }
+
+    .card-link {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #00fff5;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: color 0.2s, gap 0.2s;
+    }
+
+    .project-card:hover .card-link {
+      color: #66fffa;
+      gap: 0.55rem;
+      text-shadow: 0 0 8px rgba(0, 255, 245, 0.5);
+    }
+
+    .card-link .arrow {
+      transition: transform 0.2s;
+      font-size: 1rem;
+    }
+
+    .project-card:hover .card-link .arrow {
+      transform: translateX(2px);
+    }
+
+    /* ── "More coming" placeholder ── */
+    .coming-soon {
+      background: transparent;
+      border: 2px dashed rgba(0, 255, 245, 0.15);
+      border-radius: 14px;
+      padding: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      color: #2a2a30;
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      border-top: 1px solid #141416;
+    }
+
+    .contact {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+    }
+
+    .contact-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #18181b;
+      border: 1px solid rgba(0, 255, 245, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: #00fff5;
+      flex-shrink: 0;
+    }
+
+    .contact-prompt {
+      color: #00fff5;
+      margin-right: 0.25rem;
+    }
+
+    .contact-value {
+      color: #a1a1aa;
+      transition: color 0.2s;
+    }
+
+    a .contact-value:hover {
+      color: #00fff5;
+      text-shadow: 0 0 8px rgba(0, 255, 245, 0.4);
+    }
+
+    .copyright {
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 0.78rem;
+      color: #3f3f46;
+      margin-top: 0.5rem;
+    }
+
+    /* ── Side Decorations ── */
+    .side-decor {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 120px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .side-decor.left { left: 20px; }
+    .side-decor.right { right: 20px; }
+
+    /* Vertical neon line */
+    .neon-line {
+      position: absolute;
+      top: 10%;
+      bottom: 10%;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(0, 255, 245, 0.3) 20%, rgba(0, 255, 245, 0.3) 80%, transparent);
+    }
+
+    .side-decor.left .neon-line { right: 0; }
+    .side-decor.right .neon-line { left: 0; }
+
+    /* Pulse traveling down the line */
+    .neon-line::after {
+      content: "";
+      position: absolute;
+      left: -2px;
+      width: 5px;
+      height: 40px;
+      background: linear-gradient(180deg, transparent, #00fff5, transparent);
+      border-radius: 3px;
+      box-shadow: 0 0 10px #00fff5, 0 0 20px rgba(0, 255, 245, 0.4);
+      animation: line-pulse 4s ease-in-out infinite;
+    }
+
+    .side-decor.right .neon-line::after {
+      animation-delay: 2s;
+    }
+
+    @keyframes line-pulse {
+      0% { top: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { top: 95%; opacity: 0; }
+    }
+
+    /* Circuit nodes on the line */
+    .node {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border: 1px solid rgba(0, 255, 245, 0.5);
+      border-radius: 50%;
+      background: #0a0a0b;
+    }
+
+    .side-decor.left .node { right: -3px; }
+    .side-decor.right .node { left: -3px; }
+
+    .node:nth-child(2) { top: 20%; }
+    .node:nth-child(3) { top: 40%; }
+    .node:nth-child(4) { top: 60%; }
+    .node:nth-child(5) { top: 80%; }
+
+    .node::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 25px;
+      height: 1px;
+      background: rgba(0, 255, 245, 0.15);
+      transform: translateY(-50%);
+    }
+
+    .side-decor.left .node::after { right: 10px; }
+    .side-decor.right .node::after { left: 10px; }
+
+    /* Data stream — vertical scrolling text */
+    .data-stream {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      overflow: hidden;
+      opacity: 0.12;
+    }
+
+    .side-decor.left .data-stream { left: 0; }
+    .side-decor.right .data-stream { right: 0; }
+
+    .data-stream-inner {
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 10px;
+      line-height: 1.8;
+      color: #00fff5;
+      white-space: nowrap;
+      writing-mode: vertical-rl;
+      animation: data-scroll 20s linear infinite;
+    }
+
+    .side-decor.right .data-stream-inner {
+      animation-direction: reverse;
+      color: #ff00aa;
+    }
+
+    @keyframes data-scroll {
+      0% { transform: translateY(-50%); }
+      100% { transform: translateY(0%); }
+    }
+
+    /* Floating geometric shapes */
+    .geo {
+      position: absolute;
+      border: 1px solid;
+      opacity: 0.08;
+      animation: geo-float 6s ease-in-out infinite;
+    }
+
+    .geo.diamond {
+      width: 20px;
+      height: 20px;
+      border-color: #00fff5;
+      transform: rotate(45deg);
+    }
+
+    .geo.hex {
+      width: 24px;
+      height: 14px;
+      border-color: #ff00aa;
+      clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+      background: rgba(255, 0, 170, 0.05);
+      border: none;
+      outline: 1px solid rgba(255, 0, 170, 0.15);
+    }
+
+    .geo.circle {
+      width: 16px;
+      height: 16px;
+      border-color: #00fff5;
+      border-radius: 50%;
+    }
+
+    .geo:nth-child(6) { top: 15%; left: 10px; animation-delay: 0s; }
+    .geo:nth-child(7) { top: 35%; left: 30px; animation-delay: 1.5s; }
+    .geo:nth-child(8) { top: 55%; left: 5px; animation-delay: 3s; }
+    .geo:nth-child(9) { top: 75%; left: 25px; animation-delay: 4.5s; }
+
+    @keyframes geo-float {
+      0%, 100% { transform: translateY(0px) rotate(45deg); opacity: 0.08; }
+      50% { transform: translateY(-10px) rotate(45deg); opacity: 0.18; }
+    }
+
+    .geo.hex, .geo.circle {
+      animation-name: geo-float-alt;
+    }
+
+    @keyframes geo-float-alt {
+      0%, 100% { transform: translateY(0px); opacity: 0.08; }
+      50% { transform: translateY(-10px); opacity: 0.18; }
+    }
+
+    /* Bracket decorations */
+    .bracket {
+      position: absolute;
+      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+      font-size: 28px;
+      color: rgba(0, 255, 245, 0.06);
+      line-height: 1;
+    }
+
+    .side-decor.left .bracket.top { top: 12%; right: 15px; }
+    .side-decor.left .bracket.bottom { bottom: 12%; right: 15px; }
+    .side-decor.right .bracket.top { top: 12%; left: 15px; }
+    .side-decor.right .bracket.bottom { bottom: 12%; left: 15px; }
+
+    /* Crosshair marker */
+    .crosshair {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .side-decor.left .crosshair { left: 10px; }
+    .side-decor.right .crosshair { right: 10px; }
+
+    .crosshair::before,
+    .crosshair::after {
+      content: "";
+      position: absolute;
+      background: rgba(255, 0, 170, 0.2);
+    }
+
+    .crosshair::before {
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      transform: translateY(-50%);
+    }
+
+    .crosshair::after {
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      transform: translateX(-50%);
+    }
+
+    /* Hide side decorations on smaller screens */
+    @media (max-width: 1200px) {
+      .side-decor { display: none; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .name {
+        font-size: 2.5rem;
+      }
+
+      header {
+        padding: 4rem 1rem 1.5rem;
+      }
+
+      main {
+        padding: 2rem 1rem 3rem;
+      }
+
+      .projects {
+        grid-template-columns: 1fr;
+      }
+
+      .contact {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .nav-btn { top: 0.75rem; right: 0.75rem; font-size: 0.7rem; padding: 0.3rem 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="nav-btn" href="http://localhost:5000">downloader <span class="arrow">&rarr;</span></a>
+
+  <!-- ── Side Decorations ── -->
+  <div class="side-decor left">
+    <div class="neon-line"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="geo diamond"></div>
+    <div class="geo hex"></div>
+    <div class="geo diamond"></div>
+    <div class="geo circle"></div>
+    <div class="data-stream">
+      <div class="data-stream-inner">0xF4 INIT_SYS &gt;&gt; 0xA7C2 LINK ACTIVE // STREAM.CONNECTED &gt;&gt; NODE.SYNC 0xBE91 // AUTH_OK &gt;&gt; RENDER.FRAME 0x44F1 ACTIVE &gt;&gt; SYS.PULSE // DATA.FLOW 0xFF12 CONNECTED &gt;&gt; UPLINK.OK // NET.STABLE 0xD3A8 SYNC &gt;&gt; PORT.OPEN 0x91C4 // STATUS.LIVE</div>
+    </div>
+    <span class="bracket top">{</span>
+    <span class="bracket bottom">}</span>
+    <div class="crosshair"></div>
+  </div>
+
+  <div class="side-decor right">
+    <div class="neon-line"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="geo circle"></div>
+    <div class="geo diamond"></div>
+    <div class="geo hex"></div>
+    <div class="geo diamond"></div>
+    <div class="data-stream">
+      <div class="data-stream-inner">PROXY.RELAY 0xC8 // PKT.ROUTE &gt;&gt; 0x5FA3 DECRYPT.OK &gt;&gt; HASH.VERIFY 0xE291 // CHAN.SECURE &gt;&gt; BUF.FLUSH 0x38D7 COMPLETE &gt;&gt; MEM.ALLOC // CACHE.HIT 0xAB44 &gt;&gt; PROC.EXEC 0x7F10 // TASK.RUN &gt;&gt; QUEUE.READY 0x62B5 DONE</div>
+    </div>
+    <span class="bracket top">[</span>
+    <span class="bracket bottom">]</span>
+    <div class="crosshair"></div>
+  </div>
+
+  <header>
+    <h1 class="name">Han Chau</h1>
+    <p class="tagline">Building tools and apps that solve everyday problems.</p>
+    <div class="divider"></div>
+  </header>
+
+  <main>
+    <div class="section-heading">
+      <h2>Projects</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="projects">
+
+      <!-- ─── YouTube Downloader ─── -->
+      <a class="project-card" href="http://localhost:5000">
+        <div class="card-header">
+          <div class="card-icon red">&#9655;</div>
+          <div>
+            <div class="card-title">YouTube Downloader</div>
+            <div class="card-subtitle">Web Application</div>
+          </div>
+        </div>
+        <p class="card-description">
+          Paste a YouTube link and download it as MP3 audio or MP4 video.
+          Features real-time progress tracking, background processing, and
+          a native save dialog.
+        </p>
+        <div class="card-tags">
+          <span class="tag">Flask</span>
+          <span class="tag">yt-dlp</span>
+          <span class="tag">Python</span>
+          <span class="tag">Async</span>
+        </div>
+        <div class="card-footer">
+          <div class="status">
+            <span class="status-dot"></span>
+            <span class="status-text">Live</span>
+          </div>
+          <span class="card-link">Open App <span class="arrow">&rarr;</span></span>
+        </div>
+      </a>
+
+      <!-- ─── Add more project cards here ─── -->
+
+      <div class="coming-soon">More projects on the way...</div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="contact">
+      <a class="contact-item" href="mailto:your-email@example.com">
+        <span class="contact-icon">&#9993;</span>
+        <span class="contact-prompt">&gt;</span>
+        <span class="contact-value">your-email@example.com</span>
+      </a>
+      <div class="contact-item">
+        <span class="contact-icon">&#9672;</span>
+        <span class="contact-prompt">&gt;</span>
+        <span class="contact-value">yourdiscord#0000</span>
+      </div>
+    </div>
+    <p class="copyright">&copy; 2026 Han Chau</p>
+  </footer>
+
+</body>
+</html>
