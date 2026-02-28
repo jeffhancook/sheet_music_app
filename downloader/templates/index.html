@@ -94,7 +94,7 @@
 
         .decor svg { position: absolute; }
 
-        .note {
+        .ring {
             animation: float-slow var(--dur, 6s) ease-in-out infinite;
             animation-delay: var(--d, 0s);
         }
@@ -112,14 +112,10 @@
         .dust.gold { background: #b8924a; }
         .dust.warm { background: #d4714f; }
 
-        .stroke {
+        .data-line {
+            position: absolute;
             animation: drift var(--dur, 10s) ease-in-out infinite;
             animation-delay: var(--d, 0s);
-        }
-
-        .staff-frag {
-            position: absolute;
-            opacity: 0.03;
         }
 
         .geo {
@@ -467,126 +463,103 @@
          ══════════════════════════════════════ -->
     <div class="decor" aria-hidden="true">
 
-        <!-- Staff line fragments -->
-        <svg class="staff-frag" style="top:8%;left:0;width:30%">
-            <line x1="0" y1="0" x2="100%" y2="0" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="6" x2="100%" y2="6" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="12" x2="100%" y2="12" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="18" x2="100%" y2="18" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="24" x2="100%" y2="24" stroke="#b8924a" stroke-width="0.8"/>
+        <!-- ── Concentric rings ── -->
+        <svg class="ring" style="top:8%;left:5%;--dur:8s;--d:0s;--r:0deg" width="70" height="70" viewBox="0 0 70 70" fill="none" opacity="0.12">
+            <circle cx="35" cy="35" r="30" stroke="#d4b896" stroke-width="0.8"/>
+            <circle cx="35" cy="35" r="20" stroke="#c9a87c" stroke-width="0.8"/>
+            <circle cx="35" cy="35" r="10" stroke="#d4b896" stroke-width="0.8"/>
+            <circle cx="35" cy="35" r="2" fill="#d4b896" opacity="0.5"/>
         </svg>
 
-        <svg class="staff-frag hide-mobile" style="bottom:15%;right:0;width:25%;left:auto;top:auto">
-            <line x1="0" y1="0" x2="100%" y2="0" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="6" x2="100%" y2="6" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="12" x2="100%" y2="12" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="18" x2="100%" y2="18" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="24" x2="100%" y2="24" stroke="#b8924a" stroke-width="0.8"/>
+        <svg class="ring hide-mobile" style="bottom:18%;right:6%;left:auto;top:auto;--dur:10s;--d:2s;--r:0deg" width="90" height="90" viewBox="0 0 90 90" fill="none" opacity="0.1">
+            <circle cx="45" cy="45" r="40" stroke="#c9a87c" stroke-width="0.8"/>
+            <circle cx="45" cy="45" r="28" stroke="#d4b896" stroke-width="0.8"/>
+            <circle cx="45" cy="45" r="16" stroke="#c9a87c" stroke-width="0.8"/>
+            <circle cx="45" cy="45" r="6" stroke="#d4b896" stroke-width="0.8"/>
+            <circle cx="45" cy="45" r="2" fill="#c9a87c" opacity="0.5"/>
         </svg>
 
-        <!-- Floating music notes -->
-        <svg class="note" style="top:10%;left:6%;--dur:7s;--d:0s;--r:-10deg" width="24" height="44" viewBox="0 0 24 44" fill="none" opacity="0.06">
-            <ellipse cx="8" cy="36" rx="7" ry="5.5" fill="#c2593e" transform="rotate(-18 8 36)"/>
-            <line x1="14" y1="36" x2="14" y2="6" stroke="#c2593e" stroke-width="1.8"/>
+        <svg class="ring" style="top:65%;left:3%;--dur:9s;--d:1.5s;--r:0deg" width="55" height="55" viewBox="0 0 55 55" fill="none" opacity="0.09">
+            <circle cx="27" cy="27" r="24" stroke="#d4b896" stroke-width="0.8"/>
+            <circle cx="27" cy="27" r="14" stroke="#c9a87c" stroke-width="0.8"/>
+            <circle cx="27" cy="27" r="2" fill="#d4b896" opacity="0.45"/>
         </svg>
 
-        <svg class="note hide-mobile" style="top:15%;right:8%;left:auto;--dur:8.5s;--d:2s;--r:6deg" width="44" height="44" viewBox="0 0 44 44" fill="none" opacity="0.05">
-            <ellipse cx="8" cy="36" rx="6" ry="5" fill="#b8924a" transform="rotate(-15 8 36)"/>
-            <line x1="13" y1="36" x2="13" y2="6" stroke="#b8924a" stroke-width="1.8"/>
-            <ellipse cx="30" cy="32" rx="6" ry="5" fill="#b8924a" transform="rotate(-15 30 32)"/>
-            <line x1="35" y1="32" x2="35" y2="2" stroke="#b8924a" stroke-width="1.8"/>
-            <line x1="13" y1="6" x2="35" y2="2" stroke="#b8924a" stroke-width="2"/>
+        <!-- ── Dashed arcs ── -->
+        <svg class="data-line hide-mobile" style="top:12%;right:4%;left:auto;--dur:14s;--d:1s" width="200" height="100" viewBox="0 0 200 100" fill="none" opacity="0.12">
+            <path d="M10 80 Q100 -10 190 80" stroke="#d4b896" stroke-width="0.8" stroke-dasharray="6 4" fill="none"/>
+            <path d="M30 80 Q100 10 170 80" stroke="#c9a87c" stroke-width="0.6" stroke-dasharray="4 6" fill="none"/>
+            <circle cx="10" cy="80" r="2.5" fill="#d4b896" opacity="0.5"/>
+            <circle cx="190" cy="80" r="2.5" fill="#d4b896" opacity="0.5"/>
+            <rect x="97" y="28" width="6" height="6" transform="rotate(45 100 31)" stroke="#c9a87c" stroke-width="0.8" fill="none" opacity="0.5"/>
         </svg>
 
-        <!-- Treble clef bottom-left -->
-        <svg class="note" style="bottom:12%;left:5%;top:auto;--dur:9s;--d:1s;--r:5deg" width="36" height="60" viewBox="0 0 36 60" fill="none" opacity="0.04">
-            <path d="M18 6 L18 48" stroke="#c2593e" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="14" cy="48" r="7" stroke="#c2593e" stroke-width="2" fill="none"/>
-            <path d="M18 48 Q18 40 24 38 Q30 36 30 28 Q30 20 22 18 Q18 17 18 22" stroke="#c2593e" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <svg class="data-line" style="bottom:10%;left:4%;top:auto;--dur:16s;--d:4s" width="180" height="80" viewBox="0 0 180 80" fill="none" opacity="0.1">
+            <path d="M5 60 Q90 -5 175 60" stroke="#c9a87c" stroke-width="0.8" stroke-dasharray="5 5" fill="none"/>
+            <circle cx="5" cy="60" r="2" fill="#c9a87c" opacity="0.45"/>
+            <circle cx="175" cy="60" r="2" fill="#c9a87c" opacity="0.45"/>
+            <rect x="87" y="18" width="5" height="5" transform="rotate(45 90 21)" stroke="#d4b896" stroke-width="0.8" fill="none" opacity="0.45"/>
         </svg>
 
-        <!-- Eighth note right -->
-        <svg class="note hide-mobile" style="bottom:25%;right:6%;left:auto;top:auto;--dur:7.5s;--d:3s;--r:-6deg" width="26" height="48" viewBox="0 0 26 48" fill="none" opacity="0.05">
-            <ellipse cx="8" cy="40" rx="7" ry="5" fill="#b8924a" transform="rotate(-16 8 40)"/>
-            <line x1="14" y1="40" x2="14" y2="8" stroke="#b8924a" stroke-width="1.8"/>
-            <path d="M14 8 Q20 12 24 20" stroke="#b8924a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <!-- ── Angular data connectors ── -->
+        <svg class="data-line hide-mobile" style="top:35%;left:2%;--dur:12s;--d:0s" width="240" height="60" viewBox="0 0 240 60" fill="none" opacity="0.1">
+            <path d="M0 30 L40 30 L55 10 L85 10 L100 30 L140 30 L155 50 L185 50 L200 30 L240 30" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+            <rect x="52" y="7" width="6" height="6" transform="rotate(45 55 10)" stroke="#d4b896" stroke-width="0.8" fill="none" opacity="0.5"/>
+            <rect x="152" y="47" width="6" height="6" transform="rotate(45 155 50)" stroke="#c9a87c" stroke-width="0.8" fill="none" opacity="0.5"/>
+            <circle cx="100" cy="30" r="2" fill="#d4b896" opacity="0.5"/>
         </svg>
 
-        <!-- Abstract brush stroke -->
-        <svg class="stroke" style="top:35%;left:2%;--dur:12s;--d:1s" width="300" height="60" viewBox="0 0 300 60" fill="none" opacity="0.025">
-            <path d="M0 40 Q60 10 140 30 Q220 50 300 20" stroke="#c2593e" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <svg class="data-line" style="bottom:6%;right:8%;left:auto;top:auto;--dur:13s;--d:3s" width="200" height="50" viewBox="0 0 200 50" fill="none" opacity="0.09">
+            <path d="M0 25 L30 25 L45 8 L75 8 L90 25 L130 25 L145 42 L175 42 L200 25" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <rect x="42" y="5" width="6" height="6" transform="rotate(45 45 8)" stroke="#c9a87c" stroke-width="0.8" fill="none" opacity="0.45"/>
+            <circle cx="90" cy="25" r="2" fill="#c9a87c" opacity="0.45"/>
         </svg>
 
-        <svg class="stroke hide-mobile" style="bottom:8%;right:3%;left:auto;top:auto;--dur:14s;--d:4s" width="250" height="50" viewBox="0 0 250 50" fill="none" opacity="0.02">
-            <path d="M0 30 Q50 5 120 25 Q190 45 250 15" stroke="#b8924a" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <svg class="data-line hide-mobile" style="top:78%;right:3%;left:auto;--dur:15s;--d:5s" width="160" height="45" viewBox="0 0 160 45" fill="none" opacity="0.08">
+            <path d="M0 22 L25 22 L38 6 L62 6 L75 22 L100 22 L112 38 L140 38 L160 22" stroke="#d4b896" stroke-width="0.7" fill="none"/>
+            <circle cx="75" cy="22" r="1.5" fill="#d4b896" opacity="0.4"/>
         </svg>
 
-        <!-- Staff fragment — bottom-left -->
-        <svg class="staff-frag" style="bottom:6%;left:5%;width:28%;top:auto">
-            <line x1="0" y1="0" x2="100%" y2="0" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="6" x2="100%" y2="6" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="12" x2="100%" y2="12" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="18" x2="100%" y2="18" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="24" x2="100%" y2="24" stroke="#b8924a" stroke-width="0.8"/>
+        <!-- ── Crosshair markers ── -->
+        <svg class="ring" style="top:20%;left:8%;--dur:7s;--d:3s;--r:0deg" width="30" height="30" viewBox="0 0 30 30" fill="none" opacity="0.12">
+            <line x1="15" y1="2" x2="15" y2="28" stroke="#d4b896" stroke-width="0.6" stroke-dasharray="3 3"/>
+            <line x1="2" y1="15" x2="28" y2="15" stroke="#d4b896" stroke-width="0.6" stroke-dasharray="3 3"/>
+            <circle cx="15" cy="15" r="8" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <circle cx="15" cy="15" r="1.5" fill="#d4b896" opacity="0.5"/>
         </svg>
 
-        <!-- Staff fragment — top-right -->
-        <svg class="staff-frag hide-mobile" style="top:4%;right:5%;width:22%;left:auto">
-            <line x1="0" y1="0" x2="100%" y2="0" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="6" x2="100%" y2="6" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="12" x2="100%" y2="12" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="18" x2="100%" y2="18" stroke="#b8924a" stroke-width="0.8"/>
-            <line x1="0" y1="24" x2="100%" y2="24" stroke="#b8924a" stroke-width="0.8"/>
+        <svg class="ring hide-mobile" style="top:48%;right:5%;left:auto;--dur:9s;--d:1s;--r:0deg" width="35" height="35" viewBox="0 0 35 35" fill="none" opacity="0.1">
+            <line x1="17" y1="2" x2="17" y2="32" stroke="#c9a87c" stroke-width="0.6" stroke-dasharray="3 3"/>
+            <line x1="2" y1="17" x2="32" y2="17" stroke="#c9a87c" stroke-width="0.6" stroke-dasharray="3 3"/>
+            <circle cx="17" cy="17" r="10" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+            <circle cx="17" cy="17" r="1.5" fill="#c9a87c" opacity="0.45"/>
         </svg>
 
-        <!-- More floating music notes -->
-        <!-- Treble clef top-right -->
-        <svg class="note hide-mobile" style="top:18%;right:5%;left:auto;--dur:10s;--d:1.5s;--r:-4deg" width="40" height="65" viewBox="0 0 40 65" fill="none" opacity="0.045">
-            <path d="M20 6 L20 50" stroke="#b8924a" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="16" cy="50" r="7" stroke="#b8924a" stroke-width="2" fill="none"/>
-            <path d="M20 50 Q20 42 26 40 Q32 38 32 30 Q32 22 24 20 Q20 19 20 24" stroke="#b8924a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <svg class="ring" style="bottom:22%;left:10%;top:auto;--dur:8s;--d:4s;--r:0deg" width="25" height="25" viewBox="0 0 25 25" fill="none" opacity="0.09">
+            <line x1="12" y1="1" x2="12" y2="24" stroke="#d4b896" stroke-width="0.6" stroke-dasharray="2 3"/>
+            <line x1="1" y1="12" x2="24" y2="12" stroke="#d4b896" stroke-width="0.6" stroke-dasharray="2 3"/>
+            <circle cx="12" cy="12" r="7" stroke="#c9a87c" stroke-width="0.7" fill="none"/>
+            <circle cx="12" cy="12" r="1.5" fill="#d4b896" opacity="0.4"/>
         </svg>
 
-        <!-- Quarter note left mid -->
-        <svg class="note" style="top:45%;left:4%;--dur:8s;--d:2s;--r:10deg" width="24" height="44" viewBox="0 0 24 44" fill="none" opacity="0.06">
-            <ellipse cx="8" cy="36" rx="7" ry="5" fill="#c2593e" transform="rotate(-18 8 36)"/>
-            <line x1="14" y1="36" x2="14" y2="6" stroke="#c2593e" stroke-width="1.8"/>
+        <!-- ── Floating diamond nodes ── -->
+        <svg class="ring hide-mobile" style="top:5%;right:20%;left:auto;--dur:7.5s;--d:2s;--r:0deg" width="20" height="20" viewBox="0 0 20 20" fill="none" opacity="0.14">
+            <rect x="5" y="5" width="10" height="10" transform="rotate(45 10 10)" stroke="#d4b896" stroke-width="1" fill="none"/>
+            <rect x="7" y="7" width="6" height="6" transform="rotate(45 10 10)" fill="#d4b896" opacity="0.2"/>
         </svg>
 
-        <!-- Beam pair right low -->
-        <svg class="note hide-mobile" style="top:60%;right:7%;left:auto;--dur:9s;--d:0.5s;--r:-7deg" width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.05">
-            <ellipse cx="8" cy="40" rx="7" ry="5" fill="#c2593e" transform="rotate(-16 8 40)"/>
-            <line x1="14" y1="40" x2="14" y2="8" stroke="#c2593e" stroke-width="1.8"/>
-            <ellipse cx="34" cy="36" rx="7" ry="5" fill="#c2593e" transform="rotate(-16 34 36)"/>
-            <line x1="40" y1="36" x2="40" y2="4" stroke="#c2593e" stroke-width="1.8"/>
-            <line x1="14" y1="8" x2="40" y2="4" stroke="#c2593e" stroke-width="2"/>
+        <svg class="ring" style="top:75%;left:6%;--dur:8.5s;--d:0.5s;--r:0deg" width="16" height="16" viewBox="0 0 16 16" fill="none" opacity="0.12">
+            <rect x="3" y="3" width="10" height="10" transform="rotate(45 8 8)" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <rect x="5.5" y="5.5" width="5" height="5" transform="rotate(45 8 8)" fill="#c9a87c" opacity="0.2"/>
         </svg>
 
-        <!-- Whole note left low -->
-        <svg class="note" style="top:80%;left:8%;--dur:7s;--d:3.5s;--r:5deg" width="28" height="18" viewBox="0 0 28 18" fill="none" opacity="0.05">
-            <ellipse cx="14" cy="9" rx="11" ry="7" stroke="#b8924a" stroke-width="1.8" fill="none" transform="rotate(-10 14 9)"/>
+        <svg class="ring hide-mobile" style="top:40%;left:12%;--dur:9s;--d:3.5s;--r:0deg" width="18" height="18" viewBox="0 0 18 18" fill="none" opacity="0.11">
+            <rect x="4" y="4" width="10" height="10" transform="rotate(45 9 9)" stroke="#d4b896" stroke-width="0.8" fill="none"/>
         </svg>
 
-        <!-- Eighth note right high -->
-        <svg class="note hide-mobile" style="top:30%;right:12%;left:auto;--dur:8.5s;--d:4s;--r:6deg" width="24" height="44" viewBox="0 0 24 44" fill="none" opacity="0.055">
-            <ellipse cx="7" cy="36" rx="6" ry="4.5" fill="#b8924a" transform="rotate(-16 7 36)"/>
-            <line x1="12" y1="36" x2="12" y2="8" stroke="#b8924a" stroke-width="1.6"/>
-            <path d="M12 8 Q17 11 20 18" stroke="#b8924a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </svg>
-
-        <!-- Quarter note bottom-right -->
-        <svg class="note" style="bottom:8%;right:10%;left:auto;top:auto;--dur:7.5s;--d:1.5s;--r:-8deg" width="22" height="40" viewBox="0 0 22 40" fill="none" opacity="0.055">
-            <ellipse cx="8" cy="32" rx="7" ry="5" fill="#c2593e" transform="rotate(-16 8 32)"/>
-            <line x1="14" y1="32" x2="14" y2="4" stroke="#c2593e" stroke-width="1.8"/>
-        </svg>
-
-        <!-- Additional brush strokes -->
-        <svg class="stroke hide-mobile" style="top:12%;left:5%;--dur:15s;--d:0s" width="350" height="70" viewBox="0 0 350 70" fill="none" opacity="0.025">
-            <path d="M0 50 Q70 10 160 35 Q250 60 350 20" stroke="#c2593e" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        </svg>
-
-        <svg class="stroke" style="top:75%;left:3%;--dur:16s;--d:5s" width="280" height="55" viewBox="0 0 280 55" fill="none" opacity="0.02">
-            <path d="M0 35 Q40 5 100 30 Q160 55 220 20 Q250 5 280 25" stroke="#b8924a" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <svg class="ring" style="bottom:12%;right:14%;left:auto;top:auto;--dur:7s;--d:5s;--r:0deg" width="14" height="14" viewBox="0 0 14 14" fill="none" opacity="0.13">
+            <rect x="2.5" y="2.5" width="9" height="9" transform="rotate(45 7 7)" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <rect x="4.5" y="4.5" width="5" height="5" transform="rotate(45 7 7)" fill="#d4b896" opacity="0.2"/>
         </svg>
 
         <!-- ══════════════════════════════════════
@@ -669,32 +642,7 @@
             <circle cx="110" cy="130" r="2" fill="#d4b896" opacity="0.4"/>
         </svg>
 
-        <!-- ── Additional music notes ── -->
-
-        <!-- Quarter note top-right -->
-        <svg class="note hide-mobile" style="top:5%;right:15%;left:auto;--dur:8s;--d:1s;--r:7deg" width="22" height="40" viewBox="0 0 22 40" fill="none" opacity="0.055">
-            <ellipse cx="8" cy="32" rx="7" ry="5" fill="#c2593e" transform="rotate(-16 8 32)"/>
-            <line x1="14" y1="32" x2="14" y2="4" stroke="#c2593e" stroke-width="1.8"/>
-        </svg>
-
-        <!-- Whole note bottom-left -->
-        <svg class="note" style="bottom:18%;left:10%;top:auto;--dur:7.5s;--d:2.5s;--r:-4deg" width="26" height="16" viewBox="0 0 26 16" fill="none" opacity="0.05">
-            <ellipse cx="13" cy="8" rx="10" ry="6" stroke="#b8924a" stroke-width="1.8" fill="none" transform="rotate(-10 13 8)"/>
-        </svg>
-
-        <!-- Eighth note right mid -->
-        <svg class="note" style="top:70%;right:4%;left:auto;--dur:6.5s;--d:4s;--r:8deg" width="24" height="44" viewBox="0 0 24 44" fill="none" opacity="0.05">
-            <ellipse cx="7" cy="36" rx="6" ry="4.5" fill="#b8924a" transform="rotate(-16 7 36)"/>
-            <line x1="12" y1="36" x2="12" y2="8" stroke="#b8924a" stroke-width="1.6"/>
-            <path d="M12 8 Q17 11 20 18" stroke="#b8924a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </svg>
-
-        <!-- Additional brush stroke -->
-        <svg class="stroke hide-mobile" style="top:22%;right:2%;left:auto;--dur:13s;--d:3s" width="200" height="50" viewBox="0 0 200 50" fill="none" opacity="0.02">
-            <path d="M0 35 Q50 5 100 25 Q150 45 200 15" stroke="#c2593e" stroke-width="2" stroke-linecap="round" fill="none"/>
-        </svg>
-
-        <!-- Rosin dust particles -->
+        <!-- Dust particles -->
         <span class="dust" style="top:8%;left:18%;--s:3px;--o:0.12;--dur:5s;--d:0s"></span>
         <span class="dust gold" style="top:14%;right:22%;--s:4px;--o:0.09;--dur:4s;--d:1s"></span>
         <span class="dust warm" style="top:25%;left:8%;--s:2px;--o:0.15;--dur:6s;--d:0.5s"></span>
