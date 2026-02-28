@@ -44,10 +44,10 @@
     }
     @keyframes geo-drift {
       0% { transform: translate(0, 0) rotate(0deg); }
-      20% { transform: translate(18px, -12px) rotate(1.5deg); }
-      40% { transform: translate(-10px, -22px) rotate(-1deg); }
-      60% { transform: translate(14px, 8px) rotate(2deg); }
-      80% { transform: translate(-16px, -6px) rotate(-1.5deg); }
+      20% { transform: translate(32px, -20px) rotate(2.5deg); }
+      40% { transform: translate(-18px, -38px) rotate(-1.5deg); }
+      60% { transform: translate(26px, 14px) rotate(3deg); }
+      80% { transform: translate(-28px, -10px) rotate(-2.5deg); }
       100% { transform: translate(0, 0) rotate(0deg); }
     }
     @keyframes twinkle {
@@ -68,6 +68,23 @@
     .stroke { animation: drift var(--dur, 10s) ease-in-out infinite; animation-delay: var(--d, 0s); }
     .staff-frag { position: absolute; opacity: 0.04; }
     .geo { position: absolute; animation: geo-drift var(--dur, 20s) ease-in-out infinite; animation-delay: var(--d, 0s); }
+
+    @keyframes mote-float {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      15% { opacity: var(--mo, 0.35); }
+      50% { transform: translateY(calc(var(--dy, -60px))) translateX(calc(var(--dx, 10px))); opacity: var(--mo, 0.35); }
+      85% { opacity: var(--mo, 0.35); }
+      100% { transform: translateY(calc(var(--dy, -60px) * 2)) translateX(calc(var(--dx, 10px) * 1.5)); opacity: 0; }
+    }
+    .mote {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      width: var(--s, 4px); height: var(--s, 4px);
+      background: var(--c, #d4b896);
+      box-shadow: 0 0 6px 1px var(--c, #d4b896);
+      animation: mote-float var(--dur, 8s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+      opacity: 0;
+    }
 
     /* ── Nav ── */
     .nav-btn {
@@ -306,6 +323,26 @@
     <span class="dust" style="top:48%;left:10%;--s:4px;--o:0.08;--dur:7s;--d:3s"></span>
     <span class="dust warm" style="top:18%;right:8%;--s:3px;--o:0.11;--dur:4.5s;--d:0.5s"></span>
     <span class="dust gold" style="top:84%;left:88%;--s:2px;--o:0.15;--dur:5s;--d:4s"></span>
+
+    <!-- ── Nostalgic dust motes ── -->
+    <span class="mote" style="top:12%;left:22%;--s:4px;--mo:0.3;--dur:9s;--d:0s;--dy:-70px;--dx:12px;--c:#d4b896"></span>
+    <span class="mote" style="top:8%;left:65%;--s:3px;--mo:0.25;--dur:11s;--d:2s;--dy:-55px;--dx:-8px;--c:#c9a87c"></span>
+    <span class="mote" style="top:20%;right:18%;--s:5px;--mo:0.35;--dur:8s;--d:1s;--dy:-80px;--dx:15px;--c:#e0cea8"></span>
+    <span class="mote" style="top:30%;left:10%;--s:3px;--mo:0.28;--dur:12s;--d:3.5s;--dy:-65px;--dx:-10px;--c:#d4b896"></span>
+    <span class="mote" style="top:35%;left:78%;--s:4px;--mo:0.32;--dur:10s;--d:0.5s;--dy:-75px;--dx:8px;--c:#c9a87c"></span>
+    <span class="mote" style="top:45%;left:35%;--s:5px;--mo:0.3;--dur:9s;--d:4s;--dy:-60px;--dx:-14px;--c:#e0cea8"></span>
+    <span class="mote" style="top:42%;right:12%;--s:3px;--mo:0.22;--dur:13s;--d:2.5s;--dy:-70px;--dx:6px;--c:#d4b896"></span>
+    <span class="mote" style="top:55%;left:50%;--s:4px;--mo:0.35;--dur:8s;--d:1.5s;--dy:-85px;--dx:-12px;--c:#c9a87c"></span>
+    <span class="mote" style="top:58%;left:8%;--s:3px;--mo:0.25;--dur:11s;--d:5s;--dy:-50px;--dx:10px;--c:#e0cea8"></span>
+    <span class="mote" style="top:65%;left:72%;--s:5px;--mo:0.3;--dur:10s;--d:0s;--dy:-75px;--dx:-8px;--c:#d4b896"></span>
+    <span class="mote" style="top:70%;left:28%;--s:4px;--mo:0.28;--dur:12s;--d:3s;--dy:-65px;--dx:14px;--c:#c9a87c"></span>
+    <span class="mote" style="top:78%;right:25%;--s:3px;--mo:0.32;--dur:9s;--d:1s;--dy:-80px;--dx:-6px;--c:#e0cea8"></span>
+    <span class="mote" style="top:82%;left:45%;--s:5px;--mo:0.25;--dur:11s;--d:4.5s;--dy:-55px;--dx:10px;--c:#d4b896"></span>
+    <span class="mote" style="top:88%;left:15%;--s:3px;--mo:0.3;--dur:8s;--d:2s;--dy:-70px;--dx:-12px;--c:#c9a87c"></span>
+    <span class="mote" style="top:92%;left:60%;--s:4px;--mo:0.28;--dur:10s;--d:6s;--dy:-60px;--dx:8px;--c:#e0cea8"></span>
+    <span class="mote" style="top:25%;left:48%;--s:3px;--mo:0.22;--dur:14s;--d:7s;--dy:-90px;--dx:-5px;--c:#d4b896"></span>
+    <span class="mote" style="top:50%;left:88%;--s:4px;--mo:0.3;--dur:9s;--d:3s;--dy:-65px;--dx:10px;--c:#c9a87c"></span>
+    <span class="mote" style="top:15%;left:38%;--s:5px;--mo:0.35;--dur:7s;--d:0.5s;--dy:-75px;--dx:-15px;--c:#e0cea8"></span>
   </div>
 
   <a class="nav-btn" href="http://localhost:5000">downloader <span class="arrow">&rarr;</span></a>
