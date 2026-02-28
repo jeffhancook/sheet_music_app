@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloader // Han Chau</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0a0a0b;
+            color: #d4d4d8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.6;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255, 40, 40, 0.025) 59px, rgba(255, 40, 40, 0.025) 60px),
+                repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255, 40, 40, 0.025) 59px, rgba(255, 40, 40, 0.025) 60px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle red radial glow behind terminal */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(255, 40, 40, 0.035) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Scanline overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 2px,
+                rgba(0, 0, 0, 0.06) 2px, rgba(0, 0, 0, 0.06) 4px
+            );
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes progress {
+            0% { width: 0%; margin-left: 0; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 245, 0.3); }
+            50% { box-shadow: 0 0 16px rgba(0, 255, 245, 0.6); }
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(15px) rotate(90deg); }
+            50% { transform: translateX(-10px) rotate(180deg); }
+            75% { transform: translateX(8px) rotate(270deg); }
+        }
+
+        @keyframes terminal-breathe {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 40, 40, 0.03), 0 0 40px rgba(255, 40, 40, 0.015); }
+            50% { box-shadow: 0 0 20px rgba(255, 40, 40, 0.05), 0 0 50px rgba(255, 40, 40, 0.025); }
+        }
+
+        /* ── Matrix Rain Canvas ── */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ── YouTube Logo ── */
+        .yt-logo {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 100;
+            opacity: 0.08;
+            transition: opacity 0.3s;
+        }
+
+        .yt-logo:hover {
+            opacity: 0.2;
+        }
+
+        /* Hide rain on narrow screens */
+        @media (max-width: 900px) {
+            .matrix-rain { display: none; }
+        }
+
+        /* ── Floating Particles ── */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float-up linear infinite;
+        }
+
+        .particle:nth-child(1) { width: 3px; height: 3px; background: rgba(255, 40, 40, 0.3); left: 10%; animation-duration: 12s; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 2px; height: 2px; background: rgba(255, 40, 40, 0.2); left: 25%; animation-duration: 16s; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 4px; height: 4px; background: rgba(255, 40, 40, 0.15); left: 40%; animation-duration: 14s; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 2px; height: 2px; background: rgba(255, 40, 40, 0.25); left: 55%; animation-duration: 18s; animation-delay: 1s; }
+        .particle:nth-child(5) { width: 3px; height: 3px; background: rgba(255, 40, 40, 0.2); left: 70%; animation-duration: 13s; animation-delay: 5s; }
+        .particle:nth-child(6) { width: 2px; height: 2px; background: rgba(255, 40, 40, 0.3); left: 85%; animation-duration: 15s; animation-delay: 3s; }
+        .particle:nth-child(7) { width: 3px; height: 3px; background: rgba(0, 255, 245, 0.15); left: 15%; animation-duration: 20s; animation-delay: 7s; }
+        .particle:nth-child(8) { width: 2px; height: 2px; background: rgba(0, 255, 245, 0.1); left: 90%; animation-duration: 17s; animation-delay: 6s; }
+
+        /* ── Floating geometric shapes ── */
+        .shapes {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border: 1px solid;
+            animation: drift 8s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) { width: 20px; height: 20px; border-color: rgba(255, 40, 40, 0.08); top: 15%; left: 8%; transform: rotate(45deg); animation-duration: 10s; }
+        .shape:nth-child(2) { width: 14px; height: 14px; border-color: rgba(255, 40, 40, 0.06); top: 70%; left: 5%; border-radius: 50%; animation-duration: 12s; animation-delay: 2s; }
+        .shape:nth-child(3) { width: 18px; height: 18px; border-color: rgba(255, 40, 40, 0.07); top: 30%; right: 8%; transform: rotate(45deg); animation-duration: 9s; animation-delay: 1s; }
+        .shape:nth-child(4) { width: 12px; height: 12px; border-color: rgba(0, 255, 245, 0.05); top: 75%; right: 10%; border-radius: 50%; animation-duration: 14s; animation-delay: 4s; }
+        .shape:nth-child(5) { width: 16px; height: 16px; border-color: rgba(255, 40, 40, 0.06); top: 50%; left: 3%; transform: rotate(45deg); animation-duration: 11s; animation-delay: 3s; }
+        .shape:nth-child(6) { width: 22px; height: 22px; border-color: rgba(255, 40, 40, 0.05); top: 20%; right: 4%; border-radius: 50%; animation-duration: 13s; animation-delay: 5s; }
+
+        /* ── Home Button ── */
+        .home-btn {
+            position: fixed;
+            top: 1.25rem;
+            left: 1.25rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.8rem;
+            color: #52525b;
+            text-decoration: none;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #1e1e22;
+            border-radius: 6px;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(8px);
+            transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .home-btn:hover {
+            color: #00fff5;
+            border-color: rgba(0, 255, 245, 0.3);
+            box-shadow: 0 0 12px rgba(0, 255, 245, 0.1);
+        }
+
+        .home-btn .arrow { transition: transform 0.2s; }
+        .home-btn:hover .arrow { transform: translateX(-2px); }
+
+        /* ── Container ── */
+        .container {
+            width: 100%;
+            max-width: 520px;
+            padding: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ── Terminal-style card wrapper ── */
+        .terminal {
+            background: rgba(17, 17, 19, 0.9);
+            border: 1px solid #1e1e22;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+            animation: terminal-breathe 4s ease-in-out infinite;
+        }
+
+        /* Top accent line */
+        .terminal::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff2828, #00fff5);
+        }
+
+        .terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid #1e1e22;
+        }
+
+        .terminal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27272a;
+        }
+
+        .terminal-dot.r { background: #ff5f57; }
+        .terminal-dot.y { background: #febc2e; }
+        .terminal-dot.g { background: #28c840; }
+
+        .terminal-title {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.7rem;
+            color: #52525b;
+            margin-left: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .terminal-body {
+            padding: 1.75rem;
+        }
+
+        /* ── Header ── */
+        h1 {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: #fff;
+        }
+
+        h1 .accent { color: #ff2828; }
+
+        .subtitle {
+            text-align: center;
+            color: #52525b;
+            font-size: 0.88rem;
+            margin-bottom: 1.75rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+        }
+
+        .subtitle::after {
+            content: "\25AE";
+            color: #ff2828;
+            animation: blink 1s step-end infinite;
+            margin-left: 0.15em;
+        }
+
+        /* ── Input ── */
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            background: #0a0a0b;
+            color: #fff;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #ff2828;
+            box-shadow: 0 0 10px rgba(255, 40, 40, 0.15);
+        }
+
+        input[type="text"]::placeholder {
+            color: #3f3f46;
+        }
+
+        /* ── Format Toggle ── */
+        .format-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+
+        .format-btn {
+            padding: 0.45rem 1.25rem;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            background: transparent;
+            color: #52525b;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .format-btn.active {
+            border-color: #ff2828;
+            color: #ff4444;
+            background: rgba(255, 40, 40, 0.06);
+            box-shadow: 0 0 8px rgba(255, 40, 40, 0.12);
+        }
+
+        .format-btn:hover:not(.active):not(:disabled) {
+            border-color: #3f3f46;
+            color: #71717a;
+        }
+
+        .format-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ── Buttons ── */
+        .btn-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .start-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ff2828;
+            border-radius: 8px;
+            background: rgba(255, 40, 40, 0.08);
+            color: #ff4444;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover:not(:disabled) {
+            background: rgba(255, 40, 40, 0.15);
+            box-shadow: 0 0 15px rgba(255, 40, 40, 0.25);
+        }
+
+        .start-btn:disabled {
+            border-color: #27272a;
+            background: transparent;
+            color: #3f3f46;
+            cursor: not-allowed;
+        }
+
+        .download-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.08);
+            color: #4ade80;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            background: rgba(34, 197, 94, 0.15);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+        }
+
+        .download-btn:disabled {
+            border-color: #27272a;
+            background: transparent;
+            color: #3f3f46;
+            cursor: not-allowed;
+        }
+
+        /* ── Status ── */
+        .status {
+            margin-top: 1.5rem;
+            text-align: center;
+            min-height: 3rem;
+        }
+
+        .status-text {
+            color: #52525b;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.85rem;
+        }
+
+        .status-text.error { color: #ff00aa; }
+        .status-text.success { color: #4ade80; }
+
+        .progress-bar {
+            width: 100%;
+            height: 2px;
+            background: #1e1e22;
+            border-radius: 1px;
+            margin-top: 0.75rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar.active { display: block; }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff2828, #ff6644);
+            border-radius: 1px;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        .timer {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .timer.active { display: block; }
+
+        .timer .label {
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: #52525b;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .time-bar {
+            width: 100%;
+            height: 3px;
+            background: #1e1e22;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        .time-bar.active { display: block; }
+
+        .time-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff2828, #ff6644);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 1s linear;
+        }
+
+        /* ── Info Cards ── */
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+
+        .info-card {
+            border: 1px solid #1e1e22;
+            border-radius: 10px;
+            padding: 1rem;
+            background: rgba(17, 17, 19, 0.9);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .info-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 40, 40, 0.2), transparent);
+        }
+
+        .info-card h3 {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #ff4444;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.6rem;
+        }
+
+        .info-card ul {
+            list-style: none;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.7rem;
+            color: #52525b;
+            line-height: 1.9;
+        }
+
+        .info-card ul li::before {
+            content: ">";
+            color: #3f3f46;
+            margin-right: 0.4rem;
+        }
+
+        .info-card .highlight {
+            color: #71717a;
+        }
+
+        /* ── Keyboard hint ── */
+        .hint {
+            text-align: center;
+            margin-top: 1rem;
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.65rem;
+            color: #27272a;
+        }
+
+        .hint kbd {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            border: 1px solid #27272a;
+            border-radius: 3px;
+            background: #18181b;
+            color: #3f3f46;
+            font-family: inherit;
+            font-size: inherit;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .terminal-body { padding: 1.25rem; }
+            h1 { font-size: 1.3rem; }
+            .home-btn { top: 0.75rem; left: 0.75rem; font-size: 0.7rem; padding: 0.3rem 0.6rem; }
+            .info-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <a class="home-btn" href="http://hanzchau.com"><span class="arrow">&larr;</span> home</a>
+
+    <!-- Matrix rain canvas -->
+    <canvas class="matrix-rain" id="matrixRain"></canvas>
+
+    <!-- Floating particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Floating shapes -->
+    <div class="shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="container">
+        <div class="terminal">
+            <div class="terminal-bar">
+                <span class="terminal-dot r"></span>
+                <span class="terminal-dot y"></span>
+                <span class="terminal-dot g"></span>
+                <span class="terminal-title">downloader.exe</span>
+            </div>
+            <div class="terminal-body">
+                <h1><span class="accent">&gt;</span> Downloader</h1>
+                <p class="subtitle">paste a url to grab video or audio</p>
+
+                <div class="input-group">
+                    <input type="text" id="urlInput" placeholder="https://youtube.com/watch?v=..." autofocus>
+                </div>
+
+                <div class="format-toggle">
+                    <button class="format-btn active" data-format="audio" onclick="setFormat('audio', this)">Audio (MP3)</button>
+                    <button class="format-btn" data-format="video" onclick="setFormat('video', this)">Video (MP4)</button>
+                </div>
+
+                <div class="btn-row">
+                    <button class="start-btn" id="startBtn" onclick="startDownload()">run</button>
+                    <button class="download-btn" id="downloadBtn" disabled>save</button>
+                </div>
+
+                <div class="status">
+                    <p class="status-text" id="statusText"></p>
+                    <div class="progress-bar" id="progressBar"><div class="fill"></div></div>
+                    <div class="timer" id="timer">
+                        <div class="label">Elapsed</div>
+                        <span id="timerValue">0:00</span>
+                    </div>
+                    <div class="time-bar" id="timeBar"><div class="fill" id="timeBarFill"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-row">
+            <div class="info-card">
+                <h3>Supported</h3>
+                <ul>
+                    <li><span class="highlight">YouTube</span> videos</li>
+                    <li><span class="highlight">YouTube</span> shorts</li>
+                    <li><span class="highlight">YouTube</span> music</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>How it works</h3>
+                <ul>
+                    <li>Paste link, pick format</li>
+                    <li>Server fetches the file</li>
+                    <li>Save directly to disk</li>
+                </ul>
+            </div>
+        </div>
+
+        <p class="hint">press <kbd>Enter</kbd> to start download</p>
+    </div>
+
+    <!-- YouTube logo watermark -->
+    <div class="yt-logo">
+        <svg width="60" height="42" viewBox="0 0 60 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="42" rx="12" fill="#ff2828"/>
+            <path d="M24 12L40 21L24 30V12Z" fill="#0a0a0b"/>
+        </svg>
+    </div>
+
+    <script>
+        let selectedFormat = 'audio';
+        let downloadedFormat = 'audio';
+        let currentJobId = null;
+        let pollInterval = null;
+        let timerInterval = null;
+        let startTime = null;
+
+        function setFormat(format, btn) {
+            selectedFormat = format;
+            document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        async function startDownload() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) {
+                showStatus('Please paste a URL first.', 'error');
+                return;
+            }
+
+            const startBtn = document.getElementById('startBtn');
+            const dlBtn = document.getElementById('downloadBtn');
+            startBtn.disabled = true;
+            startBtn.textContent = 'processing...';
+            dlBtn.disabled = true;
+            document.querySelectorAll('.format-btn').forEach(b => b.disabled = true);
+            downloadedFormat = selectedFormat;
+            showStatus('Starting download...', '');
+            document.getElementById('progressBar').classList.add('active');
+            startTimer();
+
+            try {
+                const resp = await fetch('api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, format: selectedFormat })
+                });
+                const data = await resp.json();
+
+                if (data.error) {
+                    showStatus(data.error, 'error');
+                    resetBtns();
+                    return;
+                }
+
+                currentJobId = data.job_id;
+                pollInterval = setInterval(checkStatus, 1500);
+            } catch (e) {
+                showStatus('Failed to start download.', 'error');
+                resetBtns();
+            }
+        }
+
+        async function checkStatus() {
+            if (!currentJobId) return;
+
+            try {
+                const resp = await fetch(`api/status/${currentJobId}`);
+                const data = await resp.json();
+
+                if (data.status === 'downloading') {
+                    showStatus('Downloading and converting...', '');
+                } else if (data.status === 'completed') {
+                    clearInterval(pollInterval);
+                    stopTimer(data.elapsed);
+                    showStatus('Ready! Click save to get your file.', 'success');
+                    document.getElementById('progressBar').classList.remove('active');
+                    const dlBtn = document.getElementById('downloadBtn');
+                    dlBtn.disabled = false;
+                    dlBtn.onclick = function() {
+                        const fileUrl = `api/file/${currentJobId}`;
+                        const name = data.filename || ('download.' + (downloadedFormat === 'audio' ? 'mp3' : 'mp4'));
+                        const a = document.createElement('a');
+                        a.href = fileUrl;
+                        a.download = name;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        showStatus('File saved to Downloads!', 'success');
+                    };
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('startBtn').textContent = 'run';
+                    document.querySelectorAll('.format-btn').forEach(b => b.disabled = false);
+                } else if (data.status === 'failed') {
+                    clearInterval(pollInterval);
+                    stopTimer(data.elapsed);
+                    showStatus(data.error || 'Download failed.', 'error');
+                    document.getElementById('progressBar').classList.remove('active');
+                    resetBtns();
+                }
+            } catch (e) {
+                clearInterval(pollInterval);
+                showStatus('Lost connection to server.', 'error');
+                resetBtns();
+            }
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('statusText');
+            el.textContent = msg;
+            el.className = 'status-text' + (type ? ' ' + type : '');
+        }
+
+        function resetBtns() {
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = 'run';
+            document.getElementById('downloadBtn').disabled = true;
+            document.getElementById('downloadBtn').onclick = null;
+            document.querySelectorAll('.format-btn').forEach(b => b.disabled = false);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            document.getElementById('timer').classList.add('active');
+            document.getElementById('timeBar').classList.add('active');
+            document.getElementById('timerValue').textContent = '0:00';
+            document.getElementById('timer').querySelector('.label').textContent = 'Elapsed';
+            document.getElementById('timeBarFill').style.width = '0%';
+
+            timerInterval = setInterval(() => {
+                const elapsed = (Date.now() - startTime) / 1000;
+                document.getElementById('timerValue').textContent = formatTime(elapsed);
+                const pct = Math.min((elapsed / 300) * 100, 100);
+                document.getElementById('timeBarFill').style.width = pct + '%';
+            }, 250);
+        }
+
+        function stopTimer(serverElapsed) {
+            clearInterval(timerInterval);
+            const elapsed = serverElapsed || ((Date.now() - startTime) / 1000);
+            document.getElementById('timerValue').textContent = formatTime(elapsed);
+            document.getElementById('timer').querySelector('.label').textContent = 'Completed in';
+            document.getElementById('timeBarFill').style.width = '100%';
+        }
+
+        document.getElementById('urlInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') startDownload();
+        });
+
+        // ── Matrix Rain ──
+        (function() {
+            const canvas = document.getElementById('matrixRain');
+            const ctx = canvas.getContext('2d');
+
+            const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF{}[]<>/\\|=+*&^%$#@!';
+            const fontSize = 13;
+            let columns, drops;
+            const edgeWidth = 160;
+
+            function init() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                columns = Math.floor(canvas.width / fontSize);
+                const maxRow = Math.floor(canvas.height / fontSize);
+                drops = [];
+                for (let i = 0; i < columns; i++) {
+                    drops[i] = Math.floor(Math.random() * maxRow);
+                }
+            }
+
+            function isInEdge(col) {
+                const x = col * fontSize;
+                return x < edgeWidth || x > canvas.width - edgeWidth;
+            }
+
+            function draw() {
+                ctx.fillStyle = 'rgba(10, 10, 11, 0.08)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    if (!isInEdge(i)) {
+                        drops[i] = 0;
+                        continue;
+                    }
+
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    const x = i * fontSize;
+                    const y = drops[i] * fontSize;
+
+                    // Head character — brighter
+                    ctx.fillStyle = 'rgba(255, 120, 120, 0.9)';
+                    ctx.shadowColor = 'rgba(255, 40, 40, 0.6)';
+                    ctx.shadowBlur = 8;
+                    ctx.fillText(char, x, y);
+
+                    // Trail characters — dimmer red
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = 'rgba(255, 40, 40, 0.25)';
+                    const trailChar = chars[Math.floor(Math.random() * chars.length)];
+                    if (drops[i] > 1) {
+                        ctx.fillText(trailChar, x, (drops[i] - 1) * fontSize);
+                    }
+
+                    drops[i]++;
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = Math.random() * -20;
+                    }
+                }
+            }
+
+            init();
+            setInterval(draw, 45);
+            window.addEventListener('resize', init);
+        })();
+    </script>
+</body>
+</html>
