@@ -5,820 +5,354 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Han Chau</title>
   <style>
-    *, *::before, *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #0a0a0b;
-      color: #d4d4d8;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, Roboto, Helvetica, Arial, sans-serif;
+      background-color: #241f15;
+      color: #d6c8b4;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      line-height: 1.6;
-      background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px),
-        repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(0, 255, 245, 0.03) 59px, rgba(0, 255, 245, 0.03) 60px);
+      line-height: 1.7;
       position: relative;
+      overflow-x: hidden;
     }
 
-    /* Scanline overlay */
+    /* Paper grain */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 9999;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.06) 2px,
-        rgba(0, 0, 0, 0.06) 4px
-      );
-      animation: scanline 8s linear infinite;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
     }
 
-    a {
-      color: inherit;
-      text-decoration: none;
+    a { color: inherit; text-decoration: none; }
+
+    @keyframes float-slow {
+      0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+      50% { transform: translateY(-14px) rotate(var(--r, 0deg)); }
+    }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(4px, -6px); }
+      66% { transform: translate(-3px, -3px); }
+    }
+    @keyframes geo-drift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(18px, -12px) rotate(1.5deg); }
+      40% { transform: translate(-10px, -22px) rotate(-1deg); }
+      60% { transform: translate(14px, 8px) rotate(2deg); }
+      80% { transform: translate(-16px, -6px) rotate(-1.5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: var(--o, 0.15); }
+      50% { opacity: calc(var(--o, 0.15) + 0.08); }
     }
 
-    /* ── Keyframes ── */
-    @keyframes glitch {
-      0%, 100% {
-        text-shadow: 2px 0 #00fff5, -2px 0 #ff00aa;
-        transform: translate(0);
-      }
-      20% {
-        text-shadow: -3px 0 #00fff5, 3px 0 #ff00aa;
-        transform: translate(-2px, 1px);
-      }
-      40% {
-        text-shadow: 3px 0 #00fff5, -3px 0 #ff00aa;
-        transform: translate(2px, -1px);
-      }
-      60% {
-        text-shadow: -1px 0 #00fff5, 1px 0 #ff00aa;
-        transform: translate(1px, 1px);
-      }
-      80% {
-        text-shadow: 2px 0 #00fff5, -2px 0 #ff00aa;
-        transform: translate(-1px, -1px);
-      }
+    .decor { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+    .decor svg { position: absolute; }
+    .note { animation: float-slow var(--dur, 6s) ease-in-out infinite; animation-delay: var(--d, 0s); }
+    .dust {
+      position: absolute; width: var(--s, 3px); height: var(--s, 3px); border-radius: 50%;
+      background: #c2593e; opacity: var(--o, 0.15);
+      animation: twinkle var(--dur, 4s) ease-in-out infinite; animation-delay: var(--d, 0s);
     }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-
-    @keyframes scanline {
-      0% { background-position: 0 0; }
-      100% { background-position: 0 100vh; }
-    }
-
-    @keyframes glow-pulse {
-      0%, 100% { box-shadow: 0 0 6px rgba(34, 197, 94, 0.5), 0 0 12px rgba(34, 197, 94, 0.3); }
-      50% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.5); }
-    }
+    .dust.gold { background: #b8924a; }
+    .dust.warm { background: #d4714f; }
+    .stroke { animation: drift var(--dur, 10s) ease-in-out infinite; animation-delay: var(--d, 0s); }
+    .staff-frag { position: absolute; opacity: 0.04; }
+    .geo { position: absolute; animation: geo-drift var(--dur, 20s) ease-in-out infinite; animation-delay: var(--d, 0s); }
 
     /* ── Nav ── */
     .nav-btn {
-      position: fixed;
-      top: 1.25rem;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      position: fixed; top: 1.25rem; right: 1.25rem; z-index: 100;
+      display: flex; align-items: center; gap: 0.5rem;
       font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.8rem;
-      color: #52525b;
-      text-decoration: none;
-      padding: 0.4rem 0.75rem;
-      border: 1px solid #1e1e22;
-      border-radius: 6px;
-      background: rgba(10, 10, 11, 0.8);
-      backdrop-filter: blur(8px);
+      font-size: 0.78rem; color: #786b5c; text-decoration: none;
+      padding: 0.45rem 0.85rem; border: 1px solid #3f3930; border-radius: 6px;
+      background: rgba(36, 31, 21, 0.9); backdrop-filter: blur(8px);
       transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
-
-    .nav-btn:hover {
-      color: #00fff5;
-      border-color: rgba(0, 255, 245, 0.3);
-      box-shadow: 0 0 12px rgba(0, 255, 245, 0.1);
-    }
-
-    .nav-btn { right: 1.25rem; }
+    .nav-btn:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.35); box-shadow: 0 2px 12px rgba(194, 89, 62, 0.08); }
     .nav-btn .arrow { transition: transform 0.2s; }
     .nav-btn:hover .arrow { transform: translateX(2px); }
 
-    /* ── Header ── */
-    header {
-      text-align: center;
-      padding: 6rem 1.5rem 2rem;
-      position: relative;
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 7rem 1.5rem 3rem; position: relative; max-width: 800px; margin: 0 auto; width: 100%; z-index: 2; }
+    .hero::after {
+      content: ""; position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 500px; background: radial-gradient(ellipse, rgba(194, 89, 62, 0.035) 0%, transparent 65%);
+      pointer-events: none; z-index: -1;
     }
+    .name { font-family: Georgia, "Times New Roman", serif; font-size: 3.8rem; font-weight: 700; color: #ecdfc8; letter-spacing: -0.02em; line-height: 1.1; }
+    .tagline { margin-top: 1rem; font-size: 1.15rem; color: #847868; max-width: 460px; margin-left: auto; margin-right: auto; }
+    .tagline em { color: #c2593e; font-style: normal; font-weight: 500; }
+    .divider { width: 40px; height: 3px; background: #c2593e; border-radius: 2px; margin: 2rem auto 0; opacity: 0.6; }
 
-    header::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 400px;
-      background: radial-gradient(ellipse, rgba(0, 255, 245, 0.1) 0%, transparent 70%);
-      pointer-events: none;
+    /* ── Disciplines ── */
+    .disciplines { max-width: 900px; width: 100%; margin: 0 auto; padding: 1rem 1.5rem 3rem; z-index: 2; position: relative; }
+    .disciplines-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .discipline-card {
+      text-align: center; padding: 2rem 1.25rem; border: 1px solid #3a3428; border-radius: 10px;
+      background: rgba(44, 38, 28, 0.8); backdrop-filter: blur(4px);
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
     }
+    .discipline-card:hover { border-color: #4a4238; transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); }
+    .discipline-icon { display: flex; justify-content: center; margin-bottom: 1.25rem; }
+    .discipline-icon svg { opacity: 0.65; }
+    .discipline-card:hover .discipline-icon svg { opacity: 0.85; }
+    .discipline-title { font-family: Georgia, "Times New Roman", serif; font-size: 1rem; font-weight: 700; color: #e0d2be; margin-bottom: 0.5rem; }
+    .discipline-desc { font-size: 0.85rem; color: #847868; line-height: 1.6; }
 
-    .name {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 3.5rem;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: -0.02em;
-      position: relative;
-      display: inline-block;
-      animation: glitch 3s infinite;
-      animation-timing-function: steps(1);
-    }
+    /* ── Section Heading ── */
+    .section-heading { display: flex; align-items: center; gap: 1rem; margin-bottom: 2.25rem; }
+    .section-heading h2 { font-family: Georgia, "Times New Roman", serif; font-size: 0.85rem; font-weight: 600; color: #b8924a; text-transform: uppercase; letter-spacing: 0.18em; white-space: nowrap; }
+    .section-heading .line { flex: 1; height: 1px; background: linear-gradient(90deg, #3f3930, transparent); }
 
-    .name::before,
-    .name::after {
-      content: "Han Chau";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    .name::before {
-      color: #00fff5;
-      z-index: -1;
-      clip-path: inset(0 0 60% 0);
-      animation: glitch 3s infinite reverse;
-      animation-timing-function: steps(1);
-    }
-
-    .name::after {
-      color: #ff00aa;
-      z-index: -1;
-      clip-path: inset(60% 0 0 0);
-      animation: glitch 3s infinite 0.5s;
-      animation-timing-function: steps(1);
-    }
-
-    .tagline {
-      margin-top: 0.75rem;
-      font-size: 1.15rem;
-      color: #71717a;
-      max-width: 440px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .tagline::after {
-      content: "\25AE";
-      color: #00fff5;
-      animation: blink 1s step-end infinite;
-      margin-left: 0.2em;
-    }
-
-    .divider {
-      width: 48px;
-      height: 3px;
-      background: linear-gradient(90deg, #00fff5, #ff00aa);
-      border-radius: 4px;
-      margin: 2.5rem auto 0;
-      box-shadow: 0 0 8px rgba(0, 255, 245, 0.4), 0 0 8px rgba(255, 0, 170, 0.4);
-    }
-
-    /* ── Main ── */
-    main {
-      flex: 1;
-      max-width: 960px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 3rem 1.5rem 5rem;
-    }
-
-    .section-heading {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .section-heading h2 {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #00fff5;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      white-space: nowrap;
-    }
-
-    .section-heading .line {
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, #00fff5, transparent);
-      opacity: 0.3;
-    }
-
-    /* ── Project Cards ── */
-    .projects {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
+    main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 0 1.5rem 5rem; z-index: 2; position: relative; }
+    .projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
     .project-card {
-      background: rgba(17, 17, 19, 0.9);
-      border: 1px solid #1e1e22;
-      border-radius: 14px;
-      padding: 1.75rem;
-      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
+      background: rgba(44, 38, 28, 0.85); backdrop-filter: blur(4px); border: 1px solid #3a3428;
+      border-radius: 8px; padding: 1.75rem; transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      display: flex; flex-direction: column; position: relative; overflow: hidden;
     }
+    .project-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #c2593e, #b8924a); opacity: 0.5; transition: opacity 0.3s; }
+    .project-card:hover { border-color: #4a4238; transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(194, 89, 62, 0.06); }
+    .project-card:hover::before { opacity: 0.9; }
 
-    /* Neon gradient top accent */
-    .project-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #00fff5, #ff00aa);
-      opacity: 0.6;
-      transition: opacity 0.3s;
+    .card-header { display: flex; align-items: flex-start; gap: 0.85rem; margin-bottom: 1rem; }
+    .card-icon { width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(194, 89, 62, 0.1); font-size: 1.3rem; color: #c2593e; }
+    .card-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; font-weight: 700; color: #e0d2be; margin-bottom: 0.15rem; }
+    .card-subtitle { font-size: 0.78rem; color: #786b5c; font-weight: 500; }
+    .card-description { font-size: 0.9rem; color: #948676; line-height: 1.7; flex: 1; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+    .tag { font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace; font-size: 0.68rem; font-weight: 500; padding: 0.3rem 0.7rem; border-radius: 4px; background: rgba(184, 146, 74, 0.06); color: #b8924a; border: 1px solid rgba(184, 146, 74, 0.15); }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #3a3428; }
+    .status { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 500; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #6d8f5e; box-shadow: 0 0 6px rgba(109, 143, 94, 0.4); }
+    .status-text { color: #6d8f5e; }
+    .card-link { font-size: 0.8rem; font-weight: 600; color: #c2593e; display: flex; align-items: center; gap: 0.35rem; transition: color 0.2s, gap 0.2s; }
+    .project-card:hover .card-link { color: #d4714f; gap: 0.55rem; }
+    .card-link .arrow { transition: transform 0.2s; font-size: 1rem; }
+    .project-card:hover .card-link .arrow { transform: translateX(2px); }
+    .coming-soon { background: transparent; border: 2px dashed #3a3428; border-radius: 8px; padding: 1.75rem; display: flex; align-items: center; justify-content: center; min-height: 200px; color: #4a4238; font-family: Georgia, "Times New Roman", serif; font-size: 0.95rem; font-style: italic; }
+
+    footer { text-align: center; padding: 3rem 1.5rem; border-top: 1px solid #3a3428; z-index: 2; position: relative; }
+    .contact { display: flex; justify-content: center; gap: 2.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .contact-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+    .contact-icon { width: 32px; height: 32px; border-radius: 6px; background: #2c261c; border: 1px solid #3a3428; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .contact-icon svg { opacity: 0.6; }
+    .contact-value { color: #847868; transition: color 0.2s; }
+    a .contact-value:hover { color: #c2593e; }
+    .copyright { font-size: 0.78rem; color: #564c40; margin-top: 0.5rem; }
+
+    @media (max-width: 768px) {
+      .disciplines-grid { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
+      .decor .hide-mobile { display: none; }
     }
-
-    .project-card:hover {
-      border-color: #00fff5;
-      transform: translateY(-3px);
-      box-shadow:
-        0 0 15px rgba(0, 255, 245, 0.15),
-        0 0 30px rgba(0, 255, 245, 0.08),
-        0 8px 30px rgba(0, 0, 0, 0.3);
-    }
-
-    .project-card:hover::before {
-      opacity: 1;
-    }
-
-    .card-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.85rem;
-      margin-bottom: 1rem;
-    }
-
-    .card-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.3rem;
-      flex-shrink: 0;
-    }
-
-    .card-icon.red {
-      background: rgba(239, 68, 68, 0.12);
-      color: #f87171;
-    }
-
-    .card-title {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #f4f4f5;
-      margin-bottom: 0.15rem;
-    }
-
-    .card-subtitle {
-      font-size: 0.78rem;
-      color: #52525b;
-      font-weight: 500;
-    }
-
-    .card-description {
-      font-size: 0.9rem;
-      color: #71717a;
-      line-height: 1.65;
-      flex: 1;
-    }
-
-    .card-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1.25rem;
-    }
-
-    .tag {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 0.3rem 0.7rem;
-      border-radius: 6px;
-      background: rgba(0, 255, 245, 0.04);
-      color: #00fff5;
-      border: 1px solid rgba(0, 255, 245, 0.2);
-      letter-spacing: 0.02em;
-    }
-
-    .card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 1.5rem;
-      padding-top: 1rem;
-      border-top: 1px solid #1e1e22;
-    }
-
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.78rem;
-      font-weight: 500;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #22c55e;
-      animation: glow-pulse 2s ease-in-out infinite;
-    }
-
-    .status-text {
-      color: #4ade80;
-    }
-
-    .card-link {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #00fff5;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      transition: color 0.2s, gap 0.2s;
-    }
-
-    .project-card:hover .card-link {
-      color: #66fffa;
-      gap: 0.55rem;
-      text-shadow: 0 0 8px rgba(0, 255, 245, 0.5);
-    }
-
-    .card-link .arrow {
-      transition: transform 0.2s;
-      font-size: 1rem;
-    }
-
-    .project-card:hover .card-link .arrow {
-      transform: translateX(2px);
-    }
-
-    /* ── "More coming" placeholder ── */
-    .coming-soon {
-      background: transparent;
-      border: 2px dashed rgba(0, 255, 245, 0.15);
-      border-radius: 14px;
-      padding: 1.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 200px;
-      color: #2a2a30;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.9rem;
-      font-weight: 500;
-      text-align: center;
-    }
-
-    /* ── Footer ── */
-    footer {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      border-top: 1px solid #141416;
-    }
-
-    .contact {
-      display: flex;
-      justify-content: center;
-      gap: 2.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
-
-    .contact-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.85rem;
-    }
-
-    .contact-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: #18181b;
-      border: 1px solid rgba(0, 255, 245, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      color: #00fff5;
-      flex-shrink: 0;
-    }
-
-    .contact-prompt {
-      color: #00fff5;
-      margin-right: 0.25rem;
-    }
-
-    .contact-value {
-      color: #a1a1aa;
-      transition: color 0.2s;
-    }
-
-    a .contact-value:hover {
-      color: #00fff5;
-      text-shadow: 0 0 8px rgba(0, 255, 245, 0.4);
-    }
-
-    .copyright {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.78rem;
-      color: #3f3f46;
-      margin-top: 0.5rem;
-    }
-
-    /* ── Side Decorations ── */
-    .side-decor {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      width: 120px;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .side-decor.left { left: 20px; }
-    .side-decor.right { right: 20px; }
-
-    /* Vertical neon line */
-    .neon-line {
-      position: absolute;
-      top: 10%;
-      bottom: 10%;
-      width: 1px;
-      background: linear-gradient(180deg, transparent, rgba(0, 255, 245, 0.3) 20%, rgba(0, 255, 245, 0.3) 80%, transparent);
-    }
-
-    .side-decor.left .neon-line { right: 0; }
-    .side-decor.right .neon-line { left: 0; }
-
-    /* Pulse traveling down the line */
-    .neon-line::after {
-      content: "";
-      position: absolute;
-      left: -2px;
-      width: 5px;
-      height: 40px;
-      background: linear-gradient(180deg, transparent, #00fff5, transparent);
-      border-radius: 3px;
-      box-shadow: 0 0 10px #00fff5, 0 0 20px rgba(0, 255, 245, 0.4);
-      animation: line-pulse 4s ease-in-out infinite;
-    }
-
-    .side-decor.right .neon-line::after {
-      animation-delay: 2s;
-    }
-
-    @keyframes line-pulse {
-      0% { top: 0%; opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { top: 95%; opacity: 0; }
-    }
-
-    /* Circuit nodes on the line */
-    .node {
-      position: absolute;
-      width: 7px;
-      height: 7px;
-      border: 1px solid rgba(0, 255, 245, 0.5);
-      border-radius: 50%;
-      background: #0a0a0b;
-    }
-
-    .side-decor.left .node { right: -3px; }
-    .side-decor.right .node { left: -3px; }
-
-    .node:nth-child(2) { top: 20%; }
-    .node:nth-child(3) { top: 40%; }
-    .node:nth-child(4) { top: 60%; }
-    .node:nth-child(5) { top: 80%; }
-
-    .node::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      width: 25px;
-      height: 1px;
-      background: rgba(0, 255, 245, 0.15);
-      transform: translateY(-50%);
-    }
-
-    .side-decor.left .node::after { right: 10px; }
-    .side-decor.right .node::after { left: 10px; }
-
-    /* Data stream — vertical scrolling text */
-    .data-stream {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 80px;
-      overflow: hidden;
-      opacity: 0.12;
-    }
-
-    .side-decor.left .data-stream { left: 0; }
-    .side-decor.right .data-stream { right: 0; }
-
-    .data-stream-inner {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 10px;
-      line-height: 1.8;
-      color: #00fff5;
-      white-space: nowrap;
-      writing-mode: vertical-rl;
-      animation: data-scroll 20s linear infinite;
-    }
-
-    .side-decor.right .data-stream-inner {
-      animation-direction: reverse;
-      color: #ff00aa;
-    }
-
-    @keyframes data-scroll {
-      0% { transform: translateY(-50%); }
-      100% { transform: translateY(0%); }
-    }
-
-    /* Floating geometric shapes */
-    .geo {
-      position: absolute;
-      border: 1px solid;
-      opacity: 0.08;
-      animation: geo-float 6s ease-in-out infinite;
-    }
-
-    .geo.diamond {
-      width: 20px;
-      height: 20px;
-      border-color: #00fff5;
-      transform: rotate(45deg);
-    }
-
-    .geo.hex {
-      width: 24px;
-      height: 14px;
-      border-color: #ff00aa;
-      clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-      background: rgba(255, 0, 170, 0.05);
-      border: none;
-      outline: 1px solid rgba(255, 0, 170, 0.15);
-    }
-
-    .geo.circle {
-      width: 16px;
-      height: 16px;
-      border-color: #00fff5;
-      border-radius: 50%;
-    }
-
-    .geo:nth-child(6) { top: 15%; left: 10px; animation-delay: 0s; }
-    .geo:nth-child(7) { top: 35%; left: 30px; animation-delay: 1.5s; }
-    .geo:nth-child(8) { top: 55%; left: 5px; animation-delay: 3s; }
-    .geo:nth-child(9) { top: 75%; left: 25px; animation-delay: 4.5s; }
-
-    @keyframes geo-float {
-      0%, 100% { transform: translateY(0px) rotate(45deg); opacity: 0.08; }
-      50% { transform: translateY(-10px) rotate(45deg); opacity: 0.18; }
-    }
-
-    .geo.hex, .geo.circle {
-      animation-name: geo-float-alt;
-    }
-
-    @keyframes geo-float-alt {
-      0%, 100% { transform: translateY(0px); opacity: 0.08; }
-      50% { transform: translateY(-10px); opacity: 0.18; }
-    }
-
-    /* Bracket decorations */
-    .bracket {
-      position: absolute;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 28px;
-      color: rgba(0, 255, 245, 0.06);
-      line-height: 1;
-    }
-
-    .side-decor.left .bracket.top { top: 12%; right: 15px; }
-    .side-decor.left .bracket.bottom { bottom: 12%; right: 15px; }
-    .side-decor.right .bracket.top { top: 12%; left: 15px; }
-    .side-decor.right .bracket.bottom { bottom: 12%; left: 15px; }
-
-    /* Crosshair marker */
-    .crosshair {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    .side-decor.left .crosshair { left: 10px; }
-    .side-decor.right .crosshair { right: 10px; }
-
-    .crosshair::before,
-    .crosshair::after {
-      content: "";
-      position: absolute;
-      background: rgba(255, 0, 170, 0.2);
-    }
-
-    .crosshair::before {
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      transform: translateY(-50%);
-    }
-
-    .crosshair::after {
-      left: 50%;
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      transform: translateX(-50%);
-    }
-
-    /* Hide side decorations on smaller screens */
-    @media (max-width: 1200px) {
-      .side-decor { display: none; }
-    }
-
-    /* ── Responsive ── */
     @media (max-width: 600px) {
-      .name {
-        font-size: 2.5rem;
-      }
-
-      header {
-        padding: 4rem 1rem 1.5rem;
-      }
-
-      main {
-        padding: 2rem 1rem 3rem;
-      }
-
-      .projects {
-        grid-template-columns: 1fr;
-      }
-
-      .contact {
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-      }
-
+      .name { font-size: 2.6rem; }
+      .hero { padding: 4.5rem 1rem 2rem; }
+      main { padding: 0 1rem 3rem; }
+      .projects { grid-template-columns: 1fr; }
+      .contact { flex-direction: column; align-items: center; gap: 1rem; }
       .nav-btn { top: 0.75rem; right: 0.75rem; font-size: 0.7rem; padding: 0.3rem 0.6rem; }
     }
   </style>
 </head>
 <body>
 
+  <div class="decor" aria-hidden="true">
+
+    <!-- ── Staff line fragments ── -->
+    <svg class="staff-frag" style="top:12%;left:0;width:45%"><line x1="0" y1="0" x2="100%" y2="0" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="6" x2="100%" y2="6" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="12" x2="100%" y2="12" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="18" x2="100%" y2="18" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="24" x2="100%" y2="24" stroke="#b8924a" stroke-width="0.8"/></svg>
+    <svg class="staff-frag hide-mobile" style="top:55%;right:0;width:35%;left:auto"><line x1="0" y1="0" x2="100%" y2="0" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="6" x2="100%" y2="6" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="12" x2="100%" y2="12" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="18" x2="100%" y2="18" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="24" x2="100%" y2="24" stroke="#b8924a" stroke-width="0.8"/></svg>
+    <svg class="staff-frag" style="top:85%;left:10%;width:50%"><line x1="0" y1="0" x2="100%" y2="0" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="6" x2="100%" y2="6" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="12" x2="100%" y2="12" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="18" x2="100%" y2="18" stroke="#b8924a" stroke-width="0.8"/><line x1="0" y1="24" x2="100%" y2="24" stroke="#b8924a" stroke-width="0.8"/></svg>
+
+    <!-- ── Floating music notes ── -->
+    <svg class="note" style="top:8%;left:8%;--dur:7s;--d:0s;--r:-12deg" width="28" height="50" viewBox="0 0 28 50" fill="none" opacity="0.07"><ellipse cx="10" cy="40" rx="9" ry="6.5" fill="#c2593e" transform="rotate(-20 10 40)"/><line x1="18" y1="40" x2="18" y2="6" stroke="#c2593e" stroke-width="2"/></svg>
+    <svg class="note hide-mobile" style="top:6%;right:12%;left:auto;--dur:8s;--d:1.5s;--r:5deg" width="52" height="52" viewBox="0 0 52 52" fill="none" opacity="0.06"><ellipse cx="10" cy="42" rx="8" ry="6" fill="#b8924a" transform="rotate(-18 10 42)"/><line x1="17" y1="42" x2="17" y2="8" stroke="#b8924a" stroke-width="2"/><ellipse cx="38" cy="38" rx="8" ry="6" fill="#b8924a" transform="rotate(-18 38 38)"/><line x1="45" y1="38" x2="45" y2="4" stroke="#b8924a" stroke-width="2"/><line x1="17" y1="8" x2="45" y2="4" stroke="#b8924a" stroke-width="2.5"/></svg>
+    <svg class="note" style="top:30%;left:4%;--dur:9s;--d:2s;--r:8deg" width="50" height="80" viewBox="0 0 50 80" fill="none" opacity="0.045"><path d="M25 8 L25 62" stroke="#c2593e" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="62" r="9" stroke="#c2593e" stroke-width="2.5" fill="none"/><path d="M25 62 Q25 50 34 47 Q44 44 44 34 Q44 22 32 19 Q26 18 25 26" stroke="#c2593e" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+    <svg class="note hide-mobile" style="top:42%;right:6%;left:auto;--dur:6.5s;--d:3s;--r:-8deg" width="24" height="46" viewBox="0 0 24 46" fill="none" opacity="0.06"><ellipse cx="9" cy="37" rx="8" ry="6" fill="#b8924a" transform="rotate(-15 9 37)"/><line x1="16" y1="37" x2="16" y2="5" stroke="#b8924a" stroke-width="2"/></svg>
+    <svg class="note" style="top:65%;left:7%;--dur:8.5s;--d:1s;--r:6deg" width="32" height="22" viewBox="0 0 32 22" fill="none" opacity="0.05"><ellipse cx="16" cy="11" rx="13" ry="8" stroke="#c2593e" stroke-width="2" fill="none" transform="rotate(-12 16 11)"/></svg>
+    <svg class="note hide-mobile" style="top:75%;right:10%;left:auto;--dur:7.5s;--d:4s;--r:-5deg" width="30" height="54" viewBox="0 0 30 54" fill="none" opacity="0.055"><ellipse cx="9" cy="44" rx="8" ry="6" fill="#c2593e" transform="rotate(-18 9 44)"/><line x1="16" y1="44" x2="16" y2="10" stroke="#c2593e" stroke-width="2"/><path d="M16 10 Q22 14 26 22" stroke="#c2593e" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <svg class="note" style="top:50%;left:65%;--dur:9s;--d:2.5s;--r:3deg" width="44" height="46" viewBox="0 0 44 46" fill="none" opacity="0.04"><ellipse cx="8" cy="38" rx="7" ry="5" fill="#b8924a" transform="rotate(-15 8 38)"/><line x1="14" y1="38" x2="14" y2="8" stroke="#b8924a" stroke-width="1.8"/><ellipse cx="32" cy="34" rx="7" ry="5" fill="#b8924a" transform="rotate(-15 32 34)"/><line x1="38" y1="34" x2="38" y2="4" stroke="#b8924a" stroke-width="1.8"/><line x1="14" y1="8" x2="38" y2="4" stroke="#b8924a" stroke-width="2"/></svg>
+    <svg class="note hide-mobile" style="top:3%;left:42%;--dur:7.5s;--d:0.5s;--r:-5deg" width="26" height="48" viewBox="0 0 26 48" fill="none" opacity="0.055"><ellipse cx="10" cy="40" rx="8" ry="5.5" stroke="#c2593e" stroke-width="1.8" fill="none" transform="rotate(-15 10 40)"/><line x1="17" y1="40" x2="17" y2="6" stroke="#c2593e" stroke-width="1.8"/></svg>
+    <svg class="note" style="top:58%;right:4%;left:auto;--dur:8s;--d:3.5s;--r:10deg" width="22" height="42" viewBox="0 0 22 42" fill="none" opacity="0.055"><ellipse cx="8" cy="34" rx="7" ry="5" fill="#b8924a" transform="rotate(-18 8 34)"/><line x1="14" y1="34" x2="14" y2="4" stroke="#b8924a" stroke-width="1.8"/></svg>
+    <svg class="note hide-mobile" style="top:82%;left:15%;--dur:9.5s;--d:1.5s;--r:-7deg" width="46" height="50" viewBox="0 0 46 50" fill="none" opacity="0.045"><ellipse cx="8" cy="42" rx="7" ry="5" fill="#c2593e" transform="rotate(-15 8 42)"/><line x1="14" y1="42" x2="14" y2="8" stroke="#c2593e" stroke-width="1.8"/><ellipse cx="34" cy="38" rx="7" ry="5" fill="#c2593e" transform="rotate(-15 34 38)"/><line x1="40" y1="38" x2="40" y2="4" stroke="#c2593e" stroke-width="1.8"/><line x1="14" y1="8" x2="40" y2="4" stroke="#c2593e" stroke-width="2"/><line x1="14" y1="14" x2="40" y2="10" stroke="#c2593e" stroke-width="2"/></svg>
+    <svg class="note hide-mobile" style="top:18%;right:4%;left:auto;--dur:10s;--d:4s;--r:-4deg" width="40" height="65" viewBox="0 0 40 65" fill="none" opacity="0.035"><path d="M20 6 L20 50" stroke="#b8924a" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="50" r="7" stroke="#b8924a" stroke-width="2" fill="none"/><path d="M20 50 Q20 42 26 40 Q32 38 32 30 Q32 22 24 20 Q20 19 20 24" stroke="#b8924a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <svg class="note" style="top:90%;left:55%;--dur:7s;--d:2s;--r:8deg" width="28" height="18" viewBox="0 0 28 18" fill="none" opacity="0.05"><ellipse cx="14" cy="9" rx="11" ry="7" stroke="#b8924a" stroke-width="1.8" fill="none" transform="rotate(-10 14 9)"/></svg>
+
+    <!-- ── Abstract brush strokes ── -->
+    <svg class="stroke" style="top:18%;left:15%;--dur:14s;--d:0s" width="500" height="120" viewBox="0 0 500 120" fill="none" opacity="0.03"><path d="M0 80 Q80 20 200 60 Q320 100 420 30 Q460 10 500 40" stroke="#c2593e" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
+    <svg class="stroke hide-mobile" style="top:48%;right:5%;left:auto;--dur:12s;--d:3s" width="300" height="80" viewBox="0 0 300 80" fill="none" opacity="0.025"><path d="M0 60 Q60 10 140 40 Q220 70 300 20" stroke="#b8924a" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+    <svg class="stroke" style="top:72%;left:20%;--dur:16s;--d:5s" width="400" height="100" viewBox="0 0 400 100" fill="none" opacity="0.02"><path d="M0 50 Q30 10 80 50 Q130 90 180 40 Q230 -10 280 50 Q330 110 380 50 L400 50" stroke="#c2593e" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+    <svg class="stroke hide-mobile" style="top:2%;left:60%;--dur:15s;--d:2s" width="200" height="60" viewBox="0 0 200 60" fill="none" opacity="0.03"><path d="M0 50 Q100 0 200 30" stroke="#c2593e" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    <svg class="stroke" style="top:92%;left:60%;--dur:11s;--d:7s" width="100" height="40" viewBox="0 0 100 40" fill="none" opacity="0.025"><path d="M0 30 Q30 5 60 20 Q80 30 100 10" stroke="#b8924a" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+
+    <!-- ══════════════════════════════════════
+         ABSTRACT GEOMETRY — connected lines & circles
+         ══════════════════════════════════════ -->
+
+    <!-- Cluster 1 — top-right constellation -->
+    <svg class="geo hide-mobile" style="top:4%;right:6%;left:auto;--dur:24s;--d:0s" width="320" height="240" viewBox="0 0 320 240" fill="none" opacity="0.22">
+      <line x1="40" y1="30" x2="140" y2="80" stroke="#d4b896" stroke-width="1"/>
+      <line x1="140" y1="80" x2="260" y2="55" stroke="#c9a87c" stroke-width="1"/>
+      <line x1="140" y1="80" x2="180" y2="170" stroke="#d4b896" stroke-width="1"/>
+      <line x1="180" y1="170" x2="290" y2="195" stroke="#c9a87c" stroke-width="0.8"/>
+      <line x1="260" y1="55" x2="290" y2="195" stroke="#d4b896" stroke-width="0.7"/>
+      <line x1="40" y1="30" x2="80" y2="150" stroke="#c9a87c" stroke-width="0.7"/>
+      <line x1="80" y1="150" x2="180" y2="170" stroke="#d4b896" stroke-width="0.7"/>
+      <circle cx="40" cy="30" r="4" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="140" cy="80" r="7" stroke="#c9a87c" stroke-width="1.2" fill="none"/>
+      <circle cx="260" cy="55" r="5" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="180" cy="170" r="6" stroke="#c9a87c" stroke-width="1.2" fill="none"/>
+      <circle cx="290" cy="195" r="3" fill="#d4b896" opacity="0.6"/>
+      <circle cx="80" cy="150" r="3" fill="#c9a87c" opacity="0.5"/>
+      <circle cx="140" cy="80" r="2.5" fill="#d4b896" opacity="0.45"/>
+    </svg>
+
+    <!-- Cluster 2 — left side network -->
+    <svg class="geo" style="top:25%;left:2%;--dur:28s;--d:3s" width="280" height="300" viewBox="0 0 280 300" fill="none" opacity="0.18">
+      <line x1="30" y1="40" x2="120" y2="100" stroke="#c9a87c" stroke-width="1"/>
+      <line x1="120" y1="100" x2="70" y2="200" stroke="#d4b896" stroke-width="1"/>
+      <line x1="70" y1="200" x2="200" y2="250" stroke="#c9a87c" stroke-width="0.8"/>
+      <line x1="120" y1="100" x2="240" y2="120" stroke="#d4b896" stroke-width="0.8"/>
+      <line x1="240" y1="120" x2="200" y2="250" stroke="#c9a87c" stroke-width="0.7"/>
+      <line x1="30" y1="40" x2="150" y2="20" stroke="#d4b896" stroke-width="0.7"/>
+      <line x1="150" y1="20" x2="240" y2="120" stroke="#c9a87c" stroke-width="0.7"/>
+      <circle cx="30" cy="40" r="5" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="120" cy="100" r="8" stroke="#c9a87c" stroke-width="1.2" fill="none"/>
+      <circle cx="120" cy="100" r="3" fill="#c9a87c" opacity="0.4"/>
+      <circle cx="70" cy="200" r="4" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="200" cy="250" r="6" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="240" cy="120" r="3.5" fill="#d4b896" opacity="0.5"/>
+      <circle cx="150" cy="20" r="3" stroke="#c9a87c" stroke-width="1" fill="none"/>
+    </svg>
+
+    <!-- Cluster 3 — bottom-right -->
+    <svg class="geo hide-mobile" style="top:62%;right:3%;left:auto;--dur:22s;--d:5s" width="260" height="260" viewBox="0 0 260 260" fill="none" opacity="0.16">
+      <line x1="50" y1="30" x2="160" y2="60" stroke="#d4b896" stroke-width="1"/>
+      <line x1="160" y1="60" x2="220" y2="160" stroke="#c9a87c" stroke-width="1"/>
+      <line x1="220" y1="160" x2="120" y2="220" stroke="#d4b896" stroke-width="0.8"/>
+      <line x1="120" y1="220" x2="40" y2="140" stroke="#c9a87c" stroke-width="0.8"/>
+      <line x1="40" y1="140" x2="50" y2="30" stroke="#d4b896" stroke-width="0.7"/>
+      <line x1="40" y1="140" x2="160" y2="60" stroke="#c9a87c" stroke-width="0.6"/>
+      <line x1="120" y1="220" x2="160" y2="60" stroke="#d4b896" stroke-width="0.5"/>
+      <circle cx="50" cy="30" r="4" stroke="#c9a87c" stroke-width="1.2" fill="none"/>
+      <circle cx="160" cy="60" r="6" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="220" cy="160" r="5" stroke="#c9a87c" stroke-width="1.2" fill="none"/>
+      <circle cx="120" cy="220" r="7" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="120" cy="220" r="2.5" fill="#d4b896" opacity="0.45"/>
+      <circle cx="40" cy="140" r="3" fill="#c9a87c" opacity="0.5"/>
+    </svg>
+
+    <!-- Cluster 4 — mid-page scattered -->
+    <svg class="geo" style="top:45%;left:55%;--dur:26s;--d:2s" width="200" height="180" viewBox="0 0 200 180" fill="none" opacity="0.14">
+      <line x1="20" y1="90" x2="100" y2="30" stroke="#d4b896" stroke-width="0.9"/>
+      <line x1="100" y1="30" x2="180" y2="80" stroke="#c9a87c" stroke-width="0.9"/>
+      <line x1="180" y1="80" x2="130" y2="150" stroke="#d4b896" stroke-width="0.8"/>
+      <line x1="130" y1="150" x2="20" y2="90" stroke="#c9a87c" stroke-width="0.8"/>
+      <line x1="100" y1="30" x2="130" y2="150" stroke="#d4b896" stroke-width="0.6"/>
+      <circle cx="20" cy="90" r="5" stroke="#c9a87c" stroke-width="1" fill="none"/>
+      <circle cx="100" cy="30" r="4" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="100" cy="30" r="1.5" fill="#d4b896" opacity="0.5"/>
+      <circle cx="180" cy="80" r="6" stroke="#c9a87c" stroke-width="1" fill="none"/>
+      <circle cx="130" cy="150" r="3.5" fill="#d4b896" opacity="0.45"/>
+    </svg>
+
+    <!-- Cluster 5 — bottom-left -->
+    <svg class="geo" style="top:78%;left:8%;--dur:25s;--d:6s" width="240" height="180" viewBox="0 0 240 180" fill="none" opacity="0.16">
+      <line x1="30" y1="50" x2="130" y2="20" stroke="#c9a87c" stroke-width="0.9"/>
+      <line x1="130" y1="20" x2="210" y2="90" stroke="#d4b896" stroke-width="0.9"/>
+      <line x1="210" y1="90" x2="150" y2="155" stroke="#c9a87c" stroke-width="0.8"/>
+      <line x1="150" y1="155" x2="60" y2="130" stroke="#d4b896" stroke-width="0.8"/>
+      <line x1="60" y1="130" x2="30" y2="50" stroke="#c9a87c" stroke-width="0.7"/>
+      <line x1="130" y1="20" x2="60" y2="130" stroke="#d4b896" stroke-width="0.6"/>
+      <circle cx="30" cy="50" r="3" stroke="#d4b896" stroke-width="1" fill="none"/>
+      <circle cx="130" cy="20" r="5" stroke="#c9a87c" stroke-width="1.2" fill="none"/>
+      <circle cx="210" cy="90" r="4" stroke="#d4b896" stroke-width="1.2" fill="none"/>
+      <circle cx="210" cy="90" r="1.5" fill="#d4b896" opacity="0.5"/>
+      <circle cx="150" cy="155" r="6" stroke="#c9a87c" stroke-width="1" fill="none"/>
+      <circle cx="150" cy="155" r="2" fill="#c9a87c" opacity="0.4"/>
+      <circle cx="60" cy="130" r="3.5" stroke="#d4b896" stroke-width="1" fill="none"/>
+    </svg>
+
+    <!-- ── Rosin dust ── -->
+    <span class="dust" style="top:5%;left:20%;--s:3px;--o:0.12;--dur:5s;--d:0s"></span>
+    <span class="dust gold" style="top:10%;left:75%;--s:4px;--o:0.1;--dur:4s;--d:1s"></span>
+    <span class="dust warm" style="top:15%;left:45%;--s:2px;--o:0.18;--dur:6s;--d:0.5s"></span>
+    <span class="dust" style="top:22%;right:25%;--s:3px;--o:0.1;--dur:5.5s;--d:2s"></span>
+    <span class="dust gold" style="top:28%;left:12%;--s:5px;--o:0.08;--dur:4.5s;--d:1.5s"></span>
+    <span class="dust warm" style="top:33%;left:60%;--s:2px;--o:0.15;--dur:3.5s;--d:0s"></span>
+    <span class="dust" style="top:38%;right:15%;--s:3px;--o:0.12;--dur:6s;--d:3s"></span>
+    <span class="dust gold" style="top:45%;left:30%;--s:4px;--o:0.09;--dur:5s;--d:2.5s"></span>
+    <span class="dust" style="top:52%;left:85%;--s:2px;--o:0.14;--dur:4s;--d:1s"></span>
+    <span class="dust warm" style="top:58%;left:5%;--s:3px;--o:0.11;--dur:5.5s;--d:0.5s"></span>
+    <span class="dust gold" style="top:62%;right:30%;--s:5px;--o:0.07;--dur:6.5s;--d:4s"></span>
+    <span class="dust" style="top:70%;left:50%;--s:2px;--o:0.16;--dur:4s;--d:2s"></span>
+    <span class="dust warm" style="top:76%;left:18%;--s:4px;--o:0.1;--dur:5s;--d:3.5s"></span>
+    <span class="dust gold" style="top:80%;right:20%;--s:3px;--o:0.12;--dur:4.5s;--d:1s"></span>
+    <span class="dust" style="top:88%;left:40%;--s:2px;--o:0.13;--dur:6s;--d:0s"></span>
+    <span class="dust warm" style="top:92%;left:70%;--s:3px;--o:0.09;--dur:5s;--d:2s"></span>
+    <span class="dust gold" style="top:3%;left:55%;--s:2px;--o:0.14;--dur:3.5s;--d:1.5s"></span>
+    <span class="dust" style="top:48%;left:10%;--s:4px;--o:0.08;--dur:7s;--d:3s"></span>
+    <span class="dust warm" style="top:18%;right:8%;--s:3px;--o:0.11;--dur:4.5s;--d:0.5s"></span>
+    <span class="dust gold" style="top:84%;left:88%;--s:2px;--o:0.15;--dur:5s;--d:4s"></span>
+  </div>
+
   <a class="nav-btn" href="http://localhost:5000">downloader <span class="arrow">&rarr;</span></a>
 
-  <!-- ── Side Decorations ── -->
-  <div class="side-decor left">
-    <div class="neon-line"></div>
-    <div class="node"></div>
-    <div class="node"></div>
-    <div class="node"></div>
-    <div class="node"></div>
-    <div class="geo diamond"></div>
-    <div class="geo hex"></div>
-    <div class="geo diamond"></div>
-    <div class="geo circle"></div>
-    <div class="data-stream">
-      <div class="data-stream-inner">0xF4 INIT_SYS &gt;&gt; 0xA7C2 LINK ACTIVE // STREAM.CONNECTED &gt;&gt; NODE.SYNC 0xBE91 // AUTH_OK &gt;&gt; RENDER.FRAME 0x44F1 ACTIVE &gt;&gt; SYS.PULSE // DATA.FLOW 0xFF12 CONNECTED &gt;&gt; UPLINK.OK // NET.STABLE 0xD3A8 SYNC &gt;&gt; PORT.OPEN 0x91C4 // STATUS.LIVE</div>
-    </div>
-    <span class="bracket top">{</span>
-    <span class="bracket bottom">}</span>
-    <div class="crosshair"></div>
-  </div>
-
-  <div class="side-decor right">
-    <div class="neon-line"></div>
-    <div class="node"></div>
-    <div class="node"></div>
-    <div class="node"></div>
-    <div class="node"></div>
-    <div class="geo circle"></div>
-    <div class="geo diamond"></div>
-    <div class="geo hex"></div>
-    <div class="geo diamond"></div>
-    <div class="data-stream">
-      <div class="data-stream-inner">PROXY.RELAY 0xC8 // PKT.ROUTE &gt;&gt; 0x5FA3 DECRYPT.OK &gt;&gt; HASH.VERIFY 0xE291 // CHAN.SECURE &gt;&gt; BUF.FLUSH 0x38D7 COMPLETE &gt;&gt; MEM.ALLOC // CACHE.HIT 0xAB44 &gt;&gt; PROC.EXEC 0x7F10 // TASK.RUN &gt;&gt; QUEUE.READY 0x62B5 DONE</div>
-    </div>
-    <span class="bracket top">[</span>
-    <span class="bracket bottom">]</span>
-    <div class="crosshair"></div>
-  </div>
-
-  <header>
+  <div class="hero">
     <h1 class="name">Han Chau</h1>
-    <p class="tagline">Building tools and apps that solve everyday problems.</p>
+    <p class="tagline"><em>Musician</em>, <em>writer</em>, and <em>builder</em> &mdash; crafting things that move people and solve problems.</p>
     <div class="divider"></div>
-  </header>
+  </div>
+
+  <section class="disciplines">
+    <div class="disciplines-grid">
+      <div class="discipline-card">
+        <div class="discipline-icon"><svg width="48" height="56" viewBox="0 0 48 56" fill="none"><path d="M24 4 L24 44" stroke="#c2593e" stroke-width="1.5" stroke-linecap="round"/><circle cx="20" cy="44" r="6" stroke="#c2593e" stroke-width="1.5" fill="none"/><path d="M24 44 Q24 38 30 36 Q36 34 36 28 Q36 20 28 18 Q24 17 24 22" stroke="#c2593e" stroke-width="1.5" fill="none"/><line x1="6" y1="20" x2="42" y2="20" stroke="#b8924a" stroke-width="0.5" opacity="0.3"/><line x1="6" y1="26" x2="42" y2="26" stroke="#b8924a" stroke-width="0.5" opacity="0.3"/><line x1="6" y1="32" x2="42" y2="32" stroke="#b8924a" stroke-width="0.5" opacity="0.3"/><line x1="6" y1="38" x2="42" y2="38" stroke="#b8924a" stroke-width="0.5" opacity="0.3"/></svg></div>
+        <div class="discipline-title">Musician</div>
+        <p class="discipline-desc">Writing melodies and arrangements that tell stories beyond words.</p>
+      </div>
+      <div class="discipline-card">
+        <div class="discipline-icon"><svg width="48" height="56" viewBox="0 0 48 56" fill="none"><path d="M24 12 Q24 10 16 8 Q6 6 4 10 L4 46 Q6 43 16 44 Q24 45 24 46" stroke="#c2593e" stroke-width="1.5" fill="none"/><path d="M24 12 Q24 10 32 8 Q42 6 44 10 L44 46 Q42 43 32 44 Q24 45 24 46" stroke="#c2593e" stroke-width="1.5" fill="none"/><line x1="24" y1="12" x2="24" y2="46" stroke="#c2593e" stroke-width="1" opacity="0.4"/><line x1="8" y1="18" x2="20" y2="17" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/><line x1="8" y1="23" x2="20" y2="22" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/><line x1="8" y1="28" x2="18" y2="27" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/><line x1="8" y1="33" x2="20" y2="32" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/><line x1="28" y1="17" x2="40" y2="18" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/><line x1="28" y1="22" x2="40" y2="23" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/><line x1="28" y1="27" x2="38" y2="28" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/><line x1="28" y1="32" x2="40" y2="33" stroke="#b8924a" stroke-width="0.6" opacity="0.3"/></svg></div>
+        <div class="discipline-title">Writer</div>
+        <p class="discipline-desc">Shaping ideas into prose, poetry, and everything in between.</p>
+      </div>
+      <div class="discipline-card">
+        <div class="discipline-icon"><svg width="48" height="56" viewBox="0 0 48 56" fill="none"><rect x="4" y="8" width="40" height="40" rx="4" stroke="#c2593e" stroke-width="1.5" fill="none"/><line x1="4" y1="16" x2="44" y2="16" stroke="#c2593e" stroke-width="1" opacity="0.4"/><circle cx="10" cy="12" r="1.5" fill="#c2593e" opacity="0.3"/><circle cx="16" cy="12" r="1.5" fill="#b8924a" opacity="0.3"/><circle cx="22" cy="12" r="1.5" fill="#6d8f5e" opacity="0.3"/><line x1="10" y1="22" x2="18" y2="22" stroke="#b8924a" stroke-width="1" opacity="0.4"/><line x1="14" y1="27" x2="30" y2="27" stroke="#c2593e" stroke-width="1" opacity="0.3"/><line x1="14" y1="32" x2="26" y2="32" stroke="#6d8f5e" stroke-width="1" opacity="0.3"/><line x1="10" y1="37" x2="22" y2="37" stroke="#b8924a" stroke-width="1" opacity="0.3"/><rect x="24" y="36" width="6" height="2" fill="#c2593e" opacity="0.4"/></svg></div>
+        <div class="discipline-title">Builder</div>
+        <p class="discipline-desc">Turning ideas into tools and applications that make life simpler.</p>
+      </div>
+    </div>
+  </section>
 
   <main>
-    <div class="section-heading">
-      <h2>Projects</h2>
-      <div class="line"></div>
-    </div>
-
+    <div class="section-heading"><h2>Projects</h2><div class="line"></div></div>
     <div class="projects">
-
-      <!-- ─── YouTube Downloader ─── -->
       <a class="project-card" href="http://localhost:5000">
-        <div class="card-header">
-          <div class="card-icon red">&#9655;</div>
-          <div>
-            <div class="card-title">YouTube Downloader</div>
-            <div class="card-subtitle">Web Application</div>
-          </div>
-        </div>
-        <p class="card-description">
-          Paste a YouTube link and download it as MP3 audio or MP4 video.
-          Features real-time progress tracking, background processing, and
-          a native save dialog.
-        </p>
-        <div class="card-tags">
-          <span class="tag">Flask</span>
-          <span class="tag">yt-dlp</span>
-          <span class="tag">Python</span>
-          <span class="tag">Async</span>
-        </div>
-        <div class="card-footer">
-          <div class="status">
-            <span class="status-dot"></span>
-            <span class="status-text">Live</span>
-          </div>
-          <span class="card-link">Open App <span class="arrow">&rarr;</span></span>
-        </div>
+        <div class="card-header"><div class="card-icon">&#9655;</div><div><div class="card-title">YouTube Downloader</div><div class="card-subtitle">Web Application</div></div></div>
+        <p class="card-description">Paste a YouTube link and download it as MP3 audio or MP4 video. Features real-time progress tracking, background processing, and a native save dialog.</p>
+        <div class="card-tags"><span class="tag">Flask</span><span class="tag">yt-dlp</span><span class="tag">Python</span><span class="tag">Async</span></div>
+        <div class="card-footer"><div class="status"><span class="status-dot"></span><span class="status-text">Live</span></div><span class="card-link">Open App <span class="arrow">&rarr;</span></span></div>
       </a>
-
-      <!-- ─── Add more project cards here ─── -->
-
-      <div class="coming-soon">More projects on the way...</div>
-
+      <div class="coming-soon">More projects on the way&hellip;</div>
     </div>
   </main>
 
   <footer>
     <div class="contact">
-      <a class="contact-item" href="mailto:your-email@example.com">
-        <span class="contact-icon">&#9993;</span>
-        <span class="contact-prompt">&gt;</span>
-        <span class="contact-value">your-email@example.com</span>
-      </a>
-      <div class="contact-item">
-        <span class="contact-icon">&#9672;</span>
-        <span class="contact-prompt">&gt;</span>
-        <span class="contact-value">yourdiscord#0000</span>
-      </div>
+      <a class="contact-item" href="mailto:your-email@example.com"><span class="contact-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="#b8924a" stroke-width="1.2" fill="none"/><path d="M1 5 L8 10 L15 5" stroke="#b8924a" stroke-width="1.2" fill="none"/></svg></span><span class="contact-value">your-email@example.com</span></a>
+      <div class="contact-item"><span class="contact-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#b8924a" stroke-width="1.2" fill="none"/><path d="M6 6 Q8 4 10 6 L10 8 Q8 10 6 8 Q5 7 6 6Z" fill="#b8924a" opacity="0.4"/></svg></span><span class="contact-value">yourdiscord#0000</span></div>
     </div>
     <p class="copyright">&copy; 2026 Han Chau</p>
   </footer>
