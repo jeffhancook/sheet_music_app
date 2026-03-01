@@ -128,13 +128,13 @@
                 <!-- Crease -->
                 <path d="M30 3 Q35 95 28 186" stroke="rgba(160,130,90,0.08)" stroke-width="0.8" fill="none"/>
                 <!-- Handwritten equations (slightly varied positions for natural feel) -->
-                <text x="16" y="28" font-family="'EB Garamond', serif" font-size="13" font-style="italic" fill="#4a3820" opacity="0.75">F = ma</text>
-                <text x="20" y="52" font-family="'EB Garamond', serif" font-size="12" font-style="italic" fill="#4a3820" opacity="0.65">E = mc²</text>
-                <text x="15" y="76" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#4a3820" opacity="0.6">F = G(m₁m₂)/r²</text>
-                <text x="22" y="99" font-family="'EB Garamond', serif" font-size="10" font-style="italic" fill="#4a3820" opacity="0.55">∇ × E = −∂B/∂t</text>
-                <text x="17" y="120" font-family="'EB Garamond', serif" font-size="12" font-style="italic" fill="#4a3820" opacity="0.6">p = mv</text>
-                <text x="24" y="143" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#4a3820" opacity="0.5">λ = h/p</text>
-                <text x="18" y="166" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#4a3820" opacity="0.45">S = k ln Ω</text>
+                <text x="16" y="28" font-family="'EB Garamond', serif" font-size="13" font-style="italic" fill="#000000" opacity="1">F = ma</text>
+                <text x="20" y="52" font-family="'EB Garamond', serif" font-size="12" font-style="italic" fill="#000000" opacity="1">E = mc²</text>
+                <text x="15" y="76" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#000000" opacity="1">F = G(m₁m₂)/r²</text>
+                <text x="22" y="99" font-family="'EB Garamond', serif" font-size="10" font-style="italic" fill="#000000" opacity="1">∇ × E = −∂B/∂t</text>
+                <text x="17" y="120" font-family="'EB Garamond', serif" font-size="12" font-style="italic" fill="#000000" opacity="1">p = mv</text>
+                <text x="24" y="143" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#000000" opacity="1">λ = h/p</text>
+                <text x="18" y="166" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#000000" opacity="1">S = k ln Ω</text>
                 <!-- Ink smudge near bottom -->
                 <ellipse cx="85" cy="160" rx="6" ry="3" fill="rgba(20,15,40,0.08)" transform="rotate(-12, 85, 160)"/>
             </svg>
@@ -289,41 +289,213 @@
             </svg>
 
             <!-- Inkwell with quill inside -->
-            <svg class="writing-set" viewBox="0 0 90 170" width="85" height="160">
+            <svg class="writing-set" viewBox="0 0 100 190" width="95" height="180">
                 <!-- Quill feather (angled, resting in inkwell) -->
-                <g transform="rotate(-15, 45, 80)">
-                    <!-- Feather — left vane (softer, wider) -->
-                    <path d="M44 5 Q32 20 28 40 Q25 55 27 72 Q28 78 30 82 L33 80 Q30 65 30 50 Q32 30 44 5 Z" fill="#EDE4CC" opacity="0.85"/>
+                <g transform="rotate(-12, 50, 90)">
+                    <!-- Feather — left vane with natural curve -->
+                    <path d="M48 2 Q38 12 32 28 Q26 48 24 65 Q23 78 26 88 L30 86 Q27 72 28 58 Q30 40 36 24 Q40 14 48 2 Z" fill="#F0E8D4" opacity="0.9"/>
+                    <!-- Feather — left vane shadow -->
+                    <path d="M48 2 Q42 10 38 22 Q34 36 32 50 Q30 62 30 72 L30 86 Q27 72 28 58 Q30 40 36 24 Q40 14 48 2 Z" fill="rgba(180,160,120,0.15)"/>
                     <!-- Feather — right vane -->
-                    <path d="M44 5 Q56 20 58 40 Q60 55 57 72 Q56 78 54 82 L51 80 Q54 65 54 50 Q53 30 44 5 Z" fill="#E5DCC4" opacity="0.85"/>
-                    <!-- Rachis (central shaft) -->
-                    <path d="M44 8 Q43 40 43 80 L43 125" stroke="#BEB09A" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-                    <!-- Barbs — left side -->
-                    <path d="M37 18 Q30 16 24 19" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M35 28 Q27 26 21 30" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M33 38 Q25 36 19 40" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M31 48 Q24 46 18 50" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M30 58 Q23 56 17 60" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <!-- Barbs — right side -->
-                    <path d="M51 18 Q58 16 64 19" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M53 28 Q61 26 67 30" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M55 38 Q63 36 69 40" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M56 48 Q64 46 70 50" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <path d="M57 58 Q64 56 70 60" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
-                    <!-- Nib (dips into ink) -->
-                    <path d="M42 123 L43 134 L44 123" fill="#3a2a18" opacity="0.7"/>
+                    <path d="M48 2 Q58 12 62 28 Q66 48 66 65 Q66 78 63 88 L59 86 Q62 72 62 58 Q60 40 56 24 Q53 14 48 2 Z" fill="#E8E0C8" opacity="0.9"/>
+                    <!-- Rachis (central shaft) — slightly curved -->
+                    <path d="M48 4 Q47 30 47 60 Q46 90 46 130" stroke="#C8B898" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                    <!-- Rachis highlight -->
+                    <path d="M48 6 Q48 30 48 60 Q47 90 47 125" stroke="rgba(220,210,180,0.3)" stroke-width="0.6" fill="none"/>
+                    <!-- Barbs — left side (dense, natural) -->
+                    <path d="M44 10 Q38 8 32 10" stroke="#DDD4BC" stroke-width="0.4" fill="none"/>
+                    <path d="M42 16 Q35 14 28 17" stroke="#DDD4BC" stroke-width="0.4" fill="none"/>
+                    <path d="M40 22 Q33 20 26 23" stroke="#D8CEB6" stroke-width="0.4" fill="none"/>
+                    <path d="M39 28 Q31 26 24 29" stroke="#D8CEB6" stroke-width="0.35" fill="none"/>
+                    <path d="M37 34 Q30 32 23 35" stroke="#D5CBB2" stroke-width="0.35" fill="none"/>
+                    <path d="M36 40 Q28 38 22 41" stroke="#D5CBB2" stroke-width="0.35" fill="none"/>
+                    <path d="M35 46 Q27 44 21 47" stroke="#D2C8AE" stroke-width="0.3" fill="none"/>
+                    <path d="M34 52 Q26 50 20 53" stroke="#D2C8AE" stroke-width="0.3" fill="none"/>
+                    <path d="M33 58 Q26 56 20 59" stroke="#CFC5AA" stroke-width="0.3" fill="none"/>
+                    <path d="M32 64 Q25 62 20 65" stroke="#CFC5AA" stroke-width="0.3" fill="none"/>
+                    <path d="M30 70 Q24 68 20 71" stroke="#CCC2A6" stroke-width="0.25" fill="none"/>
+                    <path d="M29 76 Q24 74 20 77" stroke="#CCC2A6" stroke-width="0.25" fill="none"/>
+                    <!-- Barbs — right side (dense, natural) -->
+                    <path d="M52 10 Q58 8 64 10" stroke="#DDD4BC" stroke-width="0.4" fill="none"/>
+                    <path d="M54 16 Q61 14 68 17" stroke="#DDD4BC" stroke-width="0.4" fill="none"/>
+                    <path d="M55 22 Q62 20 68 23" stroke="#D8CEB6" stroke-width="0.4" fill="none"/>
+                    <path d="M56 28 Q63 26 70 29" stroke="#D8CEB6" stroke-width="0.35" fill="none"/>
+                    <path d="M57 34 Q64 32 70 35" stroke="#D5CBB2" stroke-width="0.35" fill="none"/>
+                    <path d="M57 40 Q65 38 72 41" stroke="#D5CBB2" stroke-width="0.35" fill="none"/>
+                    <path d="M58 46 Q66 44 72 47" stroke="#D2C8AE" stroke-width="0.3" fill="none"/>
+                    <path d="M58 52 Q66 50 72 53" stroke="#D2C8AE" stroke-width="0.3" fill="none"/>
+                    <path d="M59 58 Q66 56 72 59" stroke="#CFC5AA" stroke-width="0.3" fill="none"/>
+                    <path d="M60 64 Q66 62 72 65" stroke="#CFC5AA" stroke-width="0.3" fill="none"/>
+                    <path d="M60 70 Q66 68 72 71" stroke="#CCC2A6" stroke-width="0.25" fill="none"/>
+                    <path d="M61 76 Q66 74 72 77" stroke="#CCC2A6" stroke-width="0.25" fill="none"/>
+                    <!-- Calamus (bare shaft below feather) -->
+                    <path d="M46 88 Q46 100 46 130" stroke="#C0B090" stroke-width="1.4" fill="none"/>
+                    <!-- Nib — split with ink -->
+                    <path d="M44 128 L45.5 145 L46 128" fill="#2a1a08" stroke="#1a0e04" stroke-width="0.3"/>
+                    <path d="M46 128 L46.5 145 L48 128" fill="#2a1a08" stroke="#1a0e04" stroke-width="0.3"/>
+                    <!-- Nib slit -->
+                    <line x1="46" y1="130" x2="46" y2="142" stroke="#0a0604" stroke-width="0.3"/>
+                    <!-- Ink on nib -->
+                    <path d="M44.5 136 Q46 140 47.5 136" fill="rgba(10,5,30,0.6)"/>
                 </g>
                 <!-- Inkwell body — rounder, more ceramic -->
-                <path d="M16 110 Q12 125 14 148 Q16 155 22 158 L68 158 Q74 155 76 148 Q78 125 74 110 Z" fill="#181818" stroke="#2a2a2a" stroke-width="0.6"/>
+                <path d="M18 120 Q14 135 16 158 Q18 166 24 169 L72 169 Q78 166 80 158 Q82 135 78 120 Z" fill="#181818" stroke="#2a2a2a" stroke-width="0.6"/>
                 <!-- Inkwell rim — raised lip -->
-                <ellipse cx="45" cy="112" rx="24" ry="8.5" fill="#222" stroke="#333" stroke-width="0.6"/>
-                <ellipse cx="45" cy="110" rx="24" ry="8.5" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="0.5"/>
+                <ellipse cx="48" cy="122" rx="26" ry="9" fill="#222" stroke="#333" stroke-width="0.6"/>
+                <ellipse cx="48" cy="120" rx="26" ry="9" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="0.5"/>
                 <!-- Ink surface -->
-                <ellipse cx="45" cy="109" rx="17" ry="6" fill="#0a0a1a"/>
+                <ellipse cx="48" cy="119" rx="19" ry="6.5" fill="#0a0a1a"/>
                 <!-- Ink highlight -->
-                <ellipse cx="40" cy="108" rx="5" ry="2" fill="rgba(50,50,100,0.2)"/>
+                <ellipse cx="42" cy="118" rx="6" ry="2.5" fill="rgba(50,50,100,0.2)"/>
                 <!-- Inkwell body highlight -->
-                <path d="M28 135 Q45 130 62 135" stroke="rgba(255,255,255,0.04)" stroke-width="1.2" fill="none"/>
+                <path d="M30 145 Q48 140 66 145" stroke="rgba(255,255,255,0.04)" stroke-width="1.2" fill="none"/>
+            </svg>
+
+            <!-- Paper: Wave equation -->
+            <svg class="desk-paper paper-wave" viewBox="0 0 120 80" width="120" height="80">
+                <rect x="2" y="2" width="116" height="76" rx="1" fill="#DDD0B0" stroke="#C0B090" stroke-width="0.4"/>
+                <rect x="2" y="2" width="116" height="76" rx="1" fill="rgba(160,130,80,0.06)"/>
+                <text x="12" y="22" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">Wave Equation:</text>
+                <text x="12" y="42" font-family="'EB Garamond', serif" font-size="14" font-style="italic" fill="#000000" opacity="1">∂²u/∂t² = c²∇²u</text>
+                <text x="12" y="62" font-family="'EB Garamond', serif" font-size="10" font-style="italic" fill="#000000" opacity="1">c = speed of propagation</text>
+            </svg>
+
+            <!-- Paper: Thermodynamics -->
+            <svg class="desk-paper paper-thermo" viewBox="0 0 130 90" width="130" height="90">
+                <path d="M3 2 Q65 0 127 2 L128 88 Q65 90 2 88 Z" fill="#E0D4B8" stroke="#C0B090" stroke-width="0.4"/>
+                <path d="M3 2 Q65 0 127 2 L128 88 Q65 90 2 88 Z" fill="rgba(150,120,70,0.05)"/>
+                <text x="10" y="20" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#000000" opacity="1">Laws of Thermodynamics</text>
+                <line x1="10" y1="24" x2="110" y2="24" stroke="rgba(60,40,20,0.15)" stroke-width="0.4"/>
+                <text x="10" y="38" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">ΔU = Q − W</text>
+                <text x="10" y="55" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">dS ≥ δQ / T</text>
+                <text x="10" y="72" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">PV = nRT</text>
+                <!-- Coffee ring stain -->
+                <ellipse cx="100" cy="65" rx="14" ry="12" fill="none" stroke="rgba(140,110,60,0.08)" stroke-width="2.5"/>
+            </svg>
+
+            <!-- Paper: Quantum mechanics -->
+            <svg class="desk-paper paper-quantum" viewBox="0 0 115 85" width="115" height="85">
+                <rect x="2" y="2" width="111" height="81" rx="1" fill="#DCD0B4" stroke="#BFB08E" stroke-width="0.4"/>
+                <rect x="2" y="2" width="111" height="81" rx="1" fill="rgba(140,115,70,0.05)"/>
+                <text x="10" y="20" font-family="'EB Garamond', serif" font-size="10" font-style="italic" fill="#000000" opacity="1">Schrödinger:</text>
+                <text x="10" y="38" font-family="'EB Garamond', serif" font-size="13" font-style="italic" fill="#000000" opacity="1">iℏ ∂ψ/∂t = Ĥψ</text>
+                <text x="10" y="56" font-family="'EB Garamond', serif" font-size="10" font-style="italic" fill="#000000" opacity="1">Uncertainty:</text>
+                <text x="10" y="72" font-family="'EB Garamond', serif" font-size="12" font-style="italic" fill="#000000" opacity="1">Δx · Δp ≥ ℏ/2</text>
+                <!-- Ink spot -->
+                <ellipse cx="95" cy="15" rx="4" ry="3" fill="rgba(15,10,35,0.08)" transform="rotate(15, 95, 15)"/>
+            </svg>
+
+            <!-- Paper: Electromagnetism -->
+            <svg class="desk-paper paper-em" viewBox="0 0 125 95" width="125" height="95">
+                <path d="M2 3 Q63 1 123 3 L124 92 Q63 94 2 92 Z" fill="#DED2B6" stroke="#C2B294" stroke-width="0.4"/>
+                <path d="M2 3 Q63 1 123 3 L124 92 Q63 94 2 92 Z" fill="rgba(155,125,75,0.05)"/>
+                <text x="10" y="18" font-family="'EB Garamond', serif" font-size="10" font-style="italic" fill="#000000" opacity="1">Maxwell's Equations:</text>
+                <line x1="10" y1="22" x2="105" y2="22" stroke="rgba(60,40,20,0.12)" stroke-width="0.4"/>
+                <text x="10" y="38" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">∇ · E = ρ/ε₀</text>
+                <text x="10" y="53" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">∇ · B = 0</text>
+                <text x="10" y="68" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">∇ × E = −∂B/∂t</text>
+                <text x="10" y="83" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#000000" opacity="1">∇ × B = μ₀J + μ₀ε₀∂E/∂t</text>
+            </svg>
+
+            <!-- Telescope / Spyglass -->
+            <svg class="desk-object telescope" viewBox="0 0 200 50" width="160" height="40">
+                <!-- Main tube -->
+                <rect x="30" y="16" width="140" height="18" rx="9" fill="#3D1C06" stroke="#2a1204" stroke-width="0.8"/>
+                <!-- Tube highlight -->
+                <rect x="35" y="18" width="130" height="4" rx="2" fill="rgba(120,80,40,0.2)"/>
+                <!-- Brass bands -->
+                <rect x="40" y="14" width="8" height="22" rx="2" fill="#8B6914" stroke="#6B5010" stroke-width="0.4"/>
+                <rect x="90" y="14" width="8" height="22" rx="2" fill="#8B6914" stroke="#6B5010" stroke-width="0.4"/>
+                <rect x="140" y="14" width="8" height="22" rx="2" fill="#8B6914" stroke="#6B5010" stroke-width="0.4"/>
+                <!-- Eyepiece -->
+                <ellipse cx="30" cy="25" rx="8" ry="10" fill="#2a1204" stroke="#1a0a02" stroke-width="0.5"/>
+                <ellipse cx="30" cy="25" rx="5" ry="7" fill="rgba(100,120,160,0.1)"/>
+                <!-- Objective lens end -->
+                <ellipse cx="170" cy="25" rx="6" ry="9" fill="#2a1204" stroke="#1a0a02" stroke-width="0.5"/>
+                <ellipse cx="171" cy="25" rx="4" ry="6.5" fill="rgba(160,180,220,0.08)"/>
+            </svg>
+
+            <!-- Armillary sphere (small) -->
+            <svg class="desk-object armillary" viewBox="0 0 90 110" width="72" height="88">
+                <!-- Base pedestal -->
+                <rect x="30" y="95" width="30" height="6" rx="2" fill="#6B5010" stroke="#4A3808" stroke-width="0.5"/>
+                <rect x="38" y="80" width="14" height="17" rx="1" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                <!-- Outer ring (ecliptic) -->
+                <ellipse cx="45" cy="45" r="34" fill="none" stroke="#8B6914" stroke-width="2"/>
+                <!-- Inner tilted ring -->
+                <ellipse cx="45" cy="45" rx="28" ry="22" fill="none" stroke="#A07818" stroke-width="1.2" transform="rotate(-23, 45, 45)"/>
+                <!-- Another ring perpendicular -->
+                <ellipse cx="45" cy="45" rx="16" ry="30" fill="none" stroke="#A07818" stroke-width="1" transform="rotate(10, 45, 45)"/>
+                <!-- Equatorial band -->
+                <ellipse cx="45" cy="45" rx="30" ry="10" fill="none" stroke="rgba(180,150,80,0.4)" stroke-width="0.8"/>
+                <!-- Earth at center -->
+                <circle cx="45" cy="45" r="5" fill="#2a3a2a" stroke="#3a5a40" stroke-width="0.5"/>
+                <!-- Axis pole -->
+                <line x1="45" y1="12" x2="45" y2="78" stroke="#6B5010" stroke-width="1" stroke-linecap="round"/>
+                <!-- Small decorative dots on rings -->
+                <circle cx="79" cy="45" r="1.5" fill="#A07818"/>
+                <circle cx="11" cy="45" r="1.5" fill="#A07818"/>
+                <circle cx="45" cy="11" r="1.5" fill="#A07818"/>
+            </svg>
+
+            <!-- Pendulum (hanging from shelf) -->
+            <svg class="desk-object pendulum-obj" viewBox="0 0 60 140" width="36" height="84">
+                <!-- Mount point -->
+                <rect x="22" y="0" width="16" height="6" rx="2" fill="#5A3018" stroke="#3D1C06" stroke-width="0.5"/>
+                <!-- String -->
+                <line x1="30" y1="6" x2="30" y2="105" stroke="rgba(180,160,120,0.4)" stroke-width="0.8"/>
+                <!-- Bob -->
+                <circle cx="30" cy="112" r="10" fill="radial-gradient(circle at 35% 35%, #C0B090, #7A6A48)" stroke="#5A4A28" stroke-width="0.8"/>
+                <circle cx="30" cy="112" r="10" fill="#8B7A58"/>
+                <!-- Bob highlight -->
+                <ellipse cx="27" cy="108" rx="4" ry="3" fill="rgba(200,180,140,0.2)"/>
+                <!-- Bob shadow -->
+                <ellipse cx="33" cy="116" rx="5" ry="3" fill="rgba(0,0,0,0.15)"/>
+            </svg>
+
+            <!-- Small balance scale -->
+            <svg class="desk-object balance-scale" viewBox="0 0 120 100" width="84" height="70">
+                <!-- Base -->
+                <ellipse cx="60" cy="92" rx="22" ry="5" fill="#5A3018" stroke="#3D1C06" stroke-width="0.5"/>
+                <!-- Center post -->
+                <rect x="57" y="30" width="6" height="62" rx="1" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                <!-- Post finial -->
+                <circle cx="60" cy="28" r="4" fill="#A07818" stroke="#8B6914" stroke-width="0.5"/>
+                <!-- Beam -->
+                <rect x="10" y="32" width="100" height="3" rx="1" fill="#8B6914" stroke="#6B5010" stroke-width="0.4"/>
+                <!-- Left chain -->
+                <line x1="18" y1="35" x2="18" y2="55" stroke="#8B6914" stroke-width="0.6"/>
+                <line x1="30" y1="35" x2="30" y2="55" stroke="#8B6914" stroke-width="0.6"/>
+                <!-- Left pan -->
+                <path d="M10 55 Q24 62 38 55" stroke="#A07818" stroke-width="1" fill="rgba(140,105,20,0.2)"/>
+                <!-- Right chain -->
+                <line x1="90" y1="35" x2="90" y2="55" stroke="#8B6914" stroke-width="0.6"/>
+                <line x1="102" y1="35" x2="102" y2="55" stroke="#8B6914" stroke-width="0.6"/>
+                <!-- Right pan -->
+                <path d="M82 55 Q96 62 110 55" stroke="#A07818" stroke-width="1" fill="rgba(140,105,20,0.2)"/>
+            </svg>
+
+            <!-- Small globe -->
+            <svg class="desk-object small-globe" viewBox="0 0 70 90" width="49" height="63">
+                <!-- Stand base -->
+                <ellipse cx="35" cy="84" rx="16" ry="4" fill="#5A3018" stroke="#3D1C06" stroke-width="0.5"/>
+                <!-- Stand post -->
+                <rect x="33" y="62" width="4" height="22" rx="1" fill="#6B5010"/>
+                <!-- Stand arc -->
+                <path d="M18 42 Q18 70 35 72 Q52 70 52 42" fill="none" stroke="#8B6914" stroke-width="1.5"/>
+                <!-- Globe -->
+                <circle cx="35" cy="38" r="24" fill="#1a3a2a" stroke="#2a4a38" stroke-width="0.8"/>
+                <!-- Continents hint -->
+                <path d="M25 28 Q30 24 38 26 Q42 30 40 36 Q36 38 30 34 Z" fill="rgba(60,100,60,0.4)"/>
+                <path d="M42 40 Q48 38 50 44 Q48 50 42 48 Z" fill="rgba(60,100,60,0.35)"/>
+                <path d="M22 42 Q26 40 28 44 Q26 48 22 46 Z" fill="rgba(60,100,60,0.3)"/>
+                <!-- Grid lines -->
+                <ellipse cx="35" cy="38" rx="24" ry="10" fill="none" stroke="rgba(80,120,80,0.2)" stroke-width="0.4"/>
+                <ellipse cx="35" cy="38" rx="10" ry="24" fill="none" stroke="rgba(80,120,80,0.2)" stroke-width="0.4"/>
+                <!-- Globe highlight -->
+                <ellipse cx="28" cy="30" rx="8" ry="10" fill="rgba(255,255,255,0.05)"/>
+                <!-- Axis tilt indicator -->
+                <line x1="35" y1="12" x2="35" y2="8" stroke="#8B6914" stroke-width="1" stroke-linecap="round"/>
             </svg>
         </div>
 
