@@ -340,13 +340,9 @@ html, body {
     background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255,220,120,0.28) 0%, rgba(218,165,32,0.08) 40%, transparent 65%);
 }
 
-/* --- FRONT EDGE (pages visible from front) --- */
+/* --- FRONT EDGE --- */
 .book-front {
-    width: 320px; height: 50px;
-    background: linear-gradient(180deg, #E8DCC0 0%, #DDD0B0 30%, #D0C4A0 70%, #C8BA98 100%);
-    transform: rotateX(-90deg) translateZ(0px);
-    transform-origin: top;
-    border-bottom: 1px solid #B8A880;
+    display: none;
 }
 
 /* --- RIGHT EDGE (pages) --- */
@@ -389,31 +385,16 @@ html, body {
 
 /* --- SPINE --- */
 .book-spine {
-    width: 50px; height: 220px;
-    background: linear-gradient(90deg, #2E1504 0%, #3D1C06 40%, #2E1504 100%);
-    transform: rotateY(-90deg) translateZ(0px);
-    transform-origin: right;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    align-items: center;
-    padding: 20px 0;
+    display: none;
 }
 
 .spine-band {
-    width: 100%; height: 4px;
-    background: linear-gradient(90deg, #2A1303, #3D1C06, #2A1303);
-    border-top: 0.5px solid #4A2308;
-    border-bottom: 0.5px solid #1A0A02;
+    display: none;
 }
 
-/* --- BACK EDGE (pages) --- */
+/* --- BACK EDGE --- */
 .book-back {
-    width: 320px; height: 50px;
-    background: linear-gradient(180deg, #E8DCC0 0%, #DDD0B0 30%, #D0C4A0 70%, #C8BA98 100%);
-    transform: rotateX(-90deg) translateZ(-220px);
-    transform-origin: top;
-    border-bottom: 1px solid #B8A880;
+    display: none;
 }
 
 /* Book shadow on desk */
@@ -502,6 +483,106 @@ html, body {
     transform: rotate(-2deg);
 }
 
+/* Newton's Cradle */
+.newtons-cradle {
+    position: absolute;
+    bottom: 30%; left: 62%;
+    width: 140px; height: 120px;
+    opacity: 0.55;
+}
+
+.cradle-frame {
+    position: absolute;
+    top: 0; left: 0;
+}
+
+.cradle-balls {
+    position: absolute;
+    top: 20px; left: 30px;
+    display: flex;
+    gap: 0px;
+    align-items: flex-start;
+}
+
+.cradle-string-ball {
+    width: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: top center;
+}
+
+.cradle-string {
+    width: 1px; height: 62px;
+    background: rgba(180,160,120,0.4);
+}
+
+.cradle-ball {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #C0B090, #8B7A60 50%, #5A4A30 100%);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1);
+}
+
+/* Left ball swings out then rests when right swings */
+.ball-left {
+    animation: swingLeft 1.6s ease-in-out infinite;
+}
+
+/* Right ball swings out then rests when left swings */
+.ball-right {
+    animation: swingRight 1.6s ease-in-out infinite;
+}
+
+@keyframes swingLeft {
+    0%   { transform: rotate(0deg); }
+    50%  { transform: rotate(0deg); }
+    75%  { transform: rotate(30deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes swingRight {
+    0%   { transform: rotate(0deg); }
+    25%  { transform: rotate(-30deg); }
+    50%  { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* Physics desk objects */
+.desk-object {
+    position: absolute;
+    pointer-events: none;
+}
+
+.magnifying-glass {
+    bottom: 28%; right: 12%;
+    opacity: 0.45;
+    transform: rotate(25deg);
+}
+
+.hourglass {
+    bottom: 30%; right: 35%;
+    opacity: 0.4;
+}
+
+.prism {
+    bottom: 26%; left: 35%;
+    opacity: 0.4;
+    transform: rotate(-8deg);
+}
+
+.compass-tool {
+    bottom: 18%; right: 20%;
+    opacity: 0.38;
+    transform: rotate(12deg);
+}
+
+.pocket-watch {
+    bottom: 24%; left: 25%;
+    opacity: 0.4;
+    transform: rotate(-15deg);
+}
+
 /* ===== PARTICLES ===== */
 .particles {
     position: absolute;
@@ -523,6 +604,26 @@ html, body {
     );
     z-index: 17;
     pointer-events: none;
+}
+
+/* ===== CURSOR LIGHT (lantern reveal) ===== */
+.cursor-light {
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(255,200,120,0.18) 0%,
+        rgba(255,180,100,0.1) 15%,
+        rgba(255,160,80,0.04) 35%,
+        transparent 55%
+    );
+    pointer-events: none;
+    z-index: 17;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.4s ease;
+    opacity: 0;
+    mix-blend-mode: screen;
 }
 
 /* ===== CURSOR GLOW ===== */

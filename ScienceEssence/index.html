@@ -139,6 +139,155 @@
                 <ellipse cx="85" cy="160" rx="6" ry="3" fill="rgba(20,15,40,0.08)" transform="rotate(-12, 85, 160)"/>
             </svg>
 
+            <!-- Newton's Cradle -->
+            <div class="newtons-cradle">
+                <!-- Frame -->
+                <svg class="cradle-frame" viewBox="0 0 140 120" width="140" height="120">
+                    <!-- Base bar -->
+                    <rect x="10" y="108" width="120" height="5" rx="2" fill="#6B5010" stroke="#4A3808" stroke-width="0.5"/>
+                    <!-- Left upright -->
+                    <rect x="18" y="18" width="4" height="92" rx="1" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                    <!-- Right upright -->
+                    <rect x="118" y="18" width="4" height="92" rx="1" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                    <!-- Top bar -->
+                    <rect x="16" y="15" width="108" height="5" rx="1.5" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                    <!-- Top bar highlight -->
+                    <rect x="20" y="16" width="100" height="1.5" rx="0.5" fill="rgba(200,170,100,0.15)"/>
+                </svg>
+                <!-- Strings and balls -->
+                <div class="cradle-balls">
+                    <!-- Ball 1 (swinging left) -->
+                    <div class="cradle-string-ball ball-left">
+                        <div class="cradle-string"></div>
+                        <div class="cradle-ball"></div>
+                    </div>
+                    <!-- Ball 2 (static) -->
+                    <div class="cradle-string-ball ball-static">
+                        <div class="cradle-string"></div>
+                        <div class="cradle-ball"></div>
+                    </div>
+                    <!-- Ball 3 (static) -->
+                    <div class="cradle-string-ball ball-static">
+                        <div class="cradle-string"></div>
+                        <div class="cradle-ball"></div>
+                    </div>
+                    <!-- Ball 4 (static) -->
+                    <div class="cradle-string-ball ball-static">
+                        <div class="cradle-string"></div>
+                        <div class="cradle-ball"></div>
+                    </div>
+                    <!-- Ball 5 (swinging right) -->
+                    <div class="cradle-string-ball ball-right">
+                        <div class="cradle-string"></div>
+                        <div class="cradle-ball"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Magnifying glass -->
+            <svg class="desk-object magnifying-glass" viewBox="0 0 100 160" width="70" height="112">
+                <!-- Handle -->
+                <rect x="44" y="85" width="12" height="65" rx="4" fill="#5A3018" stroke="#3D1C06" stroke-width="0.8"/>
+                <rect x="47" y="88" width="3" height="58" fill="#7A4828" opacity="0.3"/>
+                <!-- Ferrule -->
+                <rect x="42" y="80" width="16" height="10" rx="2" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                <!-- Lens rim -->
+                <circle cx="50" cy="42" r="36" fill="none" stroke="#8B6914" stroke-width="4"/>
+                <circle cx="50" cy="42" r="33" fill="none" stroke="#A07818" stroke-width="1.5"/>
+                <!-- Lens glass -->
+                <circle cx="50" cy="42" r="31" fill="rgba(200,220,240,0.08)"/>
+                <!-- Lens reflection -->
+                <ellipse cx="40" cy="32" rx="12" ry="8" fill="rgba(255,255,255,0.06)" transform="rotate(-20, 40, 32)"/>
+            </svg>
+
+            <!-- Hourglass -->
+            <svg class="desk-object hourglass" viewBox="0 0 60 120" width="42" height="84">
+                <!-- Top frame -->
+                <rect x="10" y="4" width="40" height="5" rx="1.5" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                <!-- Bottom frame -->
+                <rect x="10" y="111" width="40" height="5" rx="1.5" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                <!-- Side posts -->
+                <path d="M14 9 Q12 60 14 111" stroke="#6B5010" stroke-width="1.5" fill="none"/>
+                <path d="M46 9 Q48 60 46 111" stroke="#6B5010" stroke-width="1.5" fill="none"/>
+                <!-- Glass bulbs -->
+                <path d="M18 9 Q18 45 30 58 Q42 45 42 9" fill="rgba(200,210,220,0.1)" stroke="rgba(160,140,100,0.3)" stroke-width="0.6"/>
+                <path d="M18 111 Q18 75 30 62 Q42 75 42 111" fill="rgba(200,210,220,0.1)" stroke="rgba(160,140,100,0.3)" stroke-width="0.6"/>
+                <!-- Sand top -->
+                <path d="M20 28 Q30 32 40 28 L38 9 L22 9 Z" fill="rgba(194,154,80,0.4)"/>
+                <!-- Sand stream -->
+                <line x1="30" y1="52" x2="30" y2="68" stroke="rgba(194,154,80,0.3)" stroke-width="1"/>
+                <!-- Sand bottom -->
+                <path d="M22 111 Q30 100 38 111 Z" fill="rgba(194,154,80,0.45)"/>
+            </svg>
+
+            <!-- Prism -->
+            <svg class="desk-object prism" viewBox="0 0 80 70" width="64" height="56">
+                <!-- Prism body (triangle) -->
+                <path d="M40 8 L10 58 L70 58 Z" fill="rgba(180,200,220,0.12)" stroke="rgba(160,180,200,0.3)" stroke-width="1"/>
+                <!-- Light refraction hint -->
+                <path d="M40 8 L10 58" stroke="rgba(200,210,230,0.15)" stroke-width="0.5"/>
+                <path d="M40 8 L70 58" stroke="rgba(200,210,230,0.15)" stroke-width="0.5"/>
+                <!-- Rainbow rays emerging from right face -->
+                <line x1="58" y1="38" x2="78" y2="28" stroke="rgba(255,60,60,0.2)" stroke-width="0.8"/>
+                <line x1="59" y1="40" x2="78" y2="32" stroke="rgba(255,160,0,0.2)" stroke-width="0.8"/>
+                <line x1="60" y1="42" x2="78" y2="36" stroke="rgba(255,255,0,0.2)" stroke-width="0.8"/>
+                <line x1="60" y1="44" x2="78" y2="40" stroke="rgba(0,200,0,0.2)" stroke-width="0.8"/>
+                <line x1="61" y1="46" x2="78" y2="44" stroke="rgba(0,100,255,0.2)" stroke-width="0.8"/>
+                <line x1="61" y1="48" x2="78" y2="48" stroke="rgba(120,0,255,0.18)" stroke-width="0.8"/>
+                <!-- Incoming light beam -->
+                <line x1="2" y1="38" x2="25" y2="38" stroke="rgba(255,250,220,0.2)" stroke-width="1.5"/>
+                <!-- Highlight on glass -->
+                <path d="M35 20 Q40 35 30 48" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" fill="none"/>
+            </svg>
+
+            <!-- Compass/Protractor -->
+            <svg class="desk-object compass-tool" viewBox="0 0 90 100" width="63" height="70">
+                <!-- Protractor arc -->
+                <path d="M10 70 A40 40 0 0 1 80 70" fill="none" stroke="rgba(180,160,120,0.3)" stroke-width="1.5"/>
+                <!-- Tick marks -->
+                <line x1="10" y1="70" x2="13" y2="67" stroke="rgba(180,160,120,0.25)" stroke-width="0.5"/>
+                <line x1="18" y1="48" x2="22" y2="50" stroke="rgba(180,160,120,0.25)" stroke-width="0.5"/>
+                <line x1="33" y1="35" x2="35" y2="39" stroke="rgba(180,160,120,0.25)" stroke-width="0.5"/>
+                <line x1="45" y1="30" x2="45" y2="34" stroke="rgba(180,160,120,0.25)" stroke-width="0.5"/>
+                <line x1="57" y1="35" x2="55" y2="39" stroke="rgba(180,160,120,0.25)" stroke-width="0.5"/>
+                <line x1="72" y1="48" x2="68" y2="50" stroke="rgba(180,160,120,0.25)" stroke-width="0.5"/>
+                <line x1="80" y1="70" x2="77" y2="67" stroke="rgba(180,160,120,0.25)" stroke-width="0.5"/>
+                <!-- Baseline -->
+                <line x1="8" y1="70" x2="82" y2="70" stroke="rgba(180,160,120,0.3)" stroke-width="1"/>
+                <!-- Compass legs -->
+                <line x1="45" y1="70" x2="30" y2="95" stroke="#6B5010" stroke-width="2" stroke-linecap="round"/>
+                <line x1="45" y1="70" x2="60" y2="95" stroke="#6B5010" stroke-width="2" stroke-linecap="round"/>
+                <!-- Pivot -->
+                <circle cx="45" cy="70" r="2.5" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                <!-- Pencil tip -->
+                <circle cx="60" cy="95" r="1" fill="#333"/>
+                <!-- Point tip -->
+                <line x1="30" y1="95" x2="29" y2="98" stroke="#888" stroke-width="1" stroke-linecap="round"/>
+            </svg>
+
+            <!-- Small pocket watch -->
+            <svg class="desk-object pocket-watch" viewBox="0 0 70 90" width="49" height="63">
+                <!-- Chain -->
+                <path d="M35 5 Q25 8 30 15" stroke="#8B6914" stroke-width="1" fill="none" stroke-dasharray="2,2"/>
+                <!-- Watch body -->
+                <circle cx="35" cy="48" r="28" fill="#1a1408" stroke="#8B6914" stroke-width="2"/>
+                <circle cx="35" cy="48" r="25" fill="#0e0c06" stroke="#A07818" stroke-width="0.8"/>
+                <!-- Watch face -->
+                <circle cx="35" cy="48" r="22" fill="rgba(225,215,190,0.1)"/>
+                <!-- Hour marks -->
+                <line x1="35" y1="28" x2="35" y2="31" stroke="rgba(180,160,120,0.4)" stroke-width="0.8"/>
+                <line x1="35" y1="65" x2="35" y2="68" stroke="rgba(180,160,120,0.4)" stroke-width="0.8"/>
+                <line x1="15" y1="48" x2="18" y2="48" stroke="rgba(180,160,120,0.4)" stroke-width="0.8"/>
+                <line x1="52" y1="48" x2="55" y2="48" stroke="rgba(180,160,120,0.4)" stroke-width="0.8"/>
+                <!-- Hands -->
+                <line x1="35" y1="48" x2="35" y2="33" stroke="rgba(200,170,100,0.5)" stroke-width="1" stroke-linecap="round"/>
+                <line x1="35" y1="48" x2="46" y2="44" stroke="rgba(200,170,100,0.5)" stroke-width="0.7" stroke-linecap="round"/>
+                <!-- Center dot -->
+                <circle cx="35" cy="48" r="1.5" fill="#8B6914"/>
+                <!-- Crown -->
+                <rect x="32" y="17" width="6" height="5" rx="1.5" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+            </svg>
+
             <!-- Inkwell with quill inside -->
             <svg class="writing-set" viewBox="0 0 90 170" width="85" height="160">
                 <!-- Quill feather (angled, resting in inkwell) -->
@@ -183,6 +332,9 @@
 
         <!-- ===== VIGNETTE ===== -->
         <div class="vignette"></div>
+
+        <!-- ===== CURSOR LIGHT (reveals dark areas) ===== -->
+        <div class="cursor-light" id="cursorLight"></div>
 
         <!-- ===== CURSOR GLOW ===== -->
         <div class="cursor-glow" id="cursorGlow"></div>

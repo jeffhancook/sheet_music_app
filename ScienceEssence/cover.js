@@ -257,17 +257,31 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(createLightOrb, 1800);
 
     // ───────────────────────────────────
-    // 7. Cursor glow aura
+    // 7. Cursor glow aura + lantern light
     // ───────────────────────────────────
     const cursorGlow = document.getElementById('cursorGlow');
-    if (cursorGlow) {
-        scene.addEventListener('mouseenter', () => { cursorGlow.style.opacity = '1'; });
-        scene.addEventListener('mouseleave', () => { cursorGlow.style.opacity = '0'; });
-        scene.addEventListener('mousemove', (e) => {
-            cursorGlow.style.left = e.clientX + 'px';
-            cursorGlow.style.top = e.clientY + 'px';
-        });
-    }
+    const cursorLight = document.getElementById('cursorLight');
+
+    scene.addEventListener('mouseenter', () => {
+        if (cursorGlow) cursorGlow.style.opacity = '1';
+        if (cursorLight) cursorLight.style.opacity = '1';
+    });
+    scene.addEventListener('mouseleave', () => {
+        if (cursorGlow) cursorGlow.style.opacity = '0';
+        if (cursorLight) cursorLight.style.opacity = '0';
+    });
+    scene.addEventListener('mousemove', (e) => {
+        const px = e.clientX + 'px';
+        const py = e.clientY + 'px';
+        if (cursorGlow) {
+            cursorGlow.style.left = px;
+            cursorGlow.style.top = py;
+        }
+        if (cursorLight) {
+            cursorLight.style.left = px;
+            cursorLight.style.top = py;
+        }
+    });
 
     // ───────────────────────────────────
     // 8. Resize handler for bookshelves
