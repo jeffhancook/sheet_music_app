@@ -479,7 +479,7 @@ html, body {
 .parchment {
     position: absolute;
     bottom: 37%; left: 5%;
-    opacity: 0.55;
+    opacity: 0.85;
     transform: rotate(-2deg);
 }
 
@@ -561,7 +561,7 @@ html, body {
 }
 
 .hourglass {
-    bottom: 30%; right: 35%;
+    bottom: 16%; right: 42%;
     opacity: 0.4;
 }
 
@@ -581,6 +581,65 @@ html, body {
     bottom: 24%; left: 25%;
     opacity: 0.4;
     transform: rotate(-15deg);
+}
+
+.telescope {
+    bottom: 34%; left: 36%;
+    opacity: 0.4;
+    transform: rotate(-5deg);
+}
+
+.armillary {
+    bottom: 26%; right: 6%;
+    opacity: 0.42;
+}
+
+.pendulum-obj {
+    top: 20%; left: 8%;
+    opacity: 0.35;
+}
+
+.balance-scale {
+    bottom: 20%; left: 10%;
+    opacity: 0.38;
+}
+
+.small-globe {
+    bottom: 14%; left: 42%;
+    opacity: 0.4;
+}
+
+/* Scattered papers */
+.desk-paper {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.85;
+    transition: opacity 0.3s ease;
+}
+
+.desk-paper text {
+    fill: #000;
+    opacity: 1;
+}
+
+.paper-wave {
+    bottom: 10%; right: 8%;
+    transform: rotate(4deg);
+}
+
+.paper-thermo {
+    bottom: 6%; left: 30%;
+    transform: rotate(-3deg);
+}
+
+.paper-quantum {
+    bottom: 18%; left: 52%;
+    transform: rotate(7deg);
+}
+
+.paper-em {
+    bottom: 4%; right: 30%;
+    transform: rotate(-5deg);
 }
 
 /* ===== PARTICLES ===== */
@@ -609,14 +668,15 @@ html, body {
 /* ===== CURSOR LIGHT (lantern reveal) ===== */
 .cursor-light {
     position: fixed;
-    width: 500px;
-    height: 500px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
     background: radial-gradient(circle,
-        rgba(255,200,120,0.18) 0%,
-        rgba(255,180,100,0.1) 15%,
-        rgba(255,160,80,0.04) 35%,
-        transparent 55%
+        rgba(255,220,150,0.3) 0%,
+        rgba(255,200,120,0.18) 15%,
+        rgba(255,180,100,0.08) 35%,
+        rgba(255,160,80,0.02) 55%,
+        transparent 70%
     );
     pointer-events: none;
     z-index: 17;
