@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Essence of Physics</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="scene">
+
+        <!-- ===== LIBRARY BACKGROUND ===== -->
+        <div class="library">
+            <div class="library-shelves" id="libraryShelves"></div>
+            <!-- Dim warm wash on shelves -->
+            <div class="library-dimmer"></div>
+        </div>
+
+        <!-- ===== DESK ===== -->
+        <div class="desk">
+            <div class="desk-edge-strip"></div>
+        </div>
+
+        <!-- ===== LAMP LIGHT (warm radial) ===== -->
+        <div class="lamp-light"></div>
+
+        <!-- ===== OIL LAMP ===== -->
+        <div class="lamp">
+            <svg class="lamp-svg" viewBox="0 0 100 200" width="90" height="180">
+                <ellipse cx="50" cy="190" rx="28" ry="7" fill="#8B6914"/>
+                <ellipse cx="50" cy="188" rx="26" ry="6" fill="#A07818"/>
+                <path d="M24 188 L28 168 L72 168 L76 188" fill="#8B6914" stroke="#6B5010" stroke-width="0.5"/>
+                <ellipse cx="50" cy="168" rx="22" ry="5" fill="#A07818" stroke="#8B6914" stroke-width="0.5"/>
+                <rect x="45" y="120" width="10" height="48" rx="3" fill="#A07818"/>
+                <rect x="47" y="122" width="2" height="44" fill="#C8A030" opacity="0.3"/>
+                <path d="M32 120 Q30 108 34 100 Q40 92 50 90 Q60 92 66 100 Q70 108 68 120 Z" fill="#A07818" stroke="#8B6914" stroke-width="1"/>
+                <path d="M37 115 Q36 108 39 103 Q44 97 50 96 Q56 97 61 103 Q64 108 63 115" fill="#B89028" opacity="0.4"/>
+                <rect x="47" y="82" width="6" height="10" rx="2" fill="#8B6914"/>
+                <rect x="48" y="74" width="4" height="12" rx="1" fill="#2C1810"/>
+                <path d="M38 84 Q34 60 40 38 Q44 22 50 16 Q56 22 60 38 Q66 60 62 84" fill="rgba(255,240,200,0.05)" stroke="rgba(200,180,140,0.15)" stroke-width="0.8"/>
+            </svg>
+            <div class="flame-wrap">
+                <div class="flame"><div class="flame-core"></div></div>
+            </div>
+            <div class="light-cone"></div>
+        </div>
+
+        <!-- ===== 3D BOOK ===== -->
+        <div class="book-scene">
+            <a href="#" class="book-link">
+                <div class="book">
+                    <!-- Top cover -->
+                    <div class="book-face book-cover">
+                        <!-- Leather texture overlay -->
+                        <div class="leather-texture"></div>
+                        <!-- Gold border -->
+                        <div class="cover-border">
+                            <div class="cover-border-inner">
+                                <!-- Corner filigree -->
+                                <div class="corner-fl corner-tl"></div>
+                                <div class="corner-fl corner-tr"></div>
+                                <div class="corner-fl corner-bl"></div>
+                                <div class="corner-fl corner-br"></div>
+
+                                <!-- Title -->
+                                <div class="book-title">
+                                    <div class="title-ornament top-ornament">&#10045;</div>
+                                    <span class="title-line line-1">The Essence</span>
+                                    <span class="title-line line-2">of</span>
+                                    <span class="title-line line-3">Physics</span>
+                                    <div class="title-divider"></div>
+                                    <span class="title-line line-4">Vol. I</span>
+                                    <div class="title-ornament bottom-ornament">&#10042;</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Glow overlay -->
+                        <div class="cover-glow"></div>
+                    </div>
+
+                    <!-- Front edge (pages) -->
+                    <div class="book-face book-front">
+                        <div class="page-lines"></div>
+                    </div>
+
+                    <!-- Right edge (pages) -->
+                    <div class="book-face book-right">
+                        <div class="page-lines"></div>
+                    </div>
+
+                    <!-- Bottom -->
+                    <div class="book-face book-bottom"></div>
+
+                    <!-- Spine -->
+                    <div class="book-face book-spine">
+                        <div class="spine-band"></div>
+                        <div class="spine-band"></div>
+                        <div class="spine-band"></div>
+                        <div class="spine-band"></div>
+                    </div>
+
+                    <!-- Back edge (pages) -->
+                    <div class="book-face book-back">
+                        <div class="page-lines"></div>
+                    </div>
+                </div>
+            </a>
+            <!-- Book shadow on desk -->
+            <div class="book-desk-shadow"></div>
+            <!-- Title glow halo -->
+            <div class="title-glow-halo"></div>
+        </div>
+
+        <!-- ===== DESK ITEMS ===== -->
+        <div class="desk-items">
+            <!-- Parchment with equations -->
+            <svg class="parchment" viewBox="0 0 150 190" width="130" height="165">
+                <!-- Paper shadow -->
+                <ellipse cx="80" cy="185" rx="65" ry="6" fill="rgba(0,0,0,0.2)"/>
+                <!-- Paper with slightly wavy edges -->
+                <path d="M8 4 Q40 2 75 5 Q110 2 142 4 L144 60 Q142 95 144 130 L142 186 Q110 188 75 185 Q40 188 8 186 L6 130 Q8 95 6 60 Z" fill="#E0D4B4" stroke="#C0B090" stroke-width="0.4"/>
+                <!-- Aged tone overlay -->
+                <path d="M8 4 Q40 2 75 5 Q110 2 142 4 L144 60 Q142 95 144 130 L142 186 Q110 188 75 185 Q40 188 8 186 L6 130 Q8 95 6 60 Z" fill="rgba(160,130,80,0.08)"/>
+                <!-- Coffee stain -->
+                <ellipse cx="110" cy="45" rx="20" ry="18" fill="rgba(150,120,70,0.08)"/>
+                <ellipse cx="110" cy="45" rx="18" ry="16" fill="none" stroke="rgba(140,110,60,0.06)" stroke-width="2"/>
+                <!-- Crease -->
+                <path d="M30 3 Q35 95 28 186" stroke="rgba(160,130,90,0.08)" stroke-width="0.8" fill="none"/>
+                <!-- Handwritten equations (slightly varied positions for natural feel) -->
+                <text x="16" y="28" font-family="'EB Garamond', serif" font-size="13" font-style="italic" fill="#4a3820" opacity="0.75">F = ma</text>
+                <text x="20" y="52" font-family="'EB Garamond', serif" font-size="12" font-style="italic" fill="#4a3820" opacity="0.65">E = mc²</text>
+                <text x="15" y="76" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#4a3820" opacity="0.6">F = G(m₁m₂)/r²</text>
+                <text x="22" y="99" font-family="'EB Garamond', serif" font-size="10" font-style="italic" fill="#4a3820" opacity="0.55">∇ × E = −∂B/∂t</text>
+                <text x="17" y="120" font-family="'EB Garamond', serif" font-size="12" font-style="italic" fill="#4a3820" opacity="0.6">p = mv</text>
+                <text x="24" y="143" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#4a3820" opacity="0.5">λ = h/p</text>
+                <text x="18" y="166" font-family="'EB Garamond', serif" font-size="10.5" font-style="italic" fill="#4a3820" opacity="0.45">S = k ln Ω</text>
+                <!-- Ink smudge near bottom -->
+                <ellipse cx="85" cy="160" rx="6" ry="3" fill="rgba(20,15,40,0.08)" transform="rotate(-12, 85, 160)"/>
+            </svg>
+
+            <!-- Inkwell with quill inside -->
+            <svg class="writing-set" viewBox="0 0 90 170" width="85" height="160">
+                <!-- Quill feather (angled, resting in inkwell) -->
+                <g transform="rotate(-15, 45, 80)">
+                    <!-- Feather — left vane (softer, wider) -->
+                    <path d="M44 5 Q32 20 28 40 Q25 55 27 72 Q28 78 30 82 L33 80 Q30 65 30 50 Q32 30 44 5 Z" fill="#EDE4CC" opacity="0.85"/>
+                    <!-- Feather — right vane -->
+                    <path d="M44 5 Q56 20 58 40 Q60 55 57 72 Q56 78 54 82 L51 80 Q54 65 54 50 Q53 30 44 5 Z" fill="#E5DCC4" opacity="0.85"/>
+                    <!-- Rachis (central shaft) -->
+                    <path d="M44 8 Q43 40 43 80 L43 125" stroke="#BEB09A" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                    <!-- Barbs — left side -->
+                    <path d="M37 18 Q30 16 24 19" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M35 28 Q27 26 21 30" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M33 38 Q25 36 19 40" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M31 48 Q24 46 18 50" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M30 58 Q23 56 17 60" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <!-- Barbs — right side -->
+                    <path d="M51 18 Q58 16 64 19" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M53 28 Q61 26 67 30" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M55 38 Q63 36 69 40" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M56 48 Q64 46 70 50" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <path d="M57 58 Q64 56 70 60" stroke="#D8CEB8" stroke-width="0.35" fill="none"/>
+                    <!-- Nib (dips into ink) -->
+                    <path d="M42 123 L43 134 L44 123" fill="#3a2a18" opacity="0.7"/>
+                </g>
+                <!-- Inkwell body — rounder, more ceramic -->
+                <path d="M16 110 Q12 125 14 148 Q16 155 22 158 L68 158 Q74 155 76 148 Q78 125 74 110 Z" fill="#181818" stroke="#2a2a2a" stroke-width="0.6"/>
+                <!-- Inkwell rim — raised lip -->
+                <ellipse cx="45" cy="112" rx="24" ry="8.5" fill="#222" stroke="#333" stroke-width="0.6"/>
+                <ellipse cx="45" cy="110" rx="24" ry="8.5" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="0.5"/>
+                <!-- Ink surface -->
+                <ellipse cx="45" cy="109" rx="17" ry="6" fill="#0a0a1a"/>
+                <!-- Ink highlight -->
+                <ellipse cx="40" cy="108" rx="5" ry="2" fill="rgba(50,50,100,0.2)"/>
+                <!-- Inkwell body highlight -->
+                <path d="M28 135 Q45 130 62 135" stroke="rgba(255,255,255,0.04)" stroke-width="1.2" fill="none"/>
+            </svg>
+        </div>
+
+        <!-- ===== PARTICLES ===== -->
+        <div class="particles" id="particles"></div>
+
+        <!-- ===== VIGNETTE ===== -->
+        <div class="vignette"></div>
+
+        <!-- ===== CURSOR GLOW ===== -->
+        <div class="cursor-glow" id="cursorGlow"></div>
+
+        <!-- ===== ENTER HINT ===== -->
+        <div class="enter-hint">
+            <p>Click the book to enter...</p>
+        </div>
+    </div>
+    <script src="cover.js"></script>
+</body>
+</html>
