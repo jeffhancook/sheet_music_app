@@ -673,25 +673,65 @@
         <!-- Green vignette -->
         <div class="newton-vignette"></div>
 
-        <!-- Dialogue box -->
-        <div class="dialogue-box" id="dialogueBox">
-            <div class="dialogue-text" id="dialogueText"></div>
-            <div class="dialogue-cursor">&#9660;</div>
-        </div>
+    </div>
 
-        <!-- Laws overlay -->
-        <div class="laws-overlay" id="lawsOverlay">
+    <!-- Dialogue box (outside newton-scene to avoid filter containment) -->
+    <div class="dialogue-box" id="dialogueBox">
+        <div class="dialogue-text" id="dialogueText"></div>
+        <div class="dialogue-cursor">&#9660;</div>
+    </div>
+
+    <!-- Laws overlay (outside newton-scene to avoid filter containment) -->
+    <div class="laws-overlay" id="lawsOverlay">
             <div class="law-card law-card-1">
                 <div class="law-number">I</div>
                 <div class="law-title">Law of Inertia</div>
                 <div class="law-desc">A body at rest stays at rest, and a body in motion stays in motion, unless acted upon by an external force.</div>
                 <div class="law-equation">&Sigma;F = 0</div>
             </div>
-            <div class="law-card law-card-2">
+            <div class="law-card law-card-2" id="lawCard2">
                 <div class="law-number">II</div>
                 <div class="law-title">Law of Acceleration</div>
                 <div class="law-desc">The acceleration of an object is proportional to the net force and inversely proportional to its mass.</div>
                 <div class="law-equation">F = ma</div>
+                <div class="fma-breakdown">
+                    <div class="fma-equation-large">
+                        <div class="fma-component">
+                            <span class="fma-symbol fma-symbol-f">F</span>
+                            <span class="fma-label fma-label-f">Force</span>
+                        </div>
+                        <span class="fma-symbol fma-symbol-eq">=</span>
+                        <div class="fma-component">
+                            <span class="fma-symbol fma-symbol-m">m</span>
+                            <span class="fma-label fma-label-m">Mass</span>
+                        </div>
+                        <div class="fma-component">
+                            <span class="fma-symbol fma-symbol-a">a</span>
+                            <span class="fma-label fma-label-a">Acceleration</span>
+                        </div>
+                    </div>
+                    <div class="fma-divider"></div>
+                    <div class="fma-details">
+                        <div class="fma-detail">
+                            <div class="fma-detail-symbol fma-detail-symbol-f">F</div>
+                            <div class="fma-detail-name">Net Force</div>
+                            <div class="fma-detail-desc">The total push or pull acting on an object</div>
+                            <div class="fma-detail-unit">Measured in Newtons (N)</div>
+                        </div>
+                        <div class="fma-detail">
+                            <div class="fma-detail-symbol fma-detail-symbol-m">m</div>
+                            <div class="fma-detail-name">Mass</div>
+                            <div class="fma-detail-desc">The amount of matter in an object; its resistance to acceleration</div>
+                            <div class="fma-detail-unit">Measured in kilograms (kg)</div>
+                        </div>
+                        <div class="fma-detail">
+                            <div class="fma-detail-symbol fma-detail-symbol-a">a</div>
+                            <div class="fma-detail-name">Acceleration</div>
+                            <div class="fma-detail-desc">The rate of change of velocity over time</div>
+                            <div class="fma-detail-unit">Measured in m/s&sup2;</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="law-card law-card-3">
                 <div class="law-number">III</div>
@@ -699,7 +739,6 @@
                 <div class="law-desc">For every action, there is an equal and opposite reaction.</div>
                 <div class="law-equation">F&#x2081;&#x2082; = &#x2212;F&#x2082;&#x2081;</div>
             </div>
-        </div>
     </div>
 
     <script src="cover.js"></script>

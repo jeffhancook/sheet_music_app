@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dText = document.getElementById('dialogueText');
                 if (dText) dText.textContent = '';
                 const lawsOv = document.getElementById('lawsOverlay');
-                if (lawsOv) lawsOv.classList.remove('laws-visible');
+                if (lawsOv) lawsOv.classList.remove('laws-visible', 'law2-focused');
                 newtonScene.style.transform = '';
 
                 // Home appears behind black
@@ -701,6 +701,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (overlay) {
             overlay.classList.add('laws-visible');
         }
+    }
+
+    // Law II click → expand and show F=ma breakdown
+    const lawCard2 = document.getElementById('lawCard2');
+    if (lawCard2) {
+        lawCard2.addEventListener('click', () => {
+            const overlay = document.getElementById('lawsOverlay');
+            if (!overlay || overlay.classList.contains('law2-focused')) return;
+            overlay.classList.add('law2-focused');
+        });
     }
 
     function triggerNewtonZoomAndLaws() {

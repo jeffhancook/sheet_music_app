@@ -1205,7 +1205,7 @@ html, body {
     border: 1px solid rgba(218,165,32,0.3);
     border-radius: 8px;
     box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 12px rgba(218,165,32,0.08);
-    pointer-events: auto;
+    pointer-events: none;
     opacity: 0;
     transform: translateY(20px);
     transition: opacity 0.6s ease, transform 0.6s ease;
@@ -1214,6 +1214,7 @@ html, body {
 .laws-visible .law-card {
     opacity: 1;
     transform: translateY(0);
+    pointer-events: auto;
 }
 
 .law-number {
@@ -1249,6 +1250,161 @@ html, body {
     color: #D4A017;
     text-shadow: 0 0 8px rgba(218,165,32,0.3);
     text-align: center;
+}
+
+/* ── Law II glow effect ── */
+.law-card-2 {
+    cursor: pointer;
+    animation: law2Glow 2.5s ease-in-out infinite;
+}
+
+@keyframes law2Glow {
+    0%, 100% {
+        box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 12px rgba(218,165,32,0.08);
+        border-color: rgba(218,165,32,0.3);
+    }
+    50% {
+        box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 24px rgba(218,165,32,0.3), 0 0 48px rgba(218,165,32,0.12);
+        border-color: rgba(218,165,32,0.6);
+    }
+}
+
+/* ── Law II expanded (focused) state ── */
+.laws-overlay.law2-focused {
+    justify-content: center;
+}
+
+.laws-overlay.law2-focused .law-card-1,
+.laws-overlay.law2-focused .law-card-3 {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+    max-width: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    flex: 0;
+    border: none;
+    box-shadow: none;
+    transition: opacity 0.5s ease, transform 0.5s ease, max-width 0.5s ease, padding 0.5s ease, flex 0.5s ease;
+}
+
+.laws-overlay.law2-focused .law-card-2 {
+    max-width: 520px;
+    animation: none;
+    cursor: default;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 32px rgba(218,165,32,0.2);
+    border-color: rgba(218,165,32,0.5);
+    transition: max-width 0.6s ease, box-shadow 0.5s ease;
+}
+
+/* ── F=ma breakdown ── */
+.fma-breakdown {
+    margin-top: 20px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.6s ease 0.3s, max-height 0.6s ease 0.1s;
+}
+
+.laws-overlay.law2-focused .fma-breakdown {
+    opacity: 1;
+    max-height: 400px;
+}
+
+.fma-equation-large {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.fma-component {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.fma-symbol {
+    font-family: 'EB Garamond', serif;
+    font-size: 48px;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.fma-symbol-f { color: #e8a832; }
+.fma-symbol-eq { color: rgba(220,200,160,0.6); font-weight: 400; font-size: 40px; }
+.fma-symbol-m { color: #6ab4e8; }
+.fma-symbol-a { color: #e86a6a; }
+
+.fma-label {
+    font-family: 'EB Garamond', serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.fma-label-f { color: #e8a832; border: 1px solid rgba(232,168,50,0.3); }
+.fma-label-m { color: #6ab4e8; border: 1px solid rgba(106,180,232,0.3); }
+.fma-label-a { color: #e86a6a; border: 1px solid rgba(232,106,106,0.3); }
+
+.fma-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(218,165,32,0.25), transparent);
+    margin: 16px 0;
+}
+
+.fma-details {
+    display: flex;
+    justify-content: space-around;
+    gap: 16px;
+}
+
+.fma-detail {
+    flex: 1;
+    text-align: center;
+}
+
+.fma-detail-symbol {
+    font-family: 'EB Garamond', serif;
+    font-size: 20px;
+    font-style: italic;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.fma-detail-symbol-f { color: #e8a832; }
+.fma-detail-symbol-m { color: #6ab4e8; }
+.fma-detail-symbol-a { color: #e86a6a; }
+
+.fma-detail-name {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(220,200,160,0.9);
+    margin-bottom: 4px;
+}
+
+.fma-detail-desc {
+    font-family: 'EB Garamond', serif;
+    font-size: 12.5px;
+    color: rgba(200,180,140,0.65);
+    line-height: 1.4;
+}
+
+.fma-detail-unit {
+    font-family: 'EB Garamond', serif;
+    font-size: 11.5px;
+    font-style: italic;
+    color: rgba(200,180,140,0.45);
+    margin-top: 3px;
 }
 
 /* ===== RESPONSIVE ===== */
