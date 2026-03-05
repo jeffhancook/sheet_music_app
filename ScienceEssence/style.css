@@ -1255,17 +1255,20 @@ html, body {
 /* ── Law II glow effect ── */
 .law-card-2 {
     cursor: pointer;
-    animation: law2Glow 2.5s ease-in-out infinite;
+    animation: law2Glow 2s ease-in-out infinite;
+    border-width: 2px;
 }
 
 @keyframes law2Glow {
     0%, 100% {
-        box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 12px rgba(218,165,32,0.08);
-        border-color: rgba(218,165,32,0.3);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 20px rgba(218,165,32,0.2), 0 0 40px rgba(218,165,32,0.1);
+        border-color: rgba(218,165,32,0.5);
+        transform: translateY(0) scale(1);
     }
     50% {
-        box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 24px rgba(218,165,32,0.3), 0 0 48px rgba(218,165,32,0.12);
-        border-color: rgba(218,165,32,0.6);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 35px rgba(218,165,32,0.5), 0 0 70px rgba(218,165,32,0.25), 0 0 100px rgba(218,165,32,0.1);
+        border-color: rgba(255,210,80,0.8);
+        transform: translateY(-2px) scale(1.02);
     }
 }
 
