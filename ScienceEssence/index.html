@@ -516,6 +516,192 @@
             <p>Click the book to enter...</p>
         </div>
     </div>
+
+    <!-- ===== ZOOM BLUR LAYER (backdrop-filter, faded via opacity) ===== -->
+    <div class="zoom-blur-layer" id="zoomBlur"></div>
+
+    <!-- ===== BOOKMARK RIBBON + NAV ===== -->
+    <div class="bookmark-ribbon" id="bookmarkRibbon">
+        <div class="bookmark-tab" id="bookmarkTab">
+            <span class="bookmark-text">Nav</span>
+        </div>
+        <div class="bookmark-menu" id="bookmarkMenu">
+            <button class="bookmark-btn" data-scene="home">
+                <span class="btn-icon">&#128218;</span> Home
+            </button>
+            <button class="bookmark-btn active" data-scene="newton">
+                <span class="btn-icon">&#127822;</span> Newton's Apple
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== NEWTON SCENE ===== -->
+    <div class="newton-scene" id="newtonScene">
+        <!-- Sky gradient -->
+        <div class="newton-sky"></div>
+
+        <!-- Sun glow -->
+        <div class="newton-sun"></div>
+
+        <!-- Clouds -->
+        <div class="newton-clouds">
+            <div class="cloud cloud-1">
+                <div class="cloud-puff cp1"></div>
+                <div class="cloud-puff cp2"></div>
+                <div class="cloud-puff cp3"></div>
+            </div>
+            <div class="cloud cloud-2">
+                <div class="cloud-puff cp1"></div>
+                <div class="cloud-puff cp2"></div>
+                <div class="cloud-puff cp3"></div>
+            </div>
+            <div class="cloud cloud-3">
+                <div class="cloud-puff cp1"></div>
+                <div class="cloud-puff cp2"></div>
+                <div class="cloud-puff cp3"></div>
+            </div>
+        </div>
+
+        <!-- Distant hills -->
+        <svg class="newton-hills" viewBox="0 0 1200 300" preserveAspectRatio="none">
+            <path d="M0 280 Q150 180 300 220 Q450 160 600 200 Q750 140 900 190 Q1050 160 1200 210 L1200 300 L0 300Z" fill="#3a7a3a" opacity="0.5"/>
+            <path d="M0 300 Q200 210 400 250 Q550 200 700 240 Q850 190 1000 230 Q1100 210 1200 240 L1200 300 L0 300Z" fill="#4a8a40"/>
+        </svg>
+
+        <!-- Apple tree -->
+        <svg class="newton-tree" viewBox="0 0 400 500" width="380" height="480">
+            <!-- Tree shadow on ground -->
+            <ellipse cx="200" cy="485" rx="150" ry="15" fill="rgba(0,60,0,0.25)"/>
+            <!-- Trunk -->
+            <path d="M175 490 L180 380 Q170 340 165 300 Q160 260 175 220 L185 220 Q195 260 192 300 Q188 340 195 380 L200 490Z" fill="#5a3a1a" stroke="#4a2a0a" stroke-width="1"/>
+            <!-- Bark texture -->
+            <path d="M178 460 Q182 440 180 420" stroke="#4a2a0a" stroke-width="0.8" fill="none"/>
+            <path d="M185 390 Q190 370 187 350" stroke="#4a2a0a" stroke-width="0.8" fill="none"/>
+            <path d="M180 340 Q175 320 178 300" stroke="#4a2a0a" stroke-width="0.6" fill="none"/>
+            <!-- Branch left -->
+            <path d="M170 280 Q130 250 100 260 Q80 265 60 250" stroke="#5a3a1a" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <!-- Branch right -->
+            <path d="M190 260 Q230 230 270 240 Q300 245 330 230" stroke="#5a3a1a" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- Branch up-left -->
+            <path d="M175 240 Q150 200 130 180" stroke="#5a3a1a" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <!-- Branch up-right -->
+            <path d="M185 230 Q210 190 240 170" stroke="#5a3a1a" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <!-- Canopy layers (back) -->
+            <ellipse cx="180" cy="170" rx="120" ry="80" fill="#2d7a2d" opacity="0.7"/>
+            <ellipse cx="140" cy="200" rx="90" ry="60" fill="#358035" opacity="0.6"/>
+            <ellipse cx="230" cy="190" rx="85" ry="55" fill="#3a8a3a" opacity="0.6"/>
+            <!-- Canopy layers (front) -->
+            <ellipse cx="190" cy="155" rx="110" ry="70" fill="#3d9a3d"/>
+            <ellipse cx="150" cy="180" rx="80" ry="50" fill="#45a045" opacity="0.8"/>
+            <ellipse cx="240" cy="175" rx="75" ry="45" fill="#40a540" opacity="0.7"/>
+            <!-- Canopy highlight -->
+            <ellipse cx="170" cy="140" rx="60" ry="35" fill="rgba(120,200,80,0.25)"/>
+            <!-- Apples -->
+            <circle cx="120" cy="210" r="7" fill="#cc2222"/>
+            <circle cx="120" cy="210" r="3" fill="rgba(255,100,100,0.3)" cx="118" cy="208"/>
+            <circle cx="250" cy="195" r="6" fill="#cc2222"/>
+            <circle cx="160" cy="165" r="6" fill="#dd3333"/>
+            <circle cx="220" cy="150" r="5" fill="#cc2222"/>
+            <circle cx="280" cy="210" r="6" fill="#bb2222"/>
+            <!-- Apple stems -->
+            <line x1="120" y1="203" x2="122" y2="198" stroke="#3a2a0a" stroke-width="1"/>
+            <line x1="250" y1="189" x2="252" y2="185" stroke="#3a2a0a" stroke-width="1"/>
+            <line x1="160" y1="159" x2="162" y2="155" stroke="#3a2a0a" stroke-width="1"/>
+        </svg>
+
+        <!-- Newton figure -->
+        <svg class="newton-figure" viewBox="0 0 180 280" width="140" height="220">
+            <!-- Shadow on ground -->
+            <ellipse cx="90" cy="272" rx="50" ry="8" fill="rgba(0,60,0,0.2)"/>
+            <!-- Legs (sitting cross-legged) -->
+            <path d="M60 230 Q70 250 90 255 Q110 250 120 230" fill="#3a3040" stroke="#2a2030" stroke-width="0.5"/>
+            <!-- Shoes -->
+            <ellipse cx="65" cy="255" rx="12" ry="6" fill="#2a1a0a"/>
+            <ellipse cx="115" cy="255" rx="12" ry="6" fill="#2a1a0a"/>
+            <!-- Body (coat) -->
+            <path d="M65 230 Q60 200 62 160 Q65 140 70 130 L110 130 Q115 140 118 160 Q120 200 115 230Z" fill="#4a3050" stroke="#3a2040" stroke-width="0.5"/>
+            <!-- Coat details -->
+            <line x1="90" y1="135" x2="90" y2="225" stroke="#3a2040" stroke-width="0.5"/>
+            <!-- Buttons -->
+            <circle cx="90" cy="155" r="2" fill="#8B6914"/>
+            <circle cx="90" cy="175" r="2" fill="#8B6914"/>
+            <circle cx="90" cy="195" r="2" fill="#8B6914"/>
+            <!-- Collar / cravat -->
+            <path d="M78 132 Q85 138 90 145 Q95 138 102 132" fill="#e0d8c8" stroke="#c0b8a8" stroke-width="0.3"/>
+            <!-- Left arm (holding paper) -->
+            <path d="M65 150 Q45 170 40 200 Q38 210 45 215" fill="none" stroke="#4a3050" stroke-width="8" stroke-linecap="round"/>
+            <!-- Right arm (resting) -->
+            <path d="M115 155 Q130 175 125 210" fill="none" stroke="#4a3050" stroke-width="8" stroke-linecap="round"/>
+            <!-- Hands -->
+            <circle cx="45" cy="215" r="6" fill="#d4a878"/>
+            <circle cx="125" cy="210" r="6" fill="#d4a878"/>
+            <!-- Paper with F=ma -->
+            <rect x="25" y="195" width="40" height="32" rx="1" fill="#e8dcc0" stroke="#c8bca0" stroke-width="0.5" transform="rotate(-10, 45, 210)"/>
+            <text x="32" y="216" font-family="'EB Garamond', serif" font-size="11" font-style="italic" fill="#1a1008" transform="rotate(-10, 45, 210)">F=ma</text>
+            <!-- Head -->
+            <ellipse cx="90" cy="115" rx="22" ry="25" fill="#d4a878"/>
+            <!-- Face features -->
+            <ellipse cx="82" cy="112" rx="2.5" ry="1.5" fill="#2a1a0a"/>
+            <ellipse cx="98" cy="112" rx="2.5" ry="1.5" fill="#2a1a0a"/>
+            <path d="M87 120 Q90 123 93 120" fill="none" stroke="#8a6a48" stroke-width="0.8"/>
+            <path d="M85 118 Q90 119 95 118" fill="none" stroke="#b08a68" stroke-width="0.4"/>
+            <!-- Eyebrows -->
+            <path d="M78 107 Q82 105 86 107" fill="none" stroke="#5a4030" stroke-width="0.8"/>
+            <path d="M94 107 Q98 105 102 107" fill="none" stroke="#5a4030" stroke-width="0.8"/>
+            <!-- Wig (grey curls) -->
+            <path d="M68 115 Q62 100 66 85 Q72 72 85 70 Q95 68 105 72 Q115 78 118 90 Q120 105 112 115" fill="#c0b8a8" stroke="#a8a098" stroke-width="0.5"/>
+            <!-- Wig curls on sides -->
+            <path d="M68 115 Q60 120 62 130 Q64 135 68 132" fill="#c0b8a8" stroke="#a8a098" stroke-width="0.5"/>
+            <path d="M112 115 Q120 120 118 130 Q116 135 112 132" fill="#c0b8a8" stroke="#a8a098" stroke-width="0.5"/>
+            <!-- Wig top detail -->
+            <path d="M75 78 Q80 72 90 70 Q100 72 105 78" fill="none" stroke="#b0a898" stroke-width="0.8"/>
+        </svg>
+
+        <!-- Falling apple container -->
+        <div class="falling-apple-container" id="fallingAppleContainer"></div>
+
+        <!-- Foreground grass -->
+        <div class="newton-grass"></div>
+        <div class="newton-grass-blades" id="grassBlades"></div>
+
+        <!-- Bird container -->
+        <div class="newton-birds" id="newtonBirds"></div>
+
+        <!-- Pollen particles -->
+        <div class="newton-pollen" id="newtonPollen"></div>
+
+        <!-- Green vignette -->
+        <div class="newton-vignette"></div>
+
+        <!-- Dialogue box -->
+        <div class="dialogue-box" id="dialogueBox">
+            <div class="dialogue-text" id="dialogueText"></div>
+            <div class="dialogue-cursor">&#9660;</div>
+        </div>
+
+        <!-- Laws overlay -->
+        <div class="laws-overlay" id="lawsOverlay">
+            <div class="law-card law-card-1">
+                <div class="law-number">I</div>
+                <div class="law-title">Law of Inertia</div>
+                <div class="law-desc">A body at rest stays at rest, and a body in motion stays in motion, unless acted upon by an external force.</div>
+                <div class="law-equation">&Sigma;F = 0</div>
+            </div>
+            <div class="law-card law-card-2">
+                <div class="law-number">II</div>
+                <div class="law-title">Law of Acceleration</div>
+                <div class="law-desc">The acceleration of an object is proportional to the net force and inversely proportional to its mass.</div>
+                <div class="law-equation">F = ma</div>
+            </div>
+            <div class="law-card law-card-3">
+                <div class="law-number">III</div>
+                <div class="law-title">Law of Action &amp; Reaction</div>
+                <div class="law-desc">For every action, there is an equal and opposite reaction.</div>
+                <div class="law-equation">F&#x2081;&#x2082; = &#x2212;F&#x2082;&#x2081;</div>
+            </div>
+        </div>
+    </div>
+
     <script src="cover.js"></script>
 </body>
 </html>

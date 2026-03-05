@@ -729,6 +729,528 @@ html, body {
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ============================================
+   ===== ZOOM TRANSITION =====
+   Only animate transform & opacity (GPU-composited).
+   Blur is handled by a backdrop-filter overlay that
+   fades via opacity — no per-frame filter repaint.
+   ============================================ */
+
+/* GPU layer promotion — hint once, composite cheaply */
+.scene,
+.newton-scene {
+    will-change: transform, opacity;
+}
+
+/* ── Transition overlay (black fade + blur) ── */
+.zoom-blur-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    pointer-events: none;
+    background: #000;
+    opacity: 0;
+    will-change: opacity;
+    transition: opacity 1s ease;
+}
+
+.zoom-blur-layer.blackout-in {
+    opacity: 1;
+    transition: opacity 1s ease-in;
+}
+
+.zoom-blur-layer.blackout-out {
+    opacity: 0;
+    transition: opacity 1.2s ease-out;
+}
+
+/* ── Home scene: fade out to black ── */
+.scene.zoom-into-book {
+    animation: homeFadeOut 1s ease-in forwards;
+}
+
+@keyframes homeFadeOut {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ── Newton scene: start blurred, unblur as black fades ── */
+.newton-scene.newton-arrive-blurred {
+    filter: blur(20px);
+    opacity: 1;
+    transition: filter 1.4s ease-out, opacity 0.3s ease;
+}
+
+.newton-scene.newton-arrive-clear {
+    filter: blur(0px);
+    transition: filter 1.4s ease-out;
+}
+
+/* ── Newton scene: departing ── */
+.newton-scene.newton-zoom-out {
+    animation: newtonDepart 0.8s ease-in forwards;
+}
+
+@keyframes newtonDepart {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ── Home scene: arriving back ── */
+.scene.zoom-arrive-home {
+    animation: homeArrival 0.8s ease-out forwards;
+}
+
+@keyframes homeArrival {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Reset home scene after returning */
+.scene.zoom-reset {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* ============================================
+   ===== BOOKMARK RIBBON =====
+   ============================================ */
+/* ===== BOOKMARK NAV ===== */
+.bookmark-ribbon {
+    position: fixed;
+    top: 0;
+    right: 40px;
+    z-index: 50;
+    display: none;
+}
+
+.bookmark-ribbon.bookmark-visible {
+    display: block;
+}
+
+.bookmark-tab {
+    background: #c0392b;
+    color: #fff;
+    font-family: 'EB Garamond', serif;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    padding: 10px 14px 14px;
+    text-align: center;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.35);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s ease;
+    user-select: none;
+}
+
+.bookmark-tab:hover {
+    background: #a93226;
+}
+
+/* Notched bottom on tab */
+.bookmark-tab::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 0;
+    height: 0;
+    border-left: calc(50%) solid #c0392b;
+    border-right: calc(50%) solid #c0392b;
+    border-bottom: 8px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.bookmark-tab:hover::after {
+    border-left-color: #a93226;
+    border-right-color: #a93226;
+}
+
+.bookmark-text {
+    display: block;
+    font-size: 12px;
+}
+
+/* Dropdown menu */
+.bookmark-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 12px;
+    background: linear-gradient(180deg, #1e1a14 0%, #16120c 100%);
+    border: 1px solid rgba(218,165,32,0.25);
+    border-radius: 6px;
+    padding: 8px 6px;
+    min-width: 170px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 12px rgba(218,165,32,0.08);
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.bookmark-menu.menu-open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.bookmark-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 14px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: rgba(200,180,140,0.7);
+    font-family: 'EB Garamond', serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.bookmark-btn:hover {
+    background: rgba(218,165,32,0.08);
+    border-color: rgba(218,165,32,0.15);
+    color: rgba(220,200,160,0.95);
+}
+
+.bookmark-btn.active {
+    background: rgba(218,165,32,0.12);
+    border-color: rgba(218,165,32,0.3);
+    color: #D4A017;
+}
+
+.bookmark-btn .btn-icon {
+    font-size: 15px;
+}
+
+/* ============================================
+   ===== NEWTON SCENE =====
+   ============================================ */
+.newton-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    overflow: hidden;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.newton-scene.newton-visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Sky */
+.newton-sky {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #4a90d9 0%, #7ab8e8 35%, #a8d8f0 60%, #d4eef8 80%, #e8f5e0 100%);
+}
+
+/* Sun */
+.newton-sun {
+    position: absolute;
+    top: -40px;
+    right: 80px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,250,200,0.9) 0%, rgba(255,240,150,0.5) 30%, rgba(255,220,100,0.15) 60%, transparent 80%);
+    box-shadow: 0 0 80px rgba(255,240,150,0.4), 0 0 160px rgba(255,220,100,0.15);
+}
+
+/* Clouds */
+.newton-clouds {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.cloud {
+    position: absolute;
+    animation: cloudDrift linear infinite;
+}
+
+.cloud-1 { top: 8%; left: -15%; animation-duration: 60s; }
+.cloud-2 { top: 15%; left: -20%; animation-duration: 80s; animation-delay: -25s; }
+.cloud-3 { top: 5%; left: -10%; animation-duration: 70s; animation-delay: -40s; }
+
+@keyframes cloudDrift {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 250px)); }
+}
+
+.cloud-puff {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+}
+
+.cloud-1 .cp1 { width: 80px; height: 40px; top: 10px; left: 0; }
+.cloud-1 .cp2 { width: 100px; height: 50px; top: 0; left: 30px; }
+.cloud-1 .cp3 { width: 70px; height: 35px; top: 12px; left: 90px; }
+
+.cloud-2 .cp1 { width: 60px; height: 30px; top: 8px; left: 0; }
+.cloud-2 .cp2 { width: 80px; height: 40px; top: 0; left: 20px; }
+.cloud-2 .cp3 { width: 55px; height: 28px; top: 10px; left: 70px; }
+
+.cloud-3 .cp1 { width: 90px; height: 45px; top: 10px; left: 0; }
+.cloud-3 .cp2 { width: 110px; height: 55px; top: 0; left: 35px; }
+.cloud-3 .cp3 { width: 80px; height: 40px; top: 12px; left: 100px; }
+
+/* Hills */
+.newton-hills {
+    position: absolute;
+    bottom: 15%;
+    left: 0;
+    width: 100%;
+    height: 30%;
+}
+
+/* Apple tree */
+.newton-tree {
+    position: absolute;
+    bottom: 8%;
+    left: 10%;
+}
+
+/* Newton figure */
+.newton-figure {
+    position: absolute;
+    bottom: 8%;
+    left: calc(10% + 200px);
+}
+
+/* Falling apple container */
+.falling-apple-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Foreground grass */
+.newton-grass {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 18%;
+    background: linear-gradient(180deg, #4a9a3a 0%, #3d8a30 30%, #358028 60%, #2d7020 100%);
+}
+
+.newton-grass-blades {
+    position: absolute;
+    bottom: 16%;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.grass-blade {
+    position: absolute;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to top, #4a9a3a, #6ab84a);
+    border-radius: 50% 50% 0 0;
+    transform-origin: bottom center;
+    animation: grassSway 3s ease-in-out infinite;
+}
+
+@keyframes grassSway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+/* Birds */
+.newton-birds {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
+}
+
+/* Pollen */
+.newton-pollen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 7;
+    overflow: hidden;
+}
+
+/* Green vignette */
+.newton-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse 60% 55% at 50% 50%,
+        transparent 0%,
+        rgba(20,60,10,0.08) 50%,
+        rgba(10,40,5,0.2) 80%,
+        rgba(5,30,0,0.35) 100%
+    );
+    z-index: 8;
+    pointer-events: none;
+}
+
+/* ============================================
+   ===== DIALOGUE BOX =====
+   ============================================ */
+.dialogue-box {
+    position: fixed;
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    z-index: 50;
+    max-width: 700px;
+    width: 90%;
+    padding: 24px 32px 20px;
+    background: linear-gradient(180deg, rgba(15,12,8,0.88) 0%, rgba(10,8,5,0.92) 100%);
+    border: 1px solid rgba(218,165,32,0.2);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(218,165,32,0.06);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.dialogue-box.dialogue-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.dialogue-box.dialogue-fade-out {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.dialogue-text {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    color: rgba(220,200,160,0.92);
+    text-align: center;
+    line-height: 1.6;
+    min-height: 1.6em;
+}
+
+.dialogue-cursor {
+    text-align: center;
+    color: rgba(218,165,32,0.5);
+    font-size: 10px;
+    margin-top: 10px;
+    animation: cursorBlink 1.2s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dialogue-cursor.cursor-visible {
+    opacity: 1;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
+/* ============================================
+   ===== NEWTON ZOOM TO TREE =====
+   ============================================ */
+.newton-scene.newton-zoom-to-tree {
+    animation: zoomToTree 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes zoomToTree {
+    0%   { transform: scale(1) translate(0, 0); }
+    100% { transform: scale(1.8) translate(-18%, 10%); }
+}
+
+/* ============================================
+   ===== LAWS OVERLAY =====
+   ============================================ */
+.laws-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    padding: 5% 3%;
+    gap: 24px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+.laws-overlay.laws-visible {
+    opacity: 1;
+}
+
+.law-card {
+    flex: 1;
+    max-width: 300px;
+    padding: 22px 24px;
+    background: linear-gradient(135deg, rgba(15,12,8,0.88) 0%, rgba(20,16,10,0.92) 100%);
+    border: 1px solid rgba(218,165,32,0.3);
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 12px rgba(218,165,32,0.08);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.laws-visible .law-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.law-number {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #D4A017;
+    text-shadow: 0 0 12px rgba(218,165,32,0.4);
+    margin-bottom: 4px;
+}
+
+.law-title {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(220,200,160,0.95);
+    margin-bottom: 8px;
+    letter-spacing: 0.03em;
+}
+
+.law-desc {
+    font-family: 'EB Garamond', serif;
+    font-size: 13.5px;
+    color: rgba(200,180,140,0.75);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.law-equation {
+    font-family: 'EB Garamond', serif;
+    font-size: 22px;
+    font-style: italic;
+    color: #D4A017;
+    text-shadow: 0 0 8px rgba(218,165,32,0.3);
+    text-align: center;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
     .book { transform: rotateX(55deg) rotateZ(-8deg) scale(0.7); animation: none; }
