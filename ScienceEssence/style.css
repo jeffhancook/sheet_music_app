@@ -813,9 +813,8 @@ html, body {
 }
 
 /* ============================================
-   ===== BOOKMARK RIBBON =====
+   ===== BOOKMARK NAV (dropdown menu) =====
    ============================================ */
-/* ===== BOOKMARK NAV ===== */
 .bookmark-ribbon {
     position: fixed;
     top: 0;
@@ -829,59 +828,60 @@ html, body {
 }
 
 .bookmark-tab {
-    background: #c0392b;
-    color: #fff;
+    background: linear-gradient(180deg, #1e1a14 0%, #16120c 100%);
+    color: rgba(220,200,160,0.9);
     font-family: 'EB Garamond', serif;
-    font-size: 12px;
+    font-size: 13px;
     letter-spacing: 0.05em;
-    padding: 10px 14px 14px;
+    padding: 8px 18px 10px;
     text-align: center;
-    box-shadow: 2px 2px 8px rgba(0,0,0,0.35);
+    border: 1px solid rgba(218,165,32,0.25);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
     cursor: pointer;
     position: relative;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease;
     user-select: none;
 }
 
 .bookmark-tab:hover {
-    background: #a93226;
+    background: linear-gradient(180deg, #2a2418 0%, #1e1a14 100%);
+    border-color: rgba(218,165,32,0.4);
 }
 
-/* Notched bottom on tab */
 .bookmark-tab::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 0;
-    height: 0;
-    border-left: calc(50%) solid #c0392b;
-    border-right: calc(50%) solid #c0392b;
-    border-bottom: 8px solid transparent;
-    transition: border-color 0.2s ease;
-}
-
-.bookmark-tab:hover::after {
-    border-left-color: #a93226;
-    border-right-color: #a93226;
+    display: none;
 }
 
 .bookmark-text {
-    display: block;
-    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
 }
 
-/* Dropdown menu — slides down from tab */
+.bookmark-text::after {
+    content: '▾';
+    font-size: 10px;
+    transition: transform 0.3s ease;
+}
+
+.bookmark-ribbon.menu-is-open .bookmark-text::after {
+    transform: rotate(180deg);
+}
+
+/* Dropdown menu — slides down */
 .bookmark-menu {
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 8px;
+    left: 0;
     background: linear-gradient(180deg, #1e1a14 0%, #16120c 100%);
     border: 1px solid rgba(218,165,32,0.25);
+    border-top: none;
     border-radius: 0 0 6px 6px;
     padding: 0 6px;
-    min-width: 170px;
     max-height: 0;
     overflow: hidden;
     box-shadow: none;
@@ -891,8 +891,8 @@ html, body {
 }
 
 .bookmark-menu.menu-open {
-    max-height: 200px;
-    padding: 8px 6px;
+    max-height: 300px;
+    padding: 6px 6px 8px;
     opacity: 1;
     pointer-events: auto;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 12px rgba(218,165,32,0.08);
@@ -1444,6 +1444,139 @@ html, body {
 .next-btn:hover {
     border-color: rgba(255,210,80,0.7);
     box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 20px rgba(218,165,32,0.25);
+}
+
+/* ============================================
+   ===== ACCELERATION SCENE (Lesson 1.1) =====
+   ============================================ */
+.accel-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    overflow: hidden;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.accel-scene.accel-visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.accel-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #0a0e1a 0%, #141828 40%, #1a2040 100%);
+}
+
+.accel-title {
+    position: absolute;
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: clamp(16px, 2.5vw, 24px);
+    font-weight: 700;
+    color: rgba(220,200,160,0.85);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 12px rgba(218,165,32,0.3);
+    z-index: 2;
+}
+
+.accel-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30%;
+    background: linear-gradient(180deg, #1a1a2e 0%, #12121f 100%);
+    border-top: 1px solid rgba(100,100,160,0.15);
+}
+
+.accel-orb-track {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 80px;
+    transform: translateY(-50%);
+    z-index: 3;
+}
+
+.accel-orb {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 35%, #8ec8ff 0%, #4a90d9 40%, #2a60a0 70%, #1a3a6a 100%);
+    box-shadow: 0 0 20px rgba(100,160,255,0.4), 0 0 40px rgba(80,140,240,0.15), 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.accel-velocity-label {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    width: 50px;
+    text-align: center;
+    font-family: 'EB Garamond', serif;
+    font-size: 22px;
+    font-style: italic;
+    z-index: 4;
+    transition: left 0s;
+}
+
+.vel-sign {
+    color: #6ae86a;
+    font-style: normal;
+    font-weight: 700;
+    transition: color 0.15s ease;
+}
+
+.vel-sign.vel-negative {
+    color: #e86a6a;
+}
+
+.vel-symbol {
+    color: rgba(220,200,160,0.9);
+    text-shadow: 0 0 8px rgba(218,165,32,0.3);
+}
+
+.accel-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse 55% 50% at 50% 50%,
+        transparent 0%,
+        rgba(5,5,15,0.3) 50%,
+        rgba(2,2,10,0.7) 100%
+    );
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Acceleration scene arrive/depart (reuse blackout pattern) */
+.accel-scene.accel-arrive-blurred {
+    filter: blur(20px);
+    opacity: 1;
+    transition: filter 1.4s ease-out, opacity 0.3s ease;
+}
+
+.accel-scene.accel-arrive-clear {
+    filter: blur(0px);
+    transition: filter 1.4s ease-out;
+}
+
+.accel-scene.accel-zoom-out {
+    animation: accelDepart 0.8s ease-in forwards;
+}
+
+@keyframes accelDepart {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
 }
 
 /* ===== RESPONSIVE ===== */

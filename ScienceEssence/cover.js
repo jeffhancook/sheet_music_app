@@ -297,13 +297,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // 9. SCENE TRANSITIONS (bidirectional)
     // ───────────────────────────────────
     let transitioning = false;
-    let currentScene = 'home'; // 'home' or 'newton'
+    let currentScene = 'home'; // 'home', 'newton', or 'acceleration'
     let newtonInitialized = false;
     const newtonScene = document.getElementById('newtonScene');
     const zoomBlur = document.getElementById('zoomBlur');
     const bookmark = document.querySelector('.bookmark-ribbon');
     const bookmarkTab = document.getElementById('bookmarkTab');
     const bookmarkMenu = document.getElementById('bookmarkMenu');
+    const accelScene = document.getElementById('accelScene');
+    let orbAnimationId = null;
+
+    function hideCurrentScene() {
+        // Hide whichever scene is currently showing (for blackout swap)
+        if (currentScene === 'home') {
+            scene.classList.add('zoom-into-book');
+        } else if (currentScene === 'newton') {
+            newtonScene.classList.add('newton-zoom-out');
+        } else if (currentScene === 'acceleration') {
+            accelScene.classList.add('accel-zoom-out');
+        }
+    }
+
+    function resetNewtonState() {
+        newtonScene.classList.remove('newton-visible', 'newton-zoom-out', 'newton-zoom-to-tree', 'newton-arrive-blurred', 'newton-arrive-clear');
+        newtonScene.style.filter = '';
+        newtonScene.style.transform = '';
+        dialogueShown = false;
+        const dBox = document.getElementById('dialogueBox');
+        if (dBox) {
+            dBox.classList.remove('dialogue-visible', 'dialogue-fade-out');
+            dBox.style.display = '';
+        }
+        const dText = document.getElementById('dialogueText');
+        if (dText) dText.textContent = '';
+        const lawsOv = document.getElementById('lawsOverlay');
+        if (lawsOv) lawsOv.classList.remove('laws-visible', 'law2-focused');
+        if (nextBtn) nextBtn.classList.remove('next-visible');
+        clearTimeout(nextBtnTimer);
+    }
+
+    function resetAccelState() {
+        accelScene.classList.remove('accel-visible', 'accel-zoom-out', 'accel-arrive-blurred', 'accel-arrive-clear');
+        accelScene.style.filter = '';
+        stopOrbAnimation();
+    }
 
     function transitionTo(target) {
         if (transitioning || currentScene === target) return;
@@ -311,100 +348,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close menu
         if (bookmarkMenu) bookmarkMenu.classList.remove('menu-open');
+        if (bookmark) bookmark.classList.remove('menu-is-open');
 
-        if (target === 'newton') {
-            // ── Home → Newton ──
+        const fromScene = currentScene;
+
+        // 1. Fade to black + depart current scene
+        zoomBlur.classList.remove('blackout-out');
+        zoomBlur.classList.add('blackout-in');
+        hideCurrentScene();
+
+        if (fromScene === 'home') {
             clearInterval(dustInterval);
             clearInterval(orbInterval);
+        }
 
-            // 1. Fade home to black via overlay
-            zoomBlur.classList.remove('blackout-out');
-            zoomBlur.classList.add('blackout-in');
-            scene.classList.add('zoom-into-book');
-
-            // 2. Once screen is black (~1s), swap scenes behind the black
-            setTimeout(() => {
+        // 2. Once screen is black (~1s), swap scenes behind the black
+        setTimeout(() => {
+            // Hide old scene
+            if (fromScene === 'home') {
                 scene.style.visibility = 'hidden';
                 scene.classList.remove('zoom-into-book');
                 scene.classList.add('zoom-reset');
+            } else if (fromScene === 'newton') {
+                resetNewtonState();
+            } else if (fromScene === 'acceleration') {
+                resetAccelState();
+            }
 
-                // Newton appears blurred behind the black overlay
+            // Show new scene
+            if (target === 'newton') {
                 newtonScene.classList.add('newton-visible', 'newton-arrive-blurred');
                 if (!newtonInitialized) {
                     startNewtonAnimations();
                     newtonInitialized = true;
                 }
-            }, 1000);
-
-            // 3. Fade black overlay out while Newton unblurs
-            setTimeout(() => {
-                zoomBlur.classList.remove('blackout-in');
-                zoomBlur.classList.add('blackout-out');
-                newtonScene.classList.add('newton-arrive-clear');
-            }, 1200);
-
-            // 4. All done — clean up classes
-            setTimeout(() => {
-                zoomBlur.classList.remove('blackout-out');
-                newtonScene.classList.remove('newton-arrive-blurred', 'newton-arrive-clear');
-                newtonScene.style.filter = '';
-                scene.classList.remove('zoom-reset');
-                currentScene = 'newton';
-                transitioning = false;
-                updateBookmarkBtns();
-                if (!dialogueShown) setTimeout(startNewtonDialogue, 600);
-            }, 2600);
-
-        } else {
-            // ── Newton → Home ──
-
-            // 1. Fade to black
-            zoomBlur.classList.remove('blackout-out');
-            zoomBlur.classList.add('blackout-in');
-            newtonScene.classList.add('newton-zoom-out');
-
-            // 2. Once black, swap scenes
-            setTimeout(() => {
-                // Reset all Newton progress
-                newtonScene.classList.remove('newton-visible', 'newton-zoom-out', 'newton-zoom-to-tree', 'newton-arrive-blurred', 'newton-arrive-clear');
-                newtonScene.style.filter = '';
-                dialogueShown = false;
-                const dBox = document.getElementById('dialogueBox');
-                if (dBox) {
-                    dBox.classList.remove('dialogue-visible', 'dialogue-fade-out');
-                    dBox.style.display = '';
-                }
-                const dText = document.getElementById('dialogueText');
-                if (dText) dText.textContent = '';
-                const lawsOv = document.getElementById('lawsOverlay');
-                if (lawsOv) lawsOv.classList.remove('laws-visible', 'law2-focused');
-                if (nextBtn) nextBtn.classList.remove('next-visible');
-                clearTimeout(nextBtnTimer);
-                newtonScene.style.transform = '';
-
-                // Home appears behind black
+            } else if (target === 'acceleration') {
+                accelScene.classList.add('accel-visible', 'accel-arrive-blurred');
+                startOrbAnimation();
+            } else if (target === 'home') {
                 scene.style.visibility = '';
                 scene.classList.add('zoom-arrive-home');
                 generateShelves();
                 for (let i = 0; i < 12; i++) setTimeout(createDustMote, Math.random() * 1500);
                 for (let i = 0; i < 4; i++) setTimeout(createLightOrb, Math.random() * 2000);
-            }, 1000);
+            }
+        }, 1000);
 
-            // 3. Fade black out to reveal home
-            setTimeout(() => {
-                zoomBlur.classList.remove('blackout-in');
-                zoomBlur.classList.add('blackout-out');
-            }, 1200);
+        // 3. Fade black overlay out while destination unblurs
+        setTimeout(() => {
+            zoomBlur.classList.remove('blackout-in');
+            zoomBlur.classList.add('blackout-out');
+            if (target === 'newton') {
+                newtonScene.classList.add('newton-arrive-clear');
+            } else if (target === 'acceleration') {
+                accelScene.classList.add('accel-arrive-clear');
+            }
+        }, 1200);
 
-            // 4. All done
-            setTimeout(() => {
-                zoomBlur.classList.remove('blackout-out');
+        // 4. All done — clean up classes
+        setTimeout(() => {
+            zoomBlur.classList.remove('blackout-out');
+
+            if (target === 'newton') {
+                newtonScene.classList.remove('newton-arrive-blurred', 'newton-arrive-clear');
+                newtonScene.style.filter = '';
+            } else if (target === 'acceleration') {
+                accelScene.classList.remove('accel-arrive-blurred', 'accel-arrive-clear');
+                accelScene.style.filter = '';
+            } else if (target === 'home') {
                 scene.classList.remove('zoom-arrive-home');
-                currentScene = 'home';
-                transitioning = false;
-                updateBookmarkBtns();
-            }, 2400);
-        }
+            }
+
+            if (fromScene === 'home') {
+                scene.classList.remove('zoom-reset');
+            }
+
+            currentScene = target;
+            transitioning = false;
+            updateBookmarkBtns();
+
+            if (target === 'newton' && !dialogueShown) {
+                setTimeout(startNewtonDialogue, 600);
+            }
+        }, 2600);
     }
 
     function updateBookmarkBtns() {
@@ -427,6 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bookmarkTab) {
         bookmarkTab.addEventListener('click', () => {
             bookmarkMenu.classList.toggle('menu-open');
+            bookmark.classList.toggle('menu-is-open');
         });
     }
 
@@ -442,6 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.bookmark-ribbon')) {
                 bookmarkMenu.classList.remove('menu-open');
+                bookmark.classList.remove('menu-is-open');
             }
         });
     }
@@ -741,6 +769,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const engine = createDialogueEngine(lines, triggerNewtonZoomAndLaws);
         engine.start();
+    }
+
+    // ───────────────────────────────────
+    // 12. NEXT BUTTON → Lesson 1.1
+    // ───────────────────────────────────
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            transitionTo('acceleration');
+        });
+    }
+
+    // ───────────────────────────────────
+    // 13. ACCELERATION SCENE — Orb animation
+    // ───────────────────────────────────
+    function startOrbAnimation() {
+        const orb = document.getElementById('accelOrb');
+        const velLabel = document.getElementById('accelVelocityLabel');
+        const velSign = document.getElementById('velSign');
+        if (!orb || !velLabel) return;
+
+        const track = orb.parentElement;
+        const trackWidth = track.offsetWidth;
+        const orbSize = 50;
+        const maxLeft = trackWidth - orbSize;
+
+        let pos = 0;
+        let direction = 1; // 1 = right (+v), -1 = left (-v)
+        const speed = 2.5; // pixels per frame
+
+        function animateOrb() {
+            pos += speed * direction;
+
+            if (pos >= maxLeft) {
+                pos = maxLeft;
+                direction = -1;
+            } else if (pos <= 0) {
+                pos = 0;
+                direction = 1;
+            }
+
+            orb.style.left = pos + 'px';
+            velLabel.style.left = pos + 'px';
+
+            if (direction === 1) {
+                velSign.textContent = '+';
+                velSign.classList.remove('vel-negative');
+            } else {
+                velSign.textContent = '−';
+                velSign.classList.add('vel-negative');
+            }
+
+            orbAnimationId = requestAnimationFrame(animateOrb);
+        }
+
+        orbAnimationId = requestAnimationFrame(animateOrb);
+    }
+
+    function stopOrbAnimation() {
+        if (orbAnimationId) {
+            cancelAnimationFrame(orbAnimationId);
+            orbAnimationId = null;
+        }
     }
 
     // --- Pollen / floating particles ---
