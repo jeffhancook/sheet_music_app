@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Downloader // Han Chau</title>
+    <title>Voice Separator // Han Chau</title>
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -83,6 +83,14 @@
             100% { transform: translate(0, 0) rotate(0deg); }
         }
 
+        @keyframes mote-float {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            15% { opacity: var(--mo, 0.35); }
+            50% { transform: translateY(calc(var(--dy, -60px))) translateX(calc(var(--dx, 10px))); opacity: var(--mo, 0.35); }
+            85% { opacity: var(--mo, 0.35); }
+            100% { transform: translateY(calc(var(--dy, -60px) * 2)) translateX(calc(var(--dx, 10px) * 1.5)); opacity: 0; }
+        }
+
         /* ── Decorations layer ── */
         .decor {
             position: fixed;
@@ -124,13 +132,6 @@
             animation-delay: var(--d, 0s);
         }
 
-        @keyframes mote-float {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            15% { opacity: var(--mo, 0.35); }
-            50% { transform: translateY(calc(var(--dy, -60px))) translateX(calc(var(--dx, 10px))); opacity: var(--mo, 0.35); }
-            85% { opacity: var(--mo, 0.35); }
-            100% { transform: translateY(calc(var(--dy, -60px) * 2)) translateX(calc(var(--dx, 10px) * 1.5)); opacity: 0; }
-        }
         .mote {
             position: absolute; border-radius: 50%; pointer-events: none;
             width: var(--s, 4px); height: var(--s, 4px);
@@ -274,54 +275,52 @@
             margin-left: 0.15em;
         }
 
-        /* ── Input ── */
-        .input-group { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 0.7rem 0.85rem;
-            border: 1px solid #3f3930;
-            border-radius: 6px;
-            background: #241f15;
-            color: #d6c8b4;
-            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-            font-size: 0.82rem;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        input[type="text"]:focus {
-            border-color: #c2593e;
-            box-shadow: 0 0 0 3px rgba(194, 89, 62, 0.08);
-        }
-
-        input[type="text"]::placeholder { color: #4a4238; }
-
-        /* ── Format Toggle ── */
-        .format-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; }
-
-        .format-btn {
-            padding: 0.4rem 1.1rem;
-            border: 1px solid #3f3930;
-            border-radius: 5px;
-            background: transparent;
-            color: #6a5d50;
-            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-            font-size: 0.75rem;
+        /* ── Drop Zone ── */
+        .drop-zone {
+            border: 2px dashed #3f3930;
+            border-radius: 8px;
+            padding: 2rem 1.5rem;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 1rem;
         }
 
-        .format-btn.active {
+        .drop-zone:hover, .drop-zone.dragover {
             border-color: #c2593e;
-            color: #c2593e;
-            background: rgba(194, 89, 62, 0.06);
+            background: rgba(194, 89, 62, 0.04);
         }
 
-        .format-btn:hover:not(.active):not(:disabled) { border-color: #564c40; color: #8a7c6c; }
-        .format-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .drop-zone.has-file {
+            border-color: #6d8f5e;
+            background: rgba(109, 143, 94, 0.04);
+        }
+
+        .drop-zone-icon {
+            font-size: 1.8rem;
+            color: #4a4238;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .drop-zone-text {
+            font-size: 0.82rem;
+            color: #6a5d50;
+        }
+
+        .drop-zone-text .browse {
+            color: #c2593e;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .drop-zone-filename {
+            font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+            font-size: 0.78rem;
+            color: #6d8f5e;
+            margin-top: 0.4rem;
+            word-break: break-all;
+        }
 
         /* ── Buttons ── */
         .btn-row { display: flex; gap: 0.75rem; }
@@ -408,6 +407,11 @@
             border-radius: 1px; width: 0%; transition: width 1s linear;
         }
 
+        .download-row {
+            display: flex; gap: 0.75rem; margin-top: 1rem; display: none;
+        }
+        .download-row.active { display: flex; }
+
         /* ── Info Cards ── */
         .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.25rem; }
 
@@ -438,13 +442,6 @@
             font-size: 0.62rem; color: #4a4238;
         }
 
-        .hint kbd {
-            display: inline-block; padding: 0.1rem 0.35rem;
-            border: 1px solid #3f3930; border-radius: 3px;
-            background: #241f15; color: #6a5d50;
-            font-family: inherit; font-size: inherit;
-        }
-
         /* ── Responsive ── */
         @media (max-width: 600px) {
             .container { padding: 1rem; }
@@ -453,6 +450,7 @@
             .home-btn { top: 0.75rem; left: 0.75rem; font-size: 0.7rem; padding: 0.3rem 0.6rem; }
             .info-row { grid-template-columns: 1fr; }
             .decor .hide-mobile { display: none; }
+            .download-row { flex-direction: column; }
         }
     </style>
 </head>
@@ -462,6 +460,40 @@
          DECORATIONS — atmospheric background
          ══════════════════════════════════════ -->
     <div class="decor" aria-hidden="true">
+
+        <!-- ── Waveform fragments ── -->
+        <svg class="data-line" style="top:10%;left:3%;--dur:14s;--d:0s" width="220" height="60" viewBox="0 0 220 60" fill="none" opacity="0.12">
+            <path d="M0 30 Q15 10 30 30 Q45 50 60 30 Q75 10 90 30 Q105 50 120 30 Q135 10 150 30 Q165 50 180 30 Q195 10 210 30" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+        </svg>
+
+        <svg class="data-line hide-mobile" style="top:14%;right:5%;left:auto;--dur:16s;--d:2s" width="200" height="50" viewBox="0 0 200 50" fill="none" opacity="0.1">
+            <path d="M0 25 Q12 5 25 25 Q38 45 50 25 Q62 5 75 25 Q88 45 100 25 Q112 5 125 25 Q138 45 150 25 Q162 5 175 25 Q188 45 200 25" stroke="#c9a87c" stroke-width="0.7" fill="none"/>
+        </svg>
+
+        <svg class="data-line" style="bottom:8%;left:5%;top:auto;--dur:18s;--d:3s" width="240" height="70" viewBox="0 0 240 70" fill="none" opacity="0.09">
+            <path d="M0 35 Q20 5 40 35 Q60 65 80 35 Q100 5 120 35 Q140 65 160 35 Q180 5 200 35 Q220 65 240 35" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+        </svg>
+
+        <!-- ── Sound wave arcs ── -->
+        <svg class="ring" style="top:22%;left:6%;--dur:8s;--d:0s;--r:0deg" width="60" height="60" viewBox="0 0 60 60" fill="none" opacity="0.12">
+            <path d="M30 10 Q40 10 40 30 Q40 50 30 50" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+            <path d="M30 16 Q36 16 36 30 Q36 44 30 44" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <path d="M30 22 Q33 22 33 30 Q33 38 30 38" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+            <circle cx="30" cy="30" r="2" fill="#d4b896" opacity="0.5"/>
+        </svg>
+
+        <svg class="ring hide-mobile" style="bottom:20%;right:7%;left:auto;top:auto;--dur:10s;--d:1.5s;--r:180deg" width="70" height="70" viewBox="0 0 70 70" fill="none" opacity="0.1">
+            <path d="M35 8 Q50 8 50 35 Q50 62 35 62" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <path d="M35 15 Q44 15 44 35 Q44 55 35 55" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+            <path d="M35 22 Q39 22 39 35 Q39 48 35 48" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <circle cx="35" cy="35" r="2" fill="#c9a87c" opacity="0.45"/>
+        </svg>
+
+        <svg class="ring" style="top:60%;left:4%;--dur:9s;--d:3s;--r:0deg" width="50" height="50" viewBox="0 0 50 50" fill="none" opacity="0.09">
+            <path d="M25 8 Q35 8 35 25 Q35 42 25 42" stroke="#d4b896" stroke-width="0.8" fill="none"/>
+            <path d="M25 14 Q31 14 31 25 Q31 36 25 36" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
+            <circle cx="25" cy="25" r="1.5" fill="#d4b896" opacity="0.4"/>
+        </svg>
 
         <!-- ── Concentric rings ── -->
         <svg class="ring" style="top:8%;left:5%;--dur:8s;--d:0s;--r:0deg" width="70" height="70" viewBox="0 0 70 70" fill="none" opacity="0.12">
@@ -479,28 +511,6 @@
             <circle cx="45" cy="45" r="2" fill="#c9a87c" opacity="0.5"/>
         </svg>
 
-        <svg class="ring" style="top:65%;left:3%;--dur:9s;--d:1.5s;--r:0deg" width="55" height="55" viewBox="0 0 55 55" fill="none" opacity="0.09">
-            <circle cx="27" cy="27" r="24" stroke="#d4b896" stroke-width="0.8"/>
-            <circle cx="27" cy="27" r="14" stroke="#c9a87c" stroke-width="0.8"/>
-            <circle cx="27" cy="27" r="2" fill="#d4b896" opacity="0.45"/>
-        </svg>
-
-        <!-- ── Dashed arcs ── -->
-        <svg class="data-line hide-mobile" style="top:12%;right:4%;left:auto;--dur:14s;--d:1s" width="200" height="100" viewBox="0 0 200 100" fill="none" opacity="0.12">
-            <path d="M10 80 Q100 -10 190 80" stroke="#d4b896" stroke-width="0.8" stroke-dasharray="6 4" fill="none"/>
-            <path d="M30 80 Q100 10 170 80" stroke="#c9a87c" stroke-width="0.6" stroke-dasharray="4 6" fill="none"/>
-            <circle cx="10" cy="80" r="2.5" fill="#d4b896" opacity="0.5"/>
-            <circle cx="190" cy="80" r="2.5" fill="#d4b896" opacity="0.5"/>
-            <rect x="97" y="28" width="6" height="6" transform="rotate(45 100 31)" stroke="#c9a87c" stroke-width="0.8" fill="none" opacity="0.5"/>
-        </svg>
-
-        <svg class="data-line" style="bottom:10%;left:4%;top:auto;--dur:16s;--d:4s" width="180" height="80" viewBox="0 0 180 80" fill="none" opacity="0.1">
-            <path d="M5 60 Q90 -5 175 60" stroke="#c9a87c" stroke-width="0.8" stroke-dasharray="5 5" fill="none"/>
-            <circle cx="5" cy="60" r="2" fill="#c9a87c" opacity="0.45"/>
-            <circle cx="175" cy="60" r="2" fill="#c9a87c" opacity="0.45"/>
-            <rect x="87" y="18" width="5" height="5" transform="rotate(45 90 21)" stroke="#d4b896" stroke-width="0.8" fill="none" opacity="0.45"/>
-        </svg>
-
         <!-- ── Angular data connectors ── -->
         <svg class="data-line hide-mobile" style="top:35%;left:2%;--dur:12s;--d:0s" width="240" height="60" viewBox="0 0 240 60" fill="none" opacity="0.1">
             <path d="M0 30 L40 30 L55 10 L85 10 L100 30 L140 30 L155 50 L185 50 L200 30 L240 30" stroke="#d4b896" stroke-width="0.8" fill="none"/>
@@ -513,11 +523,6 @@
             <path d="M0 25 L30 25 L45 8 L75 8 L90 25 L130 25 L145 42 L175 42 L200 25" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
             <rect x="42" y="5" width="6" height="6" transform="rotate(45 45 8)" stroke="#c9a87c" stroke-width="0.8" fill="none" opacity="0.45"/>
             <circle cx="90" cy="25" r="2" fill="#c9a87c" opacity="0.45"/>
-        </svg>
-
-        <svg class="data-line hide-mobile" style="top:78%;right:3%;left:auto;--dur:15s;--d:5s" width="160" height="45" viewBox="0 0 160 45" fill="none" opacity="0.08">
-            <path d="M0 22 L25 22 L38 6 L62 6 L75 22 L100 22 L112 38 L140 38 L160 22" stroke="#d4b896" stroke-width="0.7" fill="none"/>
-            <circle cx="75" cy="22" r="1.5" fill="#d4b896" opacity="0.4"/>
         </svg>
 
         <!-- ── Crosshair markers ── -->
@@ -535,13 +540,6 @@
             <circle cx="17" cy="17" r="1.5" fill="#c9a87c" opacity="0.45"/>
         </svg>
 
-        <svg class="ring" style="bottom:22%;left:10%;top:auto;--dur:8s;--d:4s;--r:0deg" width="25" height="25" viewBox="0 0 25 25" fill="none" opacity="0.09">
-            <line x1="12" y1="1" x2="12" y2="24" stroke="#d4b896" stroke-width="0.6" stroke-dasharray="2 3"/>
-            <line x1="1" y1="12" x2="24" y2="12" stroke="#d4b896" stroke-width="0.6" stroke-dasharray="2 3"/>
-            <circle cx="12" cy="12" r="7" stroke="#c9a87c" stroke-width="0.7" fill="none"/>
-            <circle cx="12" cy="12" r="1.5" fill="#d4b896" opacity="0.4"/>
-        </svg>
-
         <!-- ── Floating diamond nodes ── -->
         <svg class="ring hide-mobile" style="top:5%;right:20%;left:auto;--dur:7.5s;--d:2s;--r:0deg" width="20" height="20" viewBox="0 0 20 20" fill="none" opacity="0.14">
             <rect x="5" y="5" width="10" height="10" transform="rotate(45 10 10)" stroke="#d4b896" stroke-width="1" fill="none"/>
@@ -551,10 +549,6 @@
         <svg class="ring" style="top:75%;left:6%;--dur:8.5s;--d:0.5s;--r:0deg" width="16" height="16" viewBox="0 0 16 16" fill="none" opacity="0.12">
             <rect x="3" y="3" width="10" height="10" transform="rotate(45 8 8)" stroke="#c9a87c" stroke-width="0.8" fill="none"/>
             <rect x="5.5" y="5.5" width="5" height="5" transform="rotate(45 8 8)" fill="#c9a87c" opacity="0.2"/>
-        </svg>
-
-        <svg class="ring hide-mobile" style="top:40%;left:12%;--dur:9s;--d:3.5s;--r:0deg" width="18" height="18" viewBox="0 0 18 18" fill="none" opacity="0.11">
-            <rect x="4" y="4" width="10" height="10" transform="rotate(45 9 9)" stroke="#d4b896" stroke-width="0.8" fill="none"/>
         </svg>
 
         <svg class="ring" style="bottom:12%;right:14%;left:auto;top:auto;--dur:7s;--d:5s;--r:0deg" width="14" height="14" viewBox="0 0 14 14" fill="none" opacity="0.13">
@@ -627,21 +621,6 @@
             <circle cx="130" cy="150" r="3.5" fill="#d4b896" opacity="0.45"/>
         </svg>
 
-        <!-- Cluster 5 — top center-right -->
-        <svg class="geo hide-mobile" style="top:8%;right:18%;left:auto;--dur:25s;--d:1s" width="180" height="160" viewBox="0 0 180 160" fill="none" opacity="0.15">
-            <line x1="30" y1="40" x2="90" y2="20" stroke="#d4b896" stroke-width="0.9"/>
-            <line x1="90" y1="20" x2="150" y2="60" stroke="#c9a87c" stroke-width="0.9"/>
-            <line x1="150" y1="60" x2="110" y2="130" stroke="#d4b896" stroke-width="0.8"/>
-            <line x1="110" y1="130" x2="30" y2="40" stroke="#c9a87c" stroke-width="0.7"/>
-            <line x1="90" y1="20" x2="110" y2="130" stroke="#d4b896" stroke-width="0.5"/>
-            <circle cx="30" cy="40" r="3.5" stroke="#d4b896" stroke-width="1" fill="none"/>
-            <circle cx="90" cy="20" r="5" stroke="#c9a87c" stroke-width="1.2" fill="none"/>
-            <circle cx="90" cy="20" r="2" fill="#c9a87c" opacity="0.45"/>
-            <circle cx="150" cy="60" r="4" stroke="#d4b896" stroke-width="1.2" fill="none"/>
-            <circle cx="110" cy="130" r="5.5" stroke="#c9a87c" stroke-width="1" fill="none"/>
-            <circle cx="110" cy="130" r="2" fill="#d4b896" opacity="0.4"/>
-        </svg>
-
         <!-- Dust particles -->
         <span class="dust" style="top:8%;left:18%;--s:3px;--o:0.12;--dur:5s;--d:0s"></span>
         <span class="dust gold" style="top:14%;right:22%;--s:4px;--o:0.09;--dur:4s;--d:1s"></span>
@@ -660,6 +639,9 @@
         <span class="dust warm" style="top:55%;left:82%;--s:2px;--o:0.15;--dur:5.5s;--d:3s"></span>
         <span class="dust" style="top:78%;left:30%;--s:3px;--o:0.11;--dur:6s;--d:2s"></span>
         <span class="dust gold" style="top:92%;right:15%;--s:2px;--o:0.12;--dur:4.5s;--d:1s"></span>
+        <span class="dust warm" style="top:3%;left:35%;--s:3px;--o:0.14;--dur:5s;--d:2s"></span>
+        <span class="dust gold" style="top:45%;right:4%;--s:4px;--o:0.1;--dur:4.5s;--d:0s"></span>
+        <span class="dust" style="top:68%;right:20%;--s:3px;--o:0.12;--dur:5.5s;--d:3s"></span>
 
         <!-- ── Nostalgic dust motes ── -->
         <span class="mote" style="top:10%;left:15%;--s:4px;--mo:0.3;--dur:9s;--d:0s;--dy:-70px;--dx:12px;--c:#d4b896"></span>
@@ -679,14 +661,6 @@
         <span class="mote" style="top:28%;left:20%;--s:4px;--mo:0.32;--dur:8s;--d:1s;--dy:-70px;--dx:12px;--c:#d4b896"></span>
         <span class="mote" style="top:42%;right:8%;--s:5px;--mo:0.28;--dur:10s;--d:5.5s;--dy:-80px;--dx:-10px;--c:#e0cea8"></span>
         <span class="mote" style="top:85%;left:40%;--s:3px;--mo:0.3;--dur:11s;--d:2s;--dy:-60px;--dx:8px;--c:#c9a87c"></span>
-        <span class="mote" style="top:15%;left:58%;--s:4px;--mo:0.25;--dur:9s;--d:4s;--dy:-75px;--dx:-14px;--c:#d4b896"></span>
-
-        <!-- Extra dust -->
-        <span class="dust warm" style="top:3%;left:35%;--s:3px;--o:0.14;--dur:5s;--d:2s"></span>
-        <span class="dust gold" style="top:45%;right:4%;--s:4px;--o:0.1;--dur:4.5s;--d:0s"></span>
-        <span class="dust" style="top:68%;right:20%;--s:3px;--o:0.12;--dur:5.5s;--d:3s"></span>
-        <span class="dust warm" style="top:85%;left:12%;--s:2px;--o:0.15;--dur:4s;--d:1.5s"></span>
-        <span class="dust gold" style="top:22%;left:65%;--s:3px;--o:0.11;--dur:6s;--d:4s"></span>
 
     </div>
 
@@ -698,25 +672,22 @@
     <div class="container">
         <div class="card-frame">
             <div class="card-header">
-                <span class="card-label">yt-dl v3.0</span>
+                <span class="card-label">demucs v1.0</span>
                 <span class="card-status"><span class="dot"></span> online</span>
             </div>
             <div class="card-body">
-                <h1><span class="accent">/</span> Downloader</h1>
-                <p class="subtitle">paste a url to grab video or audio</p>
+                <h1><span class="accent">~</span> Voice Separator</h1>
+                <p class="subtitle">separate lead vocals from accompaniment</p>
 
-                <div class="input-group">
-                    <input type="text" id="urlInput" placeholder="https://youtube.com/watch?v=..." autofocus>
-                </div>
-
-                <div class="format-toggle">
-                    <button class="format-btn active" data-format="audio" onclick="setFormat('audio', this)">Audio (MP3)</button>
-                    <button class="format-btn" data-format="video" onclick="setFormat('video', this)">Video (MP4)</button>
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">&#9835;</div>
+                    <p class="drop-zone-text">drag &amp; drop audio file or <span class="browse">browse</span></p>
+                    <p class="drop-zone-filename" id="fileName"></p>
+                    <input type="file" id="fileInput" accept=".mp3,.wav,.flac,.m4a,.ogg,.aac" hidden>
                 </div>
 
                 <div class="btn-row">
-                    <button class="start-btn" id="startBtn" onclick="startDownload()">Execute</button>
-                    <button class="download-btn" id="downloadBtn" disabled>Save</button>
+                    <button class="start-btn" id="startBtn" onclick="startSeparation()" disabled>Separate</button>
                 </div>
 
                 <div class="status">
@@ -727,6 +698,10 @@
                         <span id="timerValue">0:00</span>
                     </div>
                     <div class="time-bar" id="timeBar"><div class="fill" id="timeBarFill"></div></div>
+                    <div class="download-row" id="downloadRow">
+                        <button class="start-btn" onclick="downloadStem('vocals')">Vocals</button>
+                        <button class="download-btn" onclick="downloadStem('accompaniment')">Accompaniment</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -735,61 +710,90 @@
             <div class="info-card">
                 <h3>Supported</h3>
                 <ul>
-                    <li><span class="highlight">YouTube</span> videos</li>
-                    <li><span class="highlight">YouTube</span> shorts</li>
-                    <li><span class="highlight">YouTube</span> music</li>
+                    <li><span class="highlight">mp3</span>, <span class="highlight">wav</span>, <span class="highlight">flac</span>, <span class="highlight">m4a</span></li>
+                    <li>up to <span class="highlight">100 MB</span></li>
+                    <li>ogg &amp; aac also accepted</li>
                 </ul>
             </div>
             <div class="info-card">
                 <h3>How it works</h3>
                 <ul>
-                    <li>Paste link, pick format</li>
-                    <li>Server fetches the file</li>
-                    <li>Save directly to disk</li>
+                    <li>Upload an audio file</li>
+                    <li>AI separates vocal stems</li>
+                    <li>Download vocals &amp; accompaniment</li>
                 </ul>
             </div>
         </div>
 
-        <p class="hint">press <kbd>Enter</kbd> to start download</p>
+        <p class="hint">max file size: 100 MB</p>
     </div>
 
     <script>
-        let selectedFormat = 'audio';
-        let downloadedFormat = 'audio';
         let currentJobId = null;
         let pollInterval = null;
         let timerInterval = null;
         let startTime = null;
+        let selectedFile = null;
 
-        function setFormat(format, btn) {
-            selectedFormat = format;
-            document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const startBtn = document.getElementById('startBtn');
+
+        // ── Drop zone interactions ──
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                selectFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                selectFile(fileInput.files[0]);
+            }
+        });
+
+        function selectFile(file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            dropZone.classList.add('has-file');
+            startBtn.disabled = false;
         }
 
-        async function startDownload() {
-            const url = document.getElementById('urlInput').value.trim();
-            if (!url) {
-                showStatus('No URL provided.', 'error');
+        // ── Separation flow ──
+        async function startSeparation() {
+            if (!selectedFile) {
+                showStatus('No file selected.', 'error');
                 return;
             }
 
-            const startBtn = document.getElementById('startBtn');
-            const dlBtn = document.getElementById('downloadBtn');
             startBtn.disabled = true;
             startBtn.textContent = 'PROCESSING...';
-            dlBtn.disabled = true;
-            document.querySelectorAll('.format-btn').forEach(b => b.disabled = true);
-            downloadedFormat = selectedFormat;
-            showStatus('Initiating download...', '');
+            showStatus('Separating vocals... this typically takes 2\u20135 minutes', '');
             document.getElementById('progressBar').classList.add('active');
+            document.getElementById('downloadRow').classList.remove('active');
             startTimer();
 
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
             try {
-                const resp = await fetch('api/download', {
+                const resp = await fetch('api/separate', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: url, format: selectedFormat })
+                    body: formData,
                 });
                 const data = await resp.json();
 
@@ -800,7 +804,7 @@
                 }
 
                 currentJobId = data.job_id;
-                pollInterval = setInterval(checkStatus, 1500);
+                pollInterval = setInterval(checkStatus, 2000);
             } catch (e) {
                 showStatus('Connection to server failed.', 'error');
                 resetBtns();
@@ -814,33 +818,20 @@
                 const resp = await fetch(`api/status/${currentJobId}`);
                 const data = await resp.json();
 
-                if (data.status === 'downloading') {
-                    showStatus('Downloading and converting...', '');
+                if (data.status === 'processing') {
+                    showStatus('Separating vocals... this typically takes 2\u20135 minutes', '');
                 } else if (data.status === 'completed') {
                     clearInterval(pollInterval);
                     stopTimer(data.elapsed);
-                    showStatus('Transfer complete. Ready to save.', 'success');
+                    showStatus('Separation complete. Download your stems.', 'success');
                     document.getElementById('progressBar').classList.remove('active');
-                    const dlBtn = document.getElementById('downloadBtn');
-                    dlBtn.disabled = false;
-                    dlBtn.onclick = function() {
-                        const fileUrl = `api/file/${currentJobId}`;
-                        const name = data.filename || ('download.' + (downloadedFormat === 'audio' ? 'mp3' : 'mp4'));
-                        const a = document.createElement('a');
-                        a.href = fileUrl;
-                        a.download = name;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        showStatus('File saved to Downloads.', 'success');
-                    };
-                    document.getElementById('startBtn').disabled = false;
-                    document.getElementById('startBtn').textContent = 'Execute';
-                    document.querySelectorAll('.format-btn').forEach(b => b.disabled = false);
+                    document.getElementById('downloadRow').classList.add('active');
+                    startBtn.disabled = false;
+                    startBtn.textContent = 'Separate';
                 } else if (data.status === 'failed') {
                     clearInterval(pollInterval);
-                    stopTimer(data.elapsed);
-                    showStatus(data.error || 'Download failed.', 'error');
+                    stopTimer(data.elapsed, true);
+                    showStatus(data.error || 'Separation failed.', 'error');
                     document.getElementById('progressBar').classList.remove('active');
                     resetBtns();
                 }
@@ -851,6 +842,16 @@
             }
         }
 
+        function downloadStem(stem) {
+            if (!currentJobId) return;
+            const a = document.createElement('a');
+            a.href = `api/file/${currentJobId}/${stem}`;
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
         function showStatus(msg, type) {
             const el = document.getElementById('statusText');
             el.textContent = msg;
@@ -858,11 +859,8 @@
         }
 
         function resetBtns() {
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('startBtn').textContent = 'Execute';
-            document.getElementById('downloadBtn').disabled = true;
-            document.getElementById('downloadBtn').onclick = null;
-            document.querySelectorAll('.format-btn').forEach(b => b.disabled = false);
+            startBtn.disabled = !selectedFile;
+            startBtn.textContent = 'Separate';
         }
 
         function formatTime(seconds) {
@@ -887,17 +885,13 @@
             }, 250);
         }
 
-        function stopTimer(serverElapsed) {
+        function stopTimer(serverElapsed, failed) {
             clearInterval(timerInterval);
             const elapsed = serverElapsed || ((Date.now() - startTime) / 1000);
             document.getElementById('timerValue').textContent = formatTime(elapsed);
-            document.getElementById('timer').querySelector('.label').textContent = 'Completed in';
+            document.getElementById('timer').querySelector('.label').textContent = failed ? 'Failed after' : 'Completed in';
             document.getElementById('timeBarFill').style.width = '100%';
         }
-
-        document.getElementById('urlInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') startDownload();
-        });
 
         // ── Timestamp ──
         (function updateTimestamp() {
