@@ -17,7 +17,8 @@ DOWNLOADS_DIR.mkdir(exist_ok=True)
 
 # Use yt-dlp via the venv's Python interpreter
 VENV_PYTHON = str(Path(__file__).resolve().parent / "venv" / "bin" / "python3")
-YTDLP_CMD = [VENV_PYTHON, "-m", "yt_dlp"]
+COOKIES_FILE = str(Path(__file__).resolve().parent / "cookies.txt")
+YTDLP_CMD = [VENV_PYTHON, "-m", "yt_dlp", "--remote-components", "ejs:github", "--cookies", COOKIES_FILE]
 
 # In-memory job tracking
 jobs = {}
@@ -50,7 +51,20 @@ def run_download(job_id, url, format_type):
             ]
 
         jobs[job_id]["status"] = "downloading"
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+
+        # Retry once — YouTube sometimes throws a one-time challenge that
+        # yt-dlp resolves by updating cookies, so the second attempt works.
+        max_attempts = 2
+        for attempt in range(max_attempts):
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+            if result.returncode == 0:
+                break
+            if attempt < max_attempts - 1:
+                # Clean any partial files before retry
+                for f in job_dir.iterdir():
+                    f.unlink(missing_ok=True)
+                time.sleep(2)
+
         elapsed = round(time.time() - jobs[job_id]["started_at"], 1)
         jobs[job_id]["elapsed"] = elapsed
 
