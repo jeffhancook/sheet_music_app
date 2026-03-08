@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lampLight = document.querySelector('.lamp-light');
     const libraryShelves = document.getElementById('libraryShelves');
     let dialogueShown = false;
+    let accelDialogueShown = false;
 
     // ───────────────────────────────────
     // 1. Generate library bookshelves
@@ -306,6 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookmarkMenu = document.getElementById('bookmarkMenu');
     const accelScene = document.getElementById('accelScene');
     let orbAnimationId = null;
+    let activeNewtonDialogue = null;
+    let activeAccelDialogue = null;
 
     function hideCurrentScene() {
         // Hide whichever scene is currently showing (for blackout swap)
@@ -319,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetNewtonState() {
+        if (activeNewtonDialogue) { activeNewtonDialogue.abort(); activeNewtonDialogue = null; }
         newtonScene.classList.remove('newton-visible', 'newton-zoom-out', 'newton-zoom-to-tree', 'newton-arrive-blurred', 'newton-arrive-clear');
         newtonScene.style.filter = '';
         newtonScene.style.transform = '';
@@ -337,9 +341,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetAccelState() {
+        if (activeAccelDialogue) { activeAccelDialogue.abort(); activeAccelDialogue = null; }
         accelScene.classList.remove('accel-visible', 'accel-zoom-out', 'accel-arrive-blurred', 'accel-arrive-clear');
         accelScene.style.filter = '';
         stopOrbAnimation();
+        accelDialogueShown = false;
+        const adBox = document.getElementById('accelDialogueBox');
+        if (adBox) {
+            adBox.classList.remove('dialogue-visible', 'dialogue-fade-out');
+            adBox.style.display = '';
+        }
+        const adText = document.getElementById('accelDialogueText');
+        if (adText) adText.innerHTML = '';
+        const formula = document.getElementById('accelFormula');
+        if (formula) formula.classList.remove('formula-visible');
+        const dispLabel = document.getElementById('accelDisplacementLabel');
+        if (dispLabel) dispLabel.classList.remove('disp-visible');
     }
 
     function transitionTo(target) {
@@ -356,6 +373,14 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomBlur.classList.remove('blackout-out');
         zoomBlur.classList.add('blackout-in');
         hideCurrentScene();
+
+        // Immediately hide overlays that sit above the blackout layer
+        if (fromScene === 'newton') {
+            const lawsOv = document.getElementById('lawsOverlay');
+            if (lawsOv) lawsOv.classList.remove('laws-visible', 'law2-focused');
+            if (nextBtn) nextBtn.classList.remove('next-visible');
+            clearTimeout(nextBtnTimer);
+        }
 
         if (fromScene === 'home') {
             clearInterval(dustInterval);
@@ -429,6 +454,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (target === 'newton' && !dialogueShown) {
                 setTimeout(startNewtonDialogue, 600);
+            }
+            if (target === 'acceleration' && !accelDialogueShown) {
+                setTimeout(startAccelDialogue, 600);
             }
         }, 2600);
     }
@@ -651,30 +679,81 @@ document.addEventListener('DOMContentLoaded', () => {
     // 11. DIALOGUE ENGINE + NEWTON'S LAWS
     // ───────────────────────────────────
 
-    function createDialogueEngine(lines, onComplete) {
-        const box = document.getElementById('dialogueBox');
-        const textEl = document.getElementById('dialogueText');
+    function createDialogueEngine(lines, onComplete, opts) {
+        const options = opts || {};
+        const boxId = options.boxId || 'dialogueBox';
+        const textId = options.textId || 'dialogueText';
+        const useHTML = options.useHTML || false;
+
+        const box = document.getElementById(boxId);
+        const textEl = document.getElementById(textId);
         const cursor = box.querySelector('.dialogue-cursor');
         let lineIdx = 0;
         let charIdx = 0;
         let typing = false;
         let typeTimer = null;
 
+        // Parse HTML string into tokens: tags are atomic, text chars are individual
+        function tokenize(str) {
+            const tokens = [];
+            let i = 0;
+            while (i < str.length) {
+                if (str[i] === '<') {
+                    const end = str.indexOf('>', i);
+                    if (end !== -1) {
+                        tokens.push(str.slice(i, end + 1));
+                        i = end + 1;
+                    } else {
+                        tokens.push(str[i]);
+                        i++;
+                    }
+                } else {
+                    tokens.push(str[i]);
+                    i++;
+                }
+            }
+            return tokens;
+        }
+
         function typeLine() {
             const line = lines[lineIdx];
             typing = true;
             charIdx = 0;
-            textEl.textContent = '';
+            if (useHTML) {
+                textEl.innerHTML = '';
+            } else {
+                textEl.textContent = '';
+            }
             cursor.classList.remove('cursor-visible');
 
+            const tokens = useHTML ? tokenize(line) : null;
+            let built = '';
+
             function typeChar() {
-                if (charIdx < line.length) {
-                    textEl.textContent += line[charIdx];
-                    charIdx++;
-                    typeTimer = setTimeout(typeChar, 45);
+                if (useHTML) {
+                    if (charIdx < tokens.length) {
+                        built += tokens[charIdx];
+                        textEl.innerHTML = built;
+                        charIdx++;
+                        // Tags are typed instantly (0 delay)
+                        if (charIdx < tokens.length && tokens[charIdx - 1].startsWith('<')) {
+                            typeChar();
+                        } else {
+                            typeTimer = setTimeout(typeChar, 45);
+                        }
+                    } else {
+                        typing = false;
+                        cursor.classList.add('cursor-visible');
+                    }
                 } else {
-                    typing = false;
-                    cursor.classList.add('cursor-visible');
+                    if (charIdx < line.length) {
+                        textEl.textContent += line[charIdx];
+                        charIdx++;
+                        typeTimer = setTimeout(typeChar, 45);
+                    } else {
+                        typing = false;
+                        cursor.classList.add('cursor-visible');
+                    }
                 }
             }
             typeChar();
@@ -682,7 +761,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function skipToEnd() {
             clearTimeout(typeTimer);
-            textEl.textContent = lines[lineIdx];
+            if (useHTML) {
+                textEl.innerHTML = lines[lineIdx];
+            } else {
+                textEl.textContent = lines[lineIdx];
+            }
             typing = false;
             cursor.classList.add('cursor-visible');
         }
@@ -723,7 +806,13 @@ document.addEventListener('DOMContentLoaded', () => {
             typeLine();
         }
 
-        return { start, handleClick };
+        function abort() {
+            clearTimeout(typeTimer);
+            document.removeEventListener('click', handleClick);
+            typing = false;
+        }
+
+        return { start, handleClick, abort };
     }
 
     function showNewtonLaws() {
@@ -750,6 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function triggerNewtonZoomAndLaws() {
+        if (currentScene !== 'newton') return;
         const ns = document.getElementById('newtonScene');
         if (ns) {
             ns.classList.add('newton-zoom-to-tree');
@@ -767,8 +857,61 @@ document.addEventListener('DOMContentLoaded', () => {
             'They are the foundations of physics as we know it.'
         ];
 
-        const engine = createDialogueEngine(lines, triggerNewtonZoomAndLaws);
-        engine.start();
+        activeNewtonDialogue = createDialogueEngine(lines, triggerNewtonZoomAndLaws);
+        activeNewtonDialogue.start();
+    }
+
+    function onAccelDialogueComplete() {
+        if (currentScene !== 'acceleration') return;
+        const formula = document.getElementById('accelFormula');
+        const dispLabel = document.getElementById('accelDisplacementLabel');
+        if (formula) formula.classList.add('formula-visible');
+        if (dispLabel) dispLabel.classList.add('disp-visible');
+
+        // Start second dialogue after a brief pause
+        setTimeout(startDisplacementDialogue, 1200);
+    }
+
+    function startDisplacementDialogue() {
+        const lines = [
+            'The variable \u2018<i>t</i>\u2019 means <b>time</b>.',
+            'The triangle on the left side of the equation means <b>change</b>.',
+            'The variable \u2018<i>x</i>\u2019 represents the horizontal position of the circle. Think back to graphs \u2014 the white dotted line represents zero, the <b>origin</b>.',
+            'That means that everything left of the dotted line has a <b>negative</b> <i>x</i> value, and everything to the right of the dotted line has a <b>positive</b> <i>x</i> value.',
+            'Therefore, in full, the formula is saying that the change in <i>x</i> is equal to velocity multiplied by time.',
+            'Another way to say change in <i>x</i> is <b>displacement</b>.',
+            'Displacement is how far something is from its original position. In this case, how far it is from the origin.',
+            'The number above the sphere shows the sphere\u2019s horizontal displacement in real time. The farther the sphere is from the center, the larger the number.'
+        ];
+
+        activeAccelDialogue = createDialogueEngine(lines, null, {
+            boxId: 'accelDialogueBox',
+            textId: 'accelDialogueText',
+            useHTML: true
+        });
+        activeAccelDialogue.start();
+    }
+
+    function startAccelDialogue() {
+        if (accelDialogueShown) return;
+        accelDialogueShown = true;
+
+        const lines = [
+            'The variable that represents <b>acceleration</b> is <i>a</i>.',
+            'In order to understand acceleration, however, we must understand <b>velocity</b>.',
+            'Velocity is denoted by the letter <i>v</i>, as seen below.',
+            'Velocity is made up of two parts: the direction, being positive or negative, and the scalar.',
+            'A scalar is how large something is. It does not have a direction.',
+            'For velocity, a scalar tells us how fast that object is moving.',
+            'When the velocity of an object doesn\u2019t change, such as how the moving sphere down below is moving, we call that <b>constant velocity</b>.'
+        ];
+
+        activeAccelDialogue = createDialogueEngine(lines, onAccelDialogueComplete, {
+            boxId: 'accelDialogueBox',
+            textId: 'accelDialogueText',
+            useHTML: true
+        });
+        activeAccelDialogue.start();
     }
 
     // ───────────────────────────────────
@@ -787,6 +930,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const orb = document.getElementById('accelOrb');
         const velLabel = document.getElementById('accelVelocityLabel');
         const velSign = document.getElementById('velSign');
+        const dispLabel = document.getElementById('accelDisplacementLabel');
+        const dispSign = document.getElementById('dispSign');
+        const dispValue = document.getElementById('dispValue');
         if (!orb || !velLabel) return;
 
         const track = orb.parentElement;
@@ -811,6 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             orb.style.left = pos + 'px';
             velLabel.style.left = pos + 'px';
+            if (dispLabel) dispLabel.style.left = pos + 'px';
 
             if (direction === 1) {
                 velSign.textContent = '+';
@@ -818,6 +965,20 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 velSign.textContent = '−';
                 velSign.classList.add('vel-negative');
+            }
+
+            // Update displacement: map pos [0, maxLeft] → [-10, 10]
+            if (dispSign && dispValue) {
+                const displacement = (pos / maxLeft) * 20 - 10;
+                const absDisp = Math.abs(displacement);
+                dispValue.textContent = absDisp.toFixed(1);
+                if (displacement >= 0) {
+                    dispSign.textContent = '+';
+                    dispSign.classList.remove('disp-negative');
+                } else {
+                    dispSign.textContent = '−';
+                    dispSign.classList.add('disp-negative');
+                }
             }
 
             orbAnimationId = requestAnimationFrame(animateOrb);

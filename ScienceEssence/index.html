@@ -523,18 +523,12 @@
     <!-- ===== BOOKMARK RIBBON + NAV ===== -->
     <div class="bookmark-ribbon" id="bookmarkRibbon">
         <div class="bookmark-tab" id="bookmarkTab">
-            <span class="bookmark-text">Nav</span>
+            <span class="bookmark-text">Contents</span>
         </div>
         <div class="bookmark-menu" id="bookmarkMenu">
-            <button class="bookmark-btn" data-scene="home">
-                <span class="btn-icon">&#128218;</span> Home
-            </button>
-            <button class="bookmark-btn active" data-scene="newton">
-                <span class="btn-icon">&#127822;</span> Lesson 1.0
-            </button>
-            <button class="bookmark-btn" data-scene="acceleration">
-                <span class="btn-icon">&#9889;</span> Lesson 1.1
-            </button>
+            <button class="bookmark-btn" data-scene="home">Home</button>
+            <button class="bookmark-btn active" data-scene="newton">Lesson 1.0 &mdash; Newton&rsquo;s Laws</button>
+            <button class="bookmark-btn" data-scene="acceleration">Lesson 1.1 &mdash; Acceleration</button>
         </div>
     </div>
 
@@ -684,6 +678,12 @@
         <div class="dialogue-cursor">&#9660;</div>
     </div>
 
+    <!-- Acceleration dialogue box (outside accelScene to avoid filter containment) -->
+    <div class="dialogue-box accel-dialogue-box" id="accelDialogueBox">
+        <div class="dialogue-text" id="accelDialogueText"></div>
+        <div class="dialogue-cursor">&#9660;</div>
+    </div>
+
     <!-- Laws overlay (outside newton-scene to avoid filter containment) -->
     <div class="laws-overlay" id="lawsOverlay">
             <div class="law-card law-card-1">
@@ -753,12 +753,26 @@
         <div class="accel-title">Lesson 1.1 &mdash; Acceleration</div>
         <div class="accel-floor"></div>
         <div class="accel-orb-track">
+            <div class="accel-origin-marker" id="accelOriginMarker">
+                <div class="origin-line"></div>
+                <div class="origin-label">0</div>
+            </div>
+            <div class="accel-displacement-label" id="accelDisplacementLabel">
+                &Delta;x = <span class="disp-sign" id="dispSign">+</span><span class="disp-value" id="dispValue">0.0</span>
+            </div>
             <div class="accel-velocity-label" id="accelVelocityLabel">
                 <span class="vel-sign" id="velSign">+</span><span class="vel-symbol">v</span>
             </div>
             <div class="accel-orb" id="accelOrb"></div>
         </div>
         <div class="accel-vignette"></div>
+    </div>
+
+    <!-- Displacement formula (outside accelScene to avoid filter) -->
+    <div class="accel-formula" id="accelFormula">
+        <span class="formula-delta">&Delta;</span><span class="formula-var">x</span>
+        <span class="formula-eq"> = </span>
+        <span class="formula-var">v</span><span class="formula-var">t</span>
     </div>
 
     <script src="cover.js"></script>
