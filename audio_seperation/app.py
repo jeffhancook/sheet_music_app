@@ -4,6 +4,7 @@ import time
 import shutil
 import subprocess
 import threading
+import queue
 from pathlib import Path
 
 from flask import Flask, render_template, request, jsonify, send_file
@@ -25,9 +26,28 @@ ALLOWED_EXTENSIONS = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aac"}
 # In-memory job tracking
 jobs = {}
 
+# Queue ensures only one Demucs process runs at a time (RAM limited)
+_job_queue = queue.Queue()
 
-def run_separation(job_id, input_path, original_name):
-    """Separate vocals from accompaniment in background."""
+
+def _queue_worker():
+    """Process queued separation jobs one at a time."""
+    while True:
+        job_id, input_path, original_name = _job_queue.get()
+        try:
+            _run_separation(job_id, input_path, original_name)
+        except Exception:
+            pass
+        finally:
+            _job_queue.task_done()
+
+
+_worker_thread = threading.Thread(target=_queue_worker, daemon=True)
+_worker_thread.start()
+
+
+def _run_separation(job_id, input_path, original_name):
+    """Separate vocals from accompaniment."""
     job_dir = OUTPUTS_DIR / job_id
     job_dir.mkdir(exist_ok=True)
 
@@ -145,7 +165,7 @@ def start_separation():
     file.save(str(input_path))
 
     jobs[job_id] = {
-        "status": "starting",
+        "status": "queued",
         "error": None,
         "elapsed": 0,
         "started_at": time.time(),
@@ -155,12 +175,7 @@ def start_separation():
         "accompaniment_name": None,
     }
 
-    thread = threading.Thread(
-        target=run_separation,
-        args=(job_id, str(input_path), file.filename),
-    )
-    thread.daemon = True
-    thread.start()
+    _job_queue.put((job_id, str(input_path), file.filename))
 
     return jsonify({"job_id": job_id})
 
@@ -170,13 +185,19 @@ def check_status(job_id):
     job = jobs.get(job_id)
     if not job:
         return jsonify({"error": "Job not found"}), 404
-    return jsonify({
+    resp = {
         "status": job["status"],
         "error": job["error"],
         "elapsed": job["elapsed"],
         "vocals_name": job["vocals_name"],
         "accompaniment_name": job["accompaniment_name"],
-    })
+    }
+    if job["status"] == "queued":
+        # Count how many jobs are queued ahead of this one
+        queued_ids = [jid for jid, j in jobs.items() if j["status"] in ("queued", "processing")]
+        resp["queue_position"] = queued_ids.index(job_id) + 1 if job_id in queued_ids else 0
+        resp["queue_size"] = len(queued_ids)
+    return jsonify(resp)
 
 
 @app.route("/api/file/<job_id>/<stem>")

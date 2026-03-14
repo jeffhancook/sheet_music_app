@@ -818,7 +818,15 @@
                 const resp = await fetch(`api/status/${currentJobId}`);
                 const data = await resp.json();
 
-                if (data.status === 'processing') {
+                if (data.status === 'queued') {
+                    const pos = data.queue_position || '?';
+                    const size = data.queue_size || '?';
+                    if (size > 1) {
+                        showStatus(`In queue (${pos} of ${size}). Another separation is in progress...`, '');
+                    } else {
+                        showStatus('Starting separation...', '');
+                    }
+                } else if (data.status === 'processing') {
                     showStatus('Separating vocals... this typically takes 2\u20135 minutes', '');
                 } else if (data.status === 'completed') {
                     clearInterval(pollInterval);
@@ -870,6 +878,7 @@
         }
 
         function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
             startTime = Date.now();
             document.getElementById('timer').classList.add('active');
             document.getElementById('timeBar').classList.add('active');
@@ -887,6 +896,7 @@
 
         function stopTimer(serverElapsed, failed) {
             clearInterval(timerInterval);
+            timerInterval = null;
             const elapsed = serverElapsed || ((Date.now() - startTime) / 1000);
             document.getElementById('timerValue').textContent = formatTime(elapsed);
             document.getElementById('timer').querySelector('.label').textContent = failed ? 'Failed after' : 'Completed in';

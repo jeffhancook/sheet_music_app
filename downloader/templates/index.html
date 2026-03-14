@@ -845,8 +845,14 @@
                     resetBtns();
                 }
             } catch (e) {
+                // Retry a few times before giving up — the server may have
+                // momentarily run out of memory during ffmpeg conversion.
+                if (!checkStatus.failures) checkStatus.failures = 0;
+                checkStatus.failures++;
+                if (checkStatus.failures < 5) return;   // keep polling
                 clearInterval(pollInterval);
-                showStatus('Lost connection.', 'error');
+                stopTimer();
+                showStatus('Lost connection to server — the download may have used too much memory. Try a shorter video or restart the server.', 'error');
                 resetBtns();
             }
         }

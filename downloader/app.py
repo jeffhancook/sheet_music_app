@@ -17,8 +17,7 @@ DOWNLOADS_DIR.mkdir(exist_ok=True)
 
 # Use yt-dlp via the venv's Python interpreter
 VENV_PYTHON = str(Path(__file__).resolve().parent / "venv" / "bin" / "python3")
-COOKIES_FILE = str(Path(__file__).resolve().parent / "cookies.txt")
-YTDLP_CMD = [VENV_PYTHON, "-m", "yt_dlp", "--remote-components", "ejs:github", "--cookies", COOKIES_FILE]
+COOKIES_MASTER = Path(__file__).resolve().parent / "cookies.txt"
 
 # In-memory job tracking
 jobs = {}
@@ -29,20 +28,34 @@ def run_download(job_id, url, format_type):
     job_dir = DOWNLOADS_DIR / job_id
     job_dir.mkdir(exist_ok=True)
 
+    # Copy cookies so yt-dlp can't corrupt the master file
+    job_cookies = job_dir / "cookies.txt"
+    shutil.copy2(str(COOKIES_MASTER), str(job_cookies))
+
     try:
+        base_cmd = [
+            VENV_PYTHON, "-m", "yt_dlp",
+            "--remote-components", "ejs:github",
+            "--cookies", str(job_cookies),
+        ]
+
         if format_type == "audio":
             output_template = str(job_dir / "%(title)s.%(ext)s")
-            cmd = YTDLP_CMD + [
+            cmd = base_cmd + [
                 "--no-playlist",
                 "-x",
                 "--audio-format", "mp3",
                 "--audio-quality", "0",
+                # Prefer pre-encoded audio streams to skip heavy ffmpeg
+                # re-encoding that can OOM the server on long tracks.
+                "-f", "bestaudio[acodec=mp4a.40.2]/bestaudio[acodec=opus]/bestaudio/best",
+                "--no-post-overwrites",
                 "-o", output_template,
                 url,
             ]
         else:
             output_template = str(job_dir / "%(title)s.%(ext)s")
-            cmd = YTDLP_CMD + [
+            cmd = base_cmd + [
                 "--no-playlist",
                 "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
                 "--merge-output-format", "mp4",
@@ -60,9 +73,10 @@ def run_download(job_id, url, format_type):
             if result.returncode == 0:
                 break
             if attempt < max_attempts - 1:
-                # Clean any partial files before retry
+                # Clean any partial files before retry (keep cookies)
                 for f in job_dir.iterdir():
-                    f.unlink(missing_ok=True)
+                    if f.name != "cookies.txt":
+                        f.unlink(missing_ok=True)
                 time.sleep(2)
 
         elapsed = round(time.time() - jobs[job_id]["started_at"], 1)
@@ -73,8 +87,8 @@ def run_download(job_id, url, format_type):
             jobs[job_id]["error"] = result.stderr[:500]
             return
 
-        # Find the downloaded file
-        files = list(job_dir.iterdir())
+        # Find the downloaded file (exclude temp cookies)
+        files = [f for f in job_dir.iterdir() if f.name != "cookies.txt"]
         if files:
             jobs[job_id]["status"] = "completed"
             jobs[job_id]["filename"] = files[0].name
