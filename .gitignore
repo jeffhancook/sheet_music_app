@@ -7,3 +7,4 @@ uploads/
 outputs/
 .env
 *.egg-info/
+*.db
