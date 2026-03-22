@@ -170,352 +170,57 @@
     a .contact-value:hover { color: #c2593e; }
     .copyright { font-size: 0.78rem; color: #564c40; margin-top: 0.5rem; }
 
-    /* ══════════════════════════════════════
-       COMMUNITY SECTION
-       ══════════════════════════════════════ */
-    .community-section { max-width: 960px; width: 100%; margin: 0 auto; padding: 0 1.5rem 5rem; z-index: 2; position: relative; }
-
-    /* Nav auth button cursor */
-    .nav-btn { cursor: pointer; }
-    .nav-btn .nav-avatar {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 20px; height: 20px; border-radius: 50%;
-      font-size: 0.6rem; font-weight: 700; color: #241f15; margin-right: 0.15rem;
+    /* Community button link */
+    .c-launch-btn {
+      display: inline-block; text-decoration: none; cursor: pointer;
+      background: linear-gradient(135deg, #c2593e 0%, #d4714f 30%, #b8924a 70%, #c2593e 100%);
+      background-size: 300% 300%;
+      color: #ecdfc8; font-family: Georgia, "Times New Roman", serif;
+      font-size: 2rem; font-weight: 700; letter-spacing: 0.08em;
+      padding: 1.5rem 4rem; border-radius: 16px;
+      border: none;
+      box-shadow:
+        0 0 40px rgba(194, 89, 62, 0.6),
+        0 0 80px rgba(184, 146, 74, 0.3),
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: c-pulse 2.5s ease-in-out infinite, c-shimmer 4s linear infinite;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    .c-launch-btn:hover {
+      transform: scale(1.08);
+      box-shadow:
+        0 0 60px rgba(194, 89, 62, 0.8),
+        0 0 120px rgba(184, 146, 74, 0.5),
+        0 12px 48px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    @keyframes c-pulse {
+      0%, 100% {
+        box-shadow:
+          0 0 40px rgba(194, 89, 62, 0.6),
+          0 0 80px rgba(184, 146, 74, 0.3),
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+      50% {
+        box-shadow:
+          0 0 60px rgba(194, 89, 62, 0.8),
+          0 0 100px rgba(184, 146, 74, 0.5),
+          0 8px 40px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+    }
+    @keyframes c-shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @media (max-width: 600px) {
+      .c-launch-btn { padding: 1rem 2.5rem; font-size: 1.4rem; }
     }
 
-    /* Nav dropdown */
-    .nav-wrap { position: fixed; top: 1.25rem; right: 1.25rem; z-index: 100; }
-    .nav-dropdown {
-      display: none; position: absolute; top: calc(100% + 0.4rem); right: 0; margin-top: 2rem;
-      min-width: 150px; background: rgba(44, 38, 28, 0.95); backdrop-filter: blur(8px);
-      border: 1px solid #3f3930; border-radius: 6px; overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-    .nav-dropdown.open { display: block; }
-    .nav-dd-item {
-      display: block; width: 100%; padding: 0.55rem 0.9rem; border: none; background: none;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.75rem; color: #b0a390; cursor: pointer; text-align: left;
-      transition: background 0.15s, color 0.15s;
-    }
-    .nav-dd-item:hover { background: rgba(194, 89, 62, 0.08); color: #d6c8b4; }
-    .nav-dd-item.logout { color: #c2593e; }
-    .nav-dd-item.logout:hover { background: rgba(194, 89, 62, 0.12); }
-    .nav-dd-sep { height: 1px; background: #3a3428; margin: 0; }
-
-    /* Full-page auth overlay */
-    .c-auth-overlay {
-      display: none; position: fixed; inset: 0; z-index: 10001;
-      background: rgba(36, 31, 21, 0.95); backdrop-filter: blur(12px);
-      align-items: center; justify-content: center;
-      animation: c-fade-in 0.25s ease;
-    }
-    .c-auth-overlay.active { display: flex; }
-    @keyframes c-fade-in { from { opacity: 0; } to { opacity: 1; } }
-    .c-auth-close {
-      position: absolute; top: 1.25rem; right: 1.25rem;
-      background: none; border: 1px solid #3f3930; border-radius: 6px;
-      color: #6a5d50; font-size: 1.2rem; width: 36px; height: 36px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .c-auth-close:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.35); }
-
-    /* Auth card */
-    .c-auth-wrap { display: flex; justify-content: center; padding: 2rem 0; }
-    .c-auth-card {
-      width: 100%; max-width: 400px;
-      background: rgba(44, 38, 28, 0.85); backdrop-filter: blur(4px);
-      border: 1px solid #3a3428; border-radius: 10px;
-      overflow: hidden; position: relative;
-      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
-    }
-    .c-auth-card::before {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5;
-    }
-    .c-auth-header { padding: 1.5rem 1.5rem 0; text-align: center; }
-    .c-auth-header h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.4rem; color: #ecdfc8; margin-bottom: 0.25rem; }
-    .c-auth-header p { font-size: 0.85rem; color: #847868; }
-    .c-auth-tabs { display: flex; margin: 1.25rem 1.5rem 0; border-bottom: 1px solid #3a3428; }
-    .c-auth-tab {
-      flex: 1; padding: 0.6rem; text-align: center; cursor: pointer;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.75rem; color: #6a5d50; letter-spacing: 0.08em;
-      border: none; border-bottom: 2px solid transparent; background: none;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .c-auth-tab.active { color: #c2593e; border-bottom-color: #c2593e; }
-    .c-auth-form { padding: 1.5rem; display: none; }
-    .c-auth-form.active { display: block; }
-    .c-fg { margin-bottom: 1rem; }
-    .c-fg label {
-      display: block; margin-bottom: 0.35rem;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.7rem; color: #6a5d50; letter-spacing: 0.08em; text-transform: uppercase;
-    }
-    .c-fg input {
-      width: 100%; padding: 0.65rem 0.85rem;
-      background: rgba(36, 31, 21, 0.8); border: 1px solid #3a3428; border-radius: 6px;
-      color: #d6c8b4; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
-    }
-    .c-fg input:focus { border-color: #c2593e; }
-    .c-fg input::placeholder { color: #564c40; }
-    .c-auth-btn {
-      width: 100%; padding: 0.7rem; margin-top: 0.5rem;
-      background: linear-gradient(135deg, #c2593e, #a84a32);
-      border: none; border-radius: 6px; color: #ecdfc8;
-      font-size: 0.9rem; font-weight: 600; cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .c-auth-btn:hover { opacity: 0.9; }
-    .c-auth-btn:active { transform: scale(0.98); }
-    .c-auth-error {
-      margin-top: 0.75rem; padding: 0.5rem 0.75rem;
-      background: rgba(194, 89, 62, 0.1); border: 1px solid rgba(194, 89, 62, 0.3);
-      border-radius: 4px; font-size: 0.8rem; color: #c2593e; display: none;
-    }
-
-    /* Three-panel app layout */
-    .c-app-wrap { display: none; }
-    .c-app-wrap.active { display: block; }
-    .c-app-layout {
-      display: grid; grid-template-columns: 260px 1fr 280px;
-      height: clamp(500px, 70vh, 720px);
-      border: 1px solid #3a3428; border-radius: 10px; overflow: hidden;
-      background: rgba(44, 38, 28, 0.85); backdrop-filter: blur(4px);
-      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
-      position: relative;
-    }
-    .c-app-layout::before {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5; z-index: 1;
-    }
-
-    .c-panel { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid #3a3428; }
-    .c-panel:last-child { border-right: none; }
-    .c-panel-hdr {
-      padding: 0.75rem 1rem; border-bottom: 1px solid #3a3428;
-      background: rgba(40, 36, 28, 0.6); flex-shrink: 0;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .c-panel-title {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.65rem; color: #6a5d50; letter-spacing: 0.12em; text-transform: uppercase;
-    }
-    .c-panel-body { flex: 1; overflow-y: auto; padding: 0.6rem; }
-    .c-panel-body::-webkit-scrollbar { width: 5px; }
-    .c-panel-body::-webkit-scrollbar-track { background: transparent; }
-    .c-panel-body::-webkit-scrollbar-thumb { background: #3a3428; border-radius: 3px; }
-
-    /* Friends panel */
-    .c-search {
-      width: 100%; padding: 0.5rem 0.7rem;
-      background: rgba(36, 31, 21, 0.8); border: 1px solid #3a3428; border-radius: 6px;
-      color: #d6c8b4; font-size: 0.82rem; outline: none; margin-bottom: 0.6rem;
-    }
-    .c-search:focus { border-color: #c2593e; }
-    .c-search::placeholder { color: #564c40; }
-    .c-search-results { display: none; margin-bottom: 0.6rem; border: 1px solid #3a3428; border-radius: 6px; overflow: hidden; }
-    .c-section-label {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.6rem; color: #564c40; letter-spacing: 0.1em; text-transform: uppercase;
-      padding: 0.4rem 0; margin-top: 0.3rem;
-    }
-    .c-user-row {
-      display: flex; align-items: center; gap: 0.6rem;
-      padding: 0.45rem 0.65rem; cursor: pointer;
-      border-radius: 6px; transition: background 0.15s;
-    }
-    .c-user-row:hover { background: rgba(194, 89, 62, 0.06); }
-    .c-user-row.active { background: rgba(194, 89, 62, 0.1); border: 1px solid rgba(194, 89, 62, 0.15); }
-    .c-avatar {
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 0.8rem; color: #241f15;
-      flex-shrink: 0; position: relative;
-    }
-    .c-avatar-sm { width: 26px; height: 26px; font-size: 0.68rem; }
-    .c-online-dot {
-      position: absolute; bottom: 0; right: 0;
-      width: 7px; height: 7px; border-radius: 50%;
-      background: #6d8f5e; border: 2px solid #2c261c;
-    }
-    .c-user-info { flex: 1; min-width: 0; }
-    .c-user-name { font-size: 0.82rem; color: #d6c8b4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .c-user-meta { font-size: 0.68rem; color: #6a5d50; }
-    .c-unread-badge {
-      background: #c2593e; color: #ecdfc8; font-size: 0.6rem; font-weight: 700;
-      padding: 0.1rem 0.35rem; border-radius: 10px; min-width: 16px; text-align: center;
-    }
-    .c-req-btn {
-      padding: 0.25rem 0.5rem; border-radius: 4px; border: none;
-      font-size: 0.68rem; cursor: pointer; font-weight: 600;
-    }
-    .c-req-btn.accept { background: rgba(109, 143, 94, 0.2); color: #6d8f5e; }
-    .c-req-btn.accept:hover { background: rgba(109, 143, 94, 0.3); }
-    .c-req-btn.decline { background: rgba(194, 89, 62, 0.15); color: #c2593e; }
-    .c-req-btn.decline:hover { background: rgba(194, 89, 62, 0.25); }
-    .c-add-btn {
-      padding: 0.25rem 0.5rem; border-radius: 4px;
-      background: rgba(194, 89, 62, 0.15); color: #c2593e;
-      border: none; font-size: 0.68rem; cursor: pointer; font-weight: 600;
-    }
-    .c-add-btn:hover { background: rgba(194, 89, 62, 0.25); }
-    .c-add-btn:disabled { opacity: 0.5; cursor: default; }
-    .c-account {
-      padding: 0.6rem 1rem; border-top: 1px solid #3a3428;
-      display: flex; align-items: center; gap: 0.6rem;
-      background: rgba(40, 36, 28, 0.6); flex-shrink: 0;
-    }
-    .c-logout-btn {
-      margin-left: auto; padding: 0.25rem 0.5rem;
-      background: none; border: 1px solid #3a3428; border-radius: 4px;
-      color: #6a5d50; font-size: 0.68rem; cursor: pointer;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-    }
-    .c-logout-btn:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.3); }
-
-    /* Chat panel */
-    .c-chat-placeholder {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      color: #564c40; font-style: italic; font-size: 0.85rem;
-    }
-    .c-chat-hdr-info { display: flex; align-items: center; gap: 0.6rem; }
-    .c-chat-hdr-name { font-family: Georgia, "Times New Roman", serif; font-size: 0.95rem; color: #e0d2be; }
-    .c-chat-hdr-status { font-size: 0.68rem; color: #6d8f5e; }
-    .c-chat-hdr-btn {
-      padding: 0.25rem 0.5rem; background: none;
-      border: 1px solid #3a3428; border-radius: 4px;
-      color: #6a5d50; font-size: 0.68rem; cursor: pointer;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-    }
-    .c-chat-hdr-btn:hover { color: #b8924a; border-color: rgba(184, 146, 74, 0.3); }
-    .c-chat-msgs {
-      flex: 1; overflow-y: auto; padding: 0.75rem;
-      display: flex; flex-direction: column; gap: 0.4rem;
-    }
-    .c-chat-msgs::-webkit-scrollbar { width: 5px; }
-    .c-chat-msgs::-webkit-scrollbar-track { background: transparent; }
-    .c-chat-msgs::-webkit-scrollbar-thumb { background: #3a3428; border-radius: 3px; }
-    .c-msg {
-      max-width: 72%; padding: 0.5rem 0.75rem;
-      border-radius: 12px; font-size: 0.85rem; line-height: 1.5; word-wrap: break-word;
-    }
-    .c-msg-sent { align-self: flex-end; background: rgba(194, 89, 62, 0.15); border: 1px solid rgba(194, 89, 62, 0.1); border-bottom-right-radius: 4px; }
-    .c-msg-recv { align-self: flex-start; background: rgba(58, 52, 40, 0.8); border: 1px solid #3a3428; border-bottom-left-radius: 4px; }
-    .c-msg-time { font-size: 0.58rem; color: #6a5d50; margin-top: 0.2rem; }
-    .c-msg-sent .c-msg-time { text-align: right; }
-    .c-msg-img { max-width: 200px; border-radius: 6px; margin-top: 0.3rem; cursor: pointer; }
-    .c-msg-img:hover { opacity: 0.9; }
-    .c-typing { font-size: 0.7rem; color: #6a5d50; font-style: italic; padding: 0 0.75rem; height: 1.3rem; flex-shrink: 0; }
-    .c-chat-input-area {
-      padding: 0.6rem 0.75rem; border-top: 1px solid #3a3428;
-      display: flex; gap: 0.4rem; align-items: flex-end;
-      background: rgba(40, 36, 28, 0.6); flex-shrink: 0;
-    }
-    .c-chat-input {
-      flex: 1; padding: 0.5rem 0.7rem; resize: none;
-      background: rgba(36, 31, 21, 0.8); border: 1px solid #3a3428; border-radius: 8px;
-      color: #d6c8b4; font-size: 0.85rem; outline: none;
-      font-family: inherit; max-height: 100px; min-height: 34px;
-    }
-    .c-chat-input:focus { border-color: #c2593e; }
-    .c-chat-input::placeholder { color: #564c40; }
-    .c-chat-btn {
-      width: 34px; height: 34px; border-radius: 8px;
-      border: 1px solid #3a3428; background: rgba(36, 31, 21, 0.8);
-      color: #6a5d50; cursor: pointer; display: flex;
-      align-items: center; justify-content: center;
-      transition: color 0.2s, border-color 0.2s; flex-shrink: 0;
-    }
-    .c-chat-btn:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.3); }
-    .c-chat-btn svg { width: 16px; height: 16px; }
-    .c-img-input { display: none; }
-
-    /* Portfolio panel */
-    .c-upload-zone {
-      padding: 0.6rem; margin-bottom: 0.6rem;
-      border: 2px dashed #3a3428; border-radius: 8px;
-      text-align: center; cursor: pointer; transition: border-color 0.2s;
-    }
-    .c-upload-zone:hover { border-color: #c2593e; }
-    .c-upload-zone p { font-size: 0.75rem; color: #6a5d50; }
-    .c-upload-zone .c-upload-icon { font-size: 1.3rem; color: #564c40; }
-    .c-upload-form { display: none; padding: 0.6rem; margin-bottom: 0.6rem; border: 1px solid #3a3428; border-radius: 8px; background: rgba(36, 31, 21, 0.5); }
-    .c-upload-form input[type="text"], .c-upload-form textarea {
-      width: 100%; padding: 0.45rem 0.6rem; margin-bottom: 0.4rem;
-      background: rgba(36, 31, 21, 0.8); border: 1px solid #3a3428; border-radius: 4px;
-      color: #d6c8b4; font-size: 0.78rem; outline: none; font-family: inherit;
-    }
-    .c-upload-form textarea { resize: vertical; min-height: 40px; }
-    .c-upload-form input:focus, .c-upload-form textarea:focus { border-color: #c2593e; }
-    .c-upload-actions { display: flex; gap: 0.4rem; }
-    .c-upload-submit {
-      flex: 1; padding: 0.4rem;
-      background: linear-gradient(135deg, #c2593e, #a84a32);
-      border: none; border-radius: 4px; color: #ecdfc8;
-      font-size: 0.78rem; cursor: pointer; font-weight: 600;
-    }
-    .c-upload-cancel {
-      padding: 0.4rem 0.6rem; background: none; border: 1px solid #3a3428;
-      border-radius: 4px; color: #6a5d50; font-size: 0.78rem; cursor: pointer;
-    }
-    .c-pf-item {
-      padding: 0.55rem 0.65rem; margin-bottom: 0.4rem;
-      border: 1px solid #3a3428; border-radius: 6px;
-      background: rgba(44, 38, 28, 0.5); transition: border-color 0.2s;
-    }
-    .c-pf-item:hover { border-color: #4a4238; }
-    .c-pf-item-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem; }
-    .c-pf-item-title { font-size: 0.82rem; color: #e0d2be; font-weight: 600; }
-    .c-pf-item-type {
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.58rem; padding: 0.1rem 0.35rem; border-radius: 3px;
-      background: rgba(184, 146, 74, 0.1); color: #b8924a;
-      text-transform: uppercase; font-weight: 600;
-    }
-    .c-pf-item-desc { font-size: 0.72rem; color: #847868; margin-bottom: 0.3rem; }
-    .c-pf-item-actions { display: flex; align-items: center; gap: 0.4rem; }
-    .c-pf-item-actions button, .c-pf-item-actions a {
-      padding: 0.18rem 0.4rem; border-radius: 3px;
-      font-size: 0.62rem; cursor: pointer; border: none;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-    }
-    .c-vis-toggle {
-      display: inline-flex; align-items: center; gap: 0.3rem;
-      background: none; border: none; cursor: pointer; padding: 0;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-      font-size: 0.62rem;
-    }
-    .c-vis-toggle .c-toggle-track {
-      width: 28px; height: 14px; border-radius: 7px;
-      background: rgba(194, 89, 62, 0.25); position: relative;
-      transition: background 0.2s; flex-shrink: 0;
-    }
-    .c-vis-toggle .c-toggle-thumb {
-      position: absolute; top: 2px; left: 2px;
-      width: 10px; height: 10px; border-radius: 50%;
-      background: #c2593e; transition: left 0.2s, background 0.2s;
-    }
-    .c-vis-toggle.public .c-toggle-track { background: rgba(109, 143, 94, 0.3); }
-    .c-vis-toggle.public .c-toggle-thumb { left: 16px; background: #6d8f5e; }
-    .c-vis-toggle .c-toggle-label { color: #c2593e; }
-    .c-vis-toggle.public .c-toggle-label { color: #6d8f5e; }
-    .c-dl-btn { background: rgba(184, 146, 74, 0.1); color: #b8924a; text-decoration: none; display: inline-block; }
-    .c-del-btn { background: rgba(194, 89, 62, 0.1); color: #c2593e; }
-    .c-pf-view-label {
-      font-size: 0.72rem; color: #b8924a; margin-bottom: 0.4rem;
-      font-family: "Fira Code", "JetBrains Mono", "Courier New", monospace;
-    }
-    .c-empty { text-align: center; padding: 1.5rem 0.75rem; color: #564c40; font-style: italic; font-size: 0.82rem; }
-
-    @media (max-width: 900px) {
-      .c-app-layout { grid-template-columns: 1fr; height: auto; }
-      .c-panel-left, .c-panel-right { max-height: 300px; }
-      .c-panel-center { min-height: 400px; }
-    }
 
     @media (max-width: 768px) {
       .disciplines-grid { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
@@ -692,14 +397,7 @@
     <span class="mote" style="top:15%;left:38%;--s:5px;--mo:0.35;--dur:7s;--d:0.5s;--dy:-75px;--dx:-15px;--c:#e0cea8"></span>
   </div>
 
-  <div class="nav-wrap" id="navWrap">
-    <button class="nav-btn" id="navAuthBtn" onclick="cOpenAuth()">login / register</button>
-    <div class="nav-dropdown" id="navDropdown">
-      <button class="nav-dd-item" onclick="cNavGoCommunity()">Community</button>
-      <div class="nav-dd-sep"></div>
-      <button class="nav-dd-item logout" onclick="cLogout()">Logout</button>
-    </div>
-  </div>
+  <a class="nav-btn" href="/community/">Community <span class="arrow">&rarr;</span></a>
 
   <div class="hero">
     <h1 class="name">Han Chau</h1>
@@ -726,6 +424,11 @@
       </div>
     </div>
   </section>
+
+  <!-- ══════════ COMMUNITY LAUNCH BUTTON ══════════ -->
+  <div style="text-align:center;padding:1rem 1.5rem 3rem;position:relative;z-index:2;">
+    <a class="c-launch-btn" href="/community/">Community</a>
+  </div>
 
   <main>
     <div class="section-heading"><h2>Projects</h2><div class="line"></div></div>
@@ -754,120 +457,17 @@
         <div class="card-tags"><span class="tag">Flask</span><span class="tag">pydub</span><span class="tag">Python</span><span class="tag">Audio FX</span></div>
         <div class="card-footer"><div class="status"><span class="status-dot"></span><span class="status-text">Live</span></div><span class="card-link">Open App <span class="arrow">&rarr;</span></span></div>
       </a>
-      <a class="project-card" href="#community">
-        <div class="card-header"><div class="card-icon">&#9734;</div><div><div class="card-title">Community</div><div class="card-subtitle">Web Application</div></div></div>
-        <p class="card-description">Connect with other creators, chat with friends in real-time, and share your music, videos, and scores in a personal portfolio.</p>
-        <div class="card-tags"><span class="tag">Flask</span><span class="tag">SocketIO</span><span class="tag">SQLite</span><span class="tag">Real-time</span></div>
-        <div class="card-footer"><div class="status"><span class="status-dot"></span><span class="status-text">Live</span></div><span class="card-link">Jump to section <span class="arrow">&darr;</span></span></div>
+      <a class="project-card" href="/sheet-music-play/">
+        <div class="card-header"><div class="card-icon">&#119070;</div><div><div class="card-title">Sheet Music Generator</div><div class="card-subtitle">Web Application</div></div></div>
+        <p class="card-description">Upload an audio file and get a violin sheet music PDF. AI transcribes audio to MIDI, then generates publication-quality notation via LilyPond.</p>
+        <div class="card-tags"><span class="tag">Flask</span><span class="tag">basic-pitch</span><span class="tag">music21</span><span class="tag">LilyPond</span></div>
+        <div class="card-footer"><div class="status"><span class="status-dot"></span><span class="status-text">Live</span></div><span class="card-link">Open App <span class="arrow">&rarr;</span></span></div>
       </a>
       <div class="coming-soon">More projects on the way&hellip;</div>
     </div>
   </main>
 
   <!-- ══════════ AUTH OVERLAY ══════════ -->
-  <div class="c-auth-overlay" id="cAuthOverlay">
-    <button class="c-auth-close" id="cAuthClose" onclick="cCloseAuth()">&times;</button>
-    <div class="c-auth-card">
-      <div class="c-auth-header">
-        <h3>Join the Community</h3>
-        <p>Chat with friends and share your work</p>
-      </div>
-      <div class="c-auth-tabs">
-        <button class="c-auth-tab active" data-ctab="login">Login</button>
-        <button class="c-auth-tab" data-ctab="register">Register</button>
-      </div>
-      <form class="c-auth-form active" id="cLoginForm" autocomplete="on">
-        <div class="c-fg"><label>Username or Email</label><input type="text" id="cLoginId" placeholder="Enter username or email" required autocomplete="username"></div>
-        <div class="c-fg"><label>Password</label><input type="password" id="cLoginPass" placeholder="Enter password" required autocomplete="current-password"></div>
-        <button type="submit" class="c-auth-btn">Login</button>
-        <div class="c-auth-error" id="cLoginErr"></div>
-      </form>
-      <form class="c-auth-form" id="cRegForm" autocomplete="on">
-        <div class="c-fg"><label>Username</label><input type="text" id="cRegUser" placeholder="3-32 chars, letters/numbers/_" required autocomplete="username"></div>
-        <div class="c-fg"><label>Display Name</label><input type="text" id="cRegName" placeholder="How others see you" autocomplete="name"></div>
-        <div class="c-fg"><label>Email</label><input type="email" id="cRegEmail" placeholder="your@email.com" required autocomplete="email"></div>
-        <div class="c-fg"><label>Password</label><input type="password" id="cRegPass" placeholder="At least 6 characters" required autocomplete="new-password"></div>
-        <button type="submit" class="c-auth-btn">Create Account</button>
-        <div class="c-auth-error" id="cRegErr"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ══════════ COMMUNITY SECTION ══════════ -->
-  <section class="community-section" id="community">
-    <div class="section-heading"><h2>Community</h2><div class="line"></div></div>
-
-    <!-- Logged-out prompt -->
-    <div class="c-auth-wrap" id="cAuth">
-      <div class="c-auth-card" style="text-align:center; padding: 2.5rem 1.5rem;">
-        <div class="c-auth-header">
-          <h3>Join the Community</h3>
-          <p style="margin-top:0.5rem">Chat with friends, share your music, videos, and scores</p>
-        </div>
-        <button class="c-auth-btn" style="max-width:240px;margin:1.5rem auto 0" onclick="cOpenAuth()">Login / Register</button>
-      </div>
-    </div>
-
-    <!-- App (shown when logged in) -->
-    <div class="c-app-wrap" id="cApp">
-      <div class="c-app-layout">
-
-        <!-- Left: Friends -->
-        <div class="c-panel c-panel-left">
-          <div class="c-panel-hdr"><span class="c-panel-title">Friends</span></div>
-          <div class="c-panel-body">
-            <input type="text" class="c-search" id="cUserSearch" placeholder="Search users...">
-            <div class="c-search-results" id="cSearchRes"></div>
-            <div id="cFriendReqs"></div>
-            <div id="cFriendsList"></div>
-          </div>
-          <div class="c-account" id="cAccount"></div>
-        </div>
-
-        <!-- Center: Chat -->
-        <div class="c-panel c-panel-center">
-          <div class="c-panel-hdr" id="cChatHdr"><span class="c-panel-title" id="cChatTitle">Chat</span></div>
-          <div class="c-chat-placeholder" id="cChatPH">Select a friend to start chatting</div>
-          <div class="c-chat-msgs" id="cChatMsgs" style="display:none"></div>
-          <div class="c-typing" id="cTyping"></div>
-          <div class="c-chat-input-area" id="cChatInputArea" style="display:none">
-            <label class="c-chat-btn" title="Attach image">
-              <input type="file" class="c-img-input" id="cChatImgInput" accept=".jpg,.jpeg,.png,.gif,.webp">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            </label>
-            <textarea class="c-chat-input" id="cChatInput" placeholder="Type a message..." rows="1"></textarea>
-            <button class="c-chat-btn" id="cSendBtn" title="Send">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Right: Portfolio -->
-        <div class="c-panel c-panel-right">
-          <div class="c-panel-hdr"><span class="c-panel-title" id="cPfTitle">My Portfolio</span></div>
-          <div class="c-panel-body" id="cPfBody">
-            <div class="c-upload-zone" id="cUploadZone">
-              <div class="c-upload-icon">+</div>
-              <p>Upload MP3, MP4, or PDF</p>
-            </div>
-            <div class="c-upload-form" id="cUploadForm">
-              <input type="file" id="cPfFileInput" accept=".mp3,.mp4,.pdf" style="display:none">
-              <div style="font-size:0.78rem;color:#d6c8b4;margin-bottom:0.4rem" id="cUploadFN"></div>
-              <input type="text" id="cUploadTitle" placeholder="Title (required)">
-              <textarea id="cUploadDesc" placeholder="Description (optional)"></textarea>
-              <div class="c-upload-actions">
-                <button class="c-upload-submit" id="cUploadSubmit">Upload</button>
-                <button class="c-upload-cancel" id="cUploadCancel" type="button">Cancel</button>
-              </div>
-            </div>
-            <div id="cPfItems"></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
   <footer>
     <div class="contact">
       <a class="contact-item" href="mailto:your-email@example.com"><span class="contact-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="#b8924a" stroke-width="1.2" fill="none"/><path d="M1 5 L8 10 L15 5" stroke="#b8924a" stroke-width="1.2" fill="none"/></svg></span><span class="contact-value">your-email@example.com</span></a>
@@ -876,412 +476,5 @@
     <p class="copyright">&copy; 2026 Han Chau</p>
   </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
-<script>
-(function() {
-    const API = '/community';
-    const $ = id => document.getElementById(id);
-
-    let me = null, socket = null, friends = [], activeFriend = null;
-    let unread = {}, typingTO = null, typingDispTO = null, viewingPfUser = null;
-
-    // ── Auth overlay ──
-    window.cOpenAuth = function() {
-        if (me) {
-            document.getElementById('community').scrollIntoView({behavior: 'smooth'});
-            return;
-        }
-        $('cAuthOverlay').classList.add('active');
-        $('cLoginId').focus();
-    };
-    window.cCloseAuth = function() {
-        $('cAuthOverlay').classList.remove('active');
-    };
-    // Close on Escape
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && $('cAuthOverlay').classList.contains('active')) cCloseAuth();
-    });
-
-    function updateNavBtn() {
-        const btn = $('navAuthBtn');
-        const dd = $('navDropdown');
-        if (me) {
-            const ini = (me.display_name || me.username || '?')[0].toUpperCase();
-            btn.innerHTML = '<span class="nav-avatar" style="background:' + (me.avatar_color || '#c2593e') + '">' + ini + '</span> ' + esc(me.display_name);
-            btn.onclick = function(e) {
-                e.stopPropagation();
-                dd.classList.toggle('open');
-            };
-        } else {
-            btn.innerHTML = 'login / register';
-            btn.onclick = cOpenAuth;
-            dd.classList.remove('open');
-        }
-    }
-
-    // Close dropdown when clicking elsewhere
-    document.addEventListener('click', () => {
-        $('navDropdown').classList.remove('open');
-    });
-
-    window.cNavGoCommunity = function() {
-        $('navDropdown').classList.remove('open');
-        document.getElementById('community').scrollIntoView({behavior: 'smooth'});
-    };
-
-    // ── Auth tabs ──
-    document.querySelectorAll('.c-auth-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.c-auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.c-auth-form').forEach(f => f.classList.remove('active'));
-            tab.classList.add('active');
-            $(tab.dataset.ctab === 'login' ? 'cLoginForm' : 'cRegForm').classList.add('active');
-        });
-    });
-
-    // ── Login ──
-    $('cLoginForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const err = $('cLoginErr');
-        err.style.display = 'none';
-        try {
-            const r = await fetch(API + '/api/auth/login', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username_or_email: $('cLoginId').value, password: $('cLoginPass').value })
-            });
-            const d = await r.json();
-            if (!r.ok) { err.textContent = d.error; err.style.display = 'block'; return; }
-            me = d.user; enterApp();
-        } catch(e) { err.textContent = 'Connection error'; err.style.display = 'block'; }
-    });
-
-    // ── Register ──
-    $('cRegForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const err = $('cRegErr');
-        err.style.display = 'none';
-        try {
-            const r = await fetch(API + '/api/auth/register', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: $('cRegUser').value, display_name: $('cRegName').value,
-                    email: $('cRegEmail').value, password: $('cRegPass').value
-                })
-            });
-            const d = await r.json();
-            if (!r.ok) { err.textContent = d.error; err.style.display = 'block'; return; }
-            me = d.user; enterApp();
-        } catch(e) { err.textContent = 'Connection error'; err.style.display = 'block'; }
-    });
-
-    // ── Check session on load ──
-    async function checkSession() {
-        try {
-            const r = await fetch(API + '/api/auth/me');
-            if (r.ok) { me = (await r.json()).user; enterApp(); }
-        } catch(e) {}
-    }
-
-    function enterApp() {
-        $('cAuthOverlay').classList.remove('active');
-        $('cAuth').style.display = 'none';
-        $('cApp').classList.add('active');
-        updateNavBtn();
-        renderAccount();
-        connectSocket();
-        loadFriends(); loadFriendReqs(); loadUnread(); loadMyPf();
-    }
-
-    // ── Avatar ──
-    function avatar(u, sm) {
-        const cls = sm ? 'c-avatar c-avatar-sm' : 'c-avatar';
-        const ini = (u.display_name || u.username || '?')[0].toUpperCase();
-        const on = isOnline(u) ? '<span class="c-online-dot"></span>' : '';
-        return '<div class="' + cls + '" style="background:' + (u.avatar_color || '#c2593e') + '">' + ini + on + '</div>';
-    }
-    function isOnline(u) {
-        if (!u.last_seen) return false;
-        return Date.now() - new Date(u.last_seen + 'Z').getTime() < 300000;
-    }
-
-    function renderAccount() {
-        $('cAccount').innerHTML = avatar(me, true) +
-            '<div class="c-user-info"><div class="c-user-name">' + esc(me.display_name) + '</div></div>' +
-            '<button class="c-logout-btn" onclick="cLogout()">logout</button>';
-    }
-
-    window.cLogout = async function() {
-        await fetch(API + '/api/auth/logout', {method: 'POST'});
-        if (socket) socket.disconnect();
-        me = null; friends = []; activeFriend = null;
-        $('cApp').classList.remove('active');
-        $('cAuth').style.display = '';
-        $('cLoginId').value = ''; $('cLoginPass').value = '';
-        updateNavBtn();
-    };
-
-    // ── Socket.IO ──
-    function connectSocket() {
-        socket = io({ path: API + '/socket.io', transports: ['websocket', 'polling'] });
-        socket.on('new_message', msg => {
-            if (activeFriend && (msg.from === activeFriend.id || msg.from === me.id)) {
-                appendMsg(msg);
-                if (msg.from !== me.id) socket.emit('mark_read', {friend_id: activeFriend.id});
-            } else if (msg.from !== me.id) {
-                unread[msg.from] = (unread[msg.from] || 0) + 1;
-                renderFriends();
-            }
-        });
-        socket.on('typing', d => {
-            if (activeFriend && d.from === activeFriend.id) {
-                const f = friends.find(x => x.id === d.from);
-                $('cTyping').textContent = (f ? f.display_name : 'User') + ' is typing...';
-                clearTimeout(typingDispTO);
-                typingDispTO = setTimeout(() => $('cTyping').textContent = '', 3000);
-            }
-        });
-        socket.on('friend_request', () => loadFriendReqs());
-        socket.on('friend_accepted', () => loadFriends());
-    }
-
-    // ── Friends ──
-    async function loadFriends() {
-        const d = await (await fetch(API + '/api/friends')).json();
-        friends = d.friends || [];
-        renderFriends();
-    }
-
-    function renderFriends() {
-        const el = $('cFriendsList');
-        if (!friends.length) { el.innerHTML = '<div class="c-empty">No friends yet. Search to add some!</div>'; return; }
-        el.innerHTML = '<div class="c-section-label">Friends</div>' + friends.map(f => {
-            const act = activeFriend && activeFriend.id === f.id ? ' active' : '';
-            const badge = unread[f.id] ? '<span class="c-unread-badge">' + unread[f.id] + '</span>' : '';
-            return '<div class="c-user-row' + act + '" onclick="cSelectFriend(' + f.id + ')">' +
-                avatar(f) + '<div class="c-user-info"><div class="c-user-name">' + esc(f.display_name) +
-                '</div><div class="c-user-meta">@' + esc(f.username) + '</div></div>' + badge + '</div>';
-        }).join('');
-    }
-
-    async function loadFriendReqs() {
-        const d = await (await fetch(API + '/api/friends/requests')).json();
-        const reqs = d.requests || [];
-        const el = $('cFriendReqs');
-        if (!reqs.length) { el.innerHTML = ''; return; }
-        el.innerHTML = '<div class="c-section-label">Friend Requests</div>' + reqs.map(r => {
-            const u = r.requester;
-            return '<div class="c-user-row">' + avatar(u, true) +
-                '<div class="c-user-info"><div class="c-user-name">' + esc(u.display_name) + '</div></div>' +
-                '<div style="display:flex;gap:0.3rem">' +
-                '<button class="c-req-btn accept" onclick="cRespondReq(' + r.id + ',\'accept\')">Accept</button>' +
-                '<button class="c-req-btn decline" onclick="cRespondReq(' + r.id + ',\'decline\')">Decline</button></div></div>';
-        }).join('');
-    }
-
-    window.cRespondReq = async function(id, action) {
-        await fetch(API + '/api/friends/respond', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({friendship_id: id, action})
-        });
-        loadFriendReqs(); loadFriends();
-    };
-
-    async function loadUnread() {
-        const d = await (await fetch(API + '/api/messages/unread')).json();
-        unread = d.unread || {};
-        renderFriends();
-    }
-
-    // ── User search ──
-    let searchTmr = null;
-    $('cUserSearch').addEventListener('input', () => {
-        clearTimeout(searchTmr);
-        const q = $('cUserSearch').value.trim();
-        if (q.length < 2) { $('cSearchRes').style.display = 'none'; return; }
-        searchTmr = setTimeout(async () => {
-            const d = await (await fetch(API + '/api/users/search?q=' + encodeURIComponent(q))).json();
-            const users = d.users || [];
-            if (!users.length) { $('cSearchRes').style.display = 'none'; return; }
-            $('cSearchRes').style.display = 'block';
-            $('cSearchRes').innerHTML = users.map(u => {
-                const isFr = friends.some(f => f.id === u.id);
-                const btn = isFr ? '<span style="font-size:0.68rem;color:#6d8f5e">Friends</span>'
-                    : '<button class="c-add-btn" onclick="cAddFriend(' + u.id + ',this)">Add</button>';
-                return '<div class="c-user-row">' + avatar(u, true) +
-                    '<div class="c-user-info"><div class="c-user-name">' + esc(u.display_name) +
-                    '</div><div class="c-user-meta">@' + esc(u.username) + '</div></div>' + btn + '</div>';
-            }).join('');
-        }, 300);
-    });
-
-    window.cAddFriend = async function(uid, btn) {
-        btn.disabled = true; btn.textContent = 'Sent';
-        await fetch(API + '/api/friends/request', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user_id: uid})
-        });
-    };
-
-    // ── Chat ──
-    window.cSelectFriend = function(fid) {
-        const f = friends.find(x => x.id === fid);
-        if (!f) return;
-        activeFriend = f;
-        renderFriends();
-        $('cChatHdr').innerHTML =
-            '<div class="c-chat-hdr-info">' + avatar(f, true) + '<div><div class="c-chat-hdr-name">' +
-            esc(f.display_name) + '</div>' + (isOnline(f) ? '<div class="c-chat-hdr-status">online</div>' : '') +
-            '</div></div><button class="c-chat-hdr-btn" onclick="cViewFriendPf(' + f.id + ')">Portfolio</button>';
-        $('cChatPH').style.display = 'none';
-        $('cChatMsgs').style.display = 'flex';
-        $('cChatInputArea').style.display = 'flex';
-        $('cChatMsgs').innerHTML = '';
-        delete unread[f.id]; renderFriends();
-        socket.emit('mark_read', {friend_id: f.id});
-        loadMsgs(f.id);
-    };
-
-    async function loadMsgs(fid) {
-        const d = await (await fetch(API + '/api/messages/' + fid + '?limit=50')).json();
-        $('cChatMsgs').innerHTML = '';
-        (d.messages || []).forEach(m => appendMsg(m));
-        scrollChat();
-    }
-
-    function appendMsg(msg) {
-        const el = document.createElement('div');
-        const mine = msg.from === me.id || msg.sender_id === me.id;
-        el.className = 'c-msg ' + (mine ? 'c-msg-sent' : 'c-msg-recv');
-        let h = '';
-        if (msg.content) h += esc(msg.content);
-        if (msg.image_path) h += '<br><img class="c-msg-img" src="' + API + '/uploads/' + esc(msg.image_path) + '" onclick="window.open(this.src)">';
-        const t = msg.created_at ? new Date(msg.created_at + (msg.created_at.endsWith('Z') ? '' : 'Z')).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-        h += '<div class="c-msg-time">' + t + '</div>';
-        el.innerHTML = h;
-        $('cChatMsgs').appendChild(el);
-        scrollChat();
-    }
-
-    function scrollChat() { const el = $('cChatMsgs'); el.scrollTop = el.scrollHeight; }
-
-    $('cSendBtn').addEventListener('click', sendMsg);
-    $('cChatInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-        if (activeFriend && socket) {
-            clearTimeout(typingTO);
-            typingTO = setTimeout(() => socket.emit('typing', {to: activeFriend.id}), 100);
-        }
-    });
-
-    function sendMsg() {
-        if (!activeFriend) return;
-        const c = $('cChatInput').value.trim();
-        if (!c) return;
-        socket.emit('send_message', {to: activeFriend.id, content: c});
-        $('cChatInput').value = '';
-        $('cChatInput').style.height = 'auto';
-    }
-
-    $('cChatInput').addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-    });
-
-    $('cChatImgInput').addEventListener('change', async function() {
-        if (!this.files[0] || !activeFriend) return;
-        const fd = new FormData(); fd.append('file', this.files[0]);
-        const d = await (await fetch(API + '/api/messages/image', {method: 'POST', body: fd})).json();
-        if (d.image_path) socket.emit('send_message', {to: activeFriend.id, content: '', image_path: d.image_path});
-        this.value = '';
-    });
-
-    // ── Portfolio ──
-    let pfFile = null;
-    $('cUploadZone').addEventListener('click', () => $('cPfFileInput').click());
-    $('cPfFileInput').addEventListener('change', function() {
-        if (!this.files[0]) return;
-        pfFile = this.files[0];
-        $('cUploadFN').textContent = pfFile.name;
-        $('cUploadZone').style.display = 'none';
-        $('cUploadForm').style.display = 'block';
-        $('cUploadTitle').value = pfFile.name.replace(/\.[^.]+$/, '');
-        $('cUploadTitle').focus();
-    });
-    $('cUploadCancel').addEventListener('click', () => {
-        pfFile = null; $('cUploadForm').style.display = 'none';
-        $('cUploadZone').style.display = 'block'; $('cPfFileInput').value = '';
-    });
-    $('cUploadSubmit').addEventListener('click', async () => {
-        if (!pfFile || !$('cUploadTitle').value.trim()) return;
-        const fd = new FormData();
-        fd.append('file', pfFile);
-        fd.append('title', $('cUploadTitle').value.trim());
-        fd.append('description', $('cUploadDesc').value.trim());
-        $('cUploadSubmit').disabled = true; $('cUploadSubmit').textContent = 'Uploading...';
-        const r = await fetch(API + '/api/portfolio/upload', {method: 'POST', body: fd});
-        const d = await r.json();
-        $('cUploadSubmit').disabled = false; $('cUploadSubmit').textContent = 'Upload';
-        if (r.ok) {
-            pfFile = null; $('cUploadForm').style.display = 'none';
-            $('cUploadZone').style.display = 'block'; $('cPfFileInput').value = '';
-            $('cUploadTitle').value = ''; $('cUploadDesc').value = '';
-            loadMyPf();
-        } else { alert(d.error || 'Upload failed'); }
-    });
-
-    async function loadMyPf() {
-        viewingPfUser = null;
-        $('cPfTitle').textContent = 'My Portfolio';
-        $('cUploadZone').style.display = 'block';
-        const d = await (await fetch(API + '/api/portfolio')).json();
-        renderPfItems(d.items || [], true);
-    }
-
-    window.cViewFriendPf = async function(uid) {
-        const f = friends.find(x => x.id === uid);
-        if (!f) return;
-        viewingPfUser = f;
-        $('cPfTitle').textContent = f.display_name + "'s Portfolio";
-        $('cUploadZone').style.display = 'none';
-        $('cUploadForm').style.display = 'none';
-        const d = await (await fetch(API + '/api/portfolio/' + uid)).json();
-        renderPfItems(d.items || [], false);
-    };
-
-    function renderPfItems(items, own) {
-        const el = $('cPfItems');
-        if (!items.length) { el.innerHTML = '<div class="c-empty">No items yet</div>'; return; }
-        const back = viewingPfUser ? '<div class="c-pf-view-label"><button onclick="cBackMyPf()" style="background:none;border:none;color:#c2593e;cursor:pointer;font-size:0.72rem;font-family:inherit">&larr; Back to mine</button></div>' : '';
-        el.innerHTML = back + items.map(it => {
-            const sz = it.file_size > 1048576 ? (it.file_size/1048576).toFixed(1)+' MB' : (it.file_size/1024).toFixed(0)+' KB';
-            const vc = it.is_public ? '' : ' private';
-            const vl = it.is_public ? 'Public' : 'Private';
-            const acts = own
-                ? '<button class="c-vis-toggle'+(it.is_public?' public':'')+'" onclick="cToggleVis('+it.id+','+(!it.is_public)+')"><span class="c-toggle-track"><span class="c-toggle-thumb"></span></span><span class="c-toggle-label">'+vl+'</span></button>' +
-                  '<a class="c-dl-btn" href="'+API+'/api/portfolio/file/'+it.id+'" target="_blank">Open</a>' +
-                  '<button class="c-del-btn" onclick="cDelItem('+it.id+')">Delete</button>'
-                : '<a class="c-dl-btn" href="'+API+'/api/portfolio/file/'+it.id+'" target="_blank">Open</a>';
-            return '<div class="c-pf-item"><div class="c-pf-item-hdr"><span class="c-pf-item-title">'+esc(it.title)+'</span><span class="c-pf-item-type">'+it.file_type+'</span></div>'+
-                (it.description ? '<div class="c-pf-item-desc">'+esc(it.description)+'</div>' : '')+
-                '<div class="c-pf-item-actions">'+acts+'<span style="font-size:0.58rem;color:#564c40;margin-left:auto">'+sz+'</span></div></div>';
-        }).join('');
-    }
-
-    window.cToggleVis = async function(id, pub) {
-        await fetch(API+'/api/portfolio/'+id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({is_public:pub})});
-        loadMyPf();
-    };
-    window.cDelItem = async function(id) {
-        if (!confirm('Delete this item?')) return;
-        await fetch(API+'/api/portfolio/'+id, {method:'DELETE'});
-        loadMyPf();
-    };
-    window.cBackMyPf = loadMyPf;
-
-    function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-    checkSession();
-})();
-</script>
 </body>
 </html>

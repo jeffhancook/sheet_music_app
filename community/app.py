@@ -1,10 +1,12 @@
 import os
 import re
 import uuid
+import subprocess
+import threading
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from flask import Flask, request, jsonify, session, send_file
+from flask import Flask, request, jsonify, session, send_file, render_template
 from flask_socketio import SocketIO, emit, join_room, disconnect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import or_, and_, func
@@ -15,7 +17,7 @@ from auth import hash_password, verify_password, login_required
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32).hex())
-app.config["MAX_CONTENT_LENGTH"] = 55 * 1024 * 1024  # 55 MB
+app.config["MAX_CONTENT_LENGTH"] = None  # enforced per-user in routes
 
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 
@@ -40,8 +42,57 @@ def get_db():
     return DBSession()
 
 
+UNLIMITED_USERNAMES = {"AFlipperStory"}
+
+
 def current_user_id():
     return session.get("user_id")
+
+
+def _is_unlimited_user(db):
+    uid = current_user_id()
+    if not uid:
+        return False
+    user = db.query(User).get(uid)
+    return user and user.username in UNLIMITED_USERNAMES
+
+
+def _transcode_to_h264(filepath, item_id):
+    """Transcode HEVC/H.265 MP4 to H.264 in background for browser compatibility."""
+    try:
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0",
+             "-show_entries", "stream=codec_name", "-of", "csv=p=0", str(filepath)],
+            capture_output=True, text=True, timeout=30
+        )
+        codec = probe.stdout.strip()
+        if codec not in ("hevc", "h265", "vp9", "av1"):
+            return  # already compatible
+
+        tmp = filepath.with_suffix(".h264.mp4")
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(filepath),
+             "-c:v", "libx264", "-preset", "medium", "-crf", "23",
+             "-c:a", "aac", "-b:a", "128k",
+             "-movflags", "+faststart", str(tmp)],
+            capture_output=True, text=True, timeout=3600
+        )
+        if result.returncode == 0 and tmp.exists():
+            tmp.replace(filepath)
+            # Update file_size in DB
+            db = DBSession()
+            try:
+                item = db.query(PortfolioItem).get(item_id)
+                if item:
+                    item.file_size = filepath.stat().st_size
+                    db.commit()
+            finally:
+                db.close()
+        else:
+            if tmp.exists():
+                tmp.unlink()
+    except Exception:
+        pass
 
 
 def _are_friends(db, user_id, other_id):
@@ -58,9 +109,7 @@ def _are_friends(db, user_id, other_id):
 
 @app.route("/")
 def index():
-    """Serve the main homepage (for local dev; in production nginx serves it)."""
-    homepage = Path(__file__).parent.parent / "website" / "index.html"
-    return send_file(str(homepage))
+    return render_template("community.html")
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -100,6 +149,20 @@ def register():
         db.add(user)
         db.commit()
 
+        # Auto-friend with AFlipperStory
+        owner = db.query(User).filter(
+            func.lower(User.username) == "aflipperstory"
+        ).first()
+        if owner and owner.id != user.id:
+            auto_friendship = Friendship(
+                requester_id=owner.id,
+                addressee_id=user.id,
+                status="accepted",
+                responded_at=datetime.now(timezone.utc),
+            )
+            db.add(auto_friendship)
+            db.commit()
+
         session["user_id"] = user.id
         return jsonify({"user": user.to_dict()}), 201
     finally:
@@ -109,17 +172,15 @@ def register():
 @app.route("/api/auth/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
-    identifier = (data.get("username_or_email") or "").strip().lower()
+    username = (data.get("username_or_email") or "").strip().lower()
     password = data.get("password") or ""
 
-    if not identifier or not password:
-        return jsonify({"error": "Username/email and password are required"}), 400
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
 
     db = get_db()
     try:
-        user = db.query(User).filter(
-            or_(User.username == identifier, User.email == identifier)
-        ).first()
+        user = db.query(User).filter(User.username == username).first()
 
         if not user or not verify_password(password, user.password_hash):
             return jsonify({"error": "Invalid credentials"}), 401
@@ -385,7 +446,12 @@ def upload_chat_image():
     file.seek(0, 2)
     size = file.tell()
     file.seek(0)
-    if size > MAX_CHAT_IMAGE:
+    db = get_db()
+    try:
+        unlimited = _is_unlimited_user(db)
+    finally:
+        db.close()
+    if not unlimited and size > MAX_CHAT_IMAGE:
         return jsonify({"error": "Image too large (5MB max)"}), 400
 
     now = datetime.now(timezone.utc)
@@ -491,17 +557,21 @@ def upload_portfolio():
     file.seek(0, 2)
     size = file.tell()
     file.seek(0)
-    if size > MAX_PORTFOLIO_FILE:
-        return jsonify({"error": "File too large (50MB max)"}), 400
 
     uid = current_user_id()
     db = get_db()
     try:
-        total = db.query(func.coalesce(func.sum(PortfolioItem.file_size), 0)).filter(
-            PortfolioItem.user_id == uid
-        ).scalar()
-        if total + size > MAX_PORTFOLIO_TOTAL:
-            return jsonify({"error": "Storage limit reached (500MB max)"}), 400
+        unlimited = _is_unlimited_user(db)
+
+        if not unlimited and size > MAX_PORTFOLIO_FILE:
+            return jsonify({"error": "File too large (50MB max)"}), 400
+
+        if not unlimited:
+            total = db.query(func.coalesce(func.sum(PortfolioItem.file_size), 0)).filter(
+                PortfolioItem.user_id == uid
+            ).scalar()
+            if total + size > MAX_PORTFOLIO_TOTAL:
+                return jsonify({"error": "Storage limit reached (500MB max)"}), 400
 
         user_dir = PORTFOLIO_DIR / str(uid)
         user_dir.mkdir(exist_ok=True)
@@ -519,7 +589,18 @@ def upload_portfolio():
         )
         db.add(item)
         db.commit()
-        return jsonify({"item": item.to_dict()}), 201
+        item_dict = item.to_dict()
+        item_id = item.id
+
+        # Transcode MP4 to H.264 in background
+        if ext == ".mp4":
+            threading.Thread(
+                target=_transcode_to_h264,
+                args=(filepath, item_id),
+                daemon=True
+            ).start()
+
+        return jsonify({"item": item_dict}), 201
     finally:
         db.close()
 
@@ -589,7 +670,13 @@ def serve_portfolio_file(item_id):
         if not filepath.exists():
             return jsonify({"error": "File missing"}), 404
 
-        return send_file(str(filepath), as_attachment=False)
+        mimemap = {
+            "mp3": "audio/mpeg",
+            "mp4": "video/mp4",
+            "pdf": "application/pdf",
+        }
+        mime = mimemap.get(item.file_type, "application/octet-stream")
+        return send_file(str(filepath), mimetype=mime, as_attachment=False)
     finally:
         db.close()
 
