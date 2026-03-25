@@ -39,9 +39,12 @@ class User(Base):
     bio = Column(Text, default="")
     created_at = Column(DateTime, default=utcnow)
     last_seen = Column(DateTime, default=utcnow)
+    active_background_id = Column(Integer, ForeignKey("user_backgrounds.id"), nullable=True)
+
+    active_background = relationship("UserBackground", foreign_keys=[active_background_id])
 
     def to_dict(self):
-        return {
+        d = {
             "id": self.id,
             "username": self.username,
             "display_name": self.display_name,
@@ -49,7 +52,11 @@ class User(Base):
             "bio": self.bio,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_seen": self.last_seen.isoformat() if self.last_seen else None,
+            "active_background_id": self.active_background_id,
         }
+        if self.active_background:
+            d["active_background"] = self.active_background.css_data
+        return d
 
 
 class Friendship(Base):
@@ -134,5 +141,36 @@ class PortfolioItem(Base):
         }
 
 
+class UserBackground(Base):
+    __tablename__ = "user_backgrounds"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String(64), nullable=False)
+    quiz_answers = Column(Text, nullable=False)  # JSON
+    css_data = Column(Text, nullable=False)  # JSON
+    created_at = Column(DateTime, default=utcnow)
+
+    owner = relationship("User", foreign_keys=[user_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "quiz_answers": self.quiz_answers,
+            "css_data": self.css_data,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 def init_db():
     Base.metadata.create_all(engine)
+    # Add active_background_id column to users if missing (SQLite migration)
+    import sqlite3
+    conn = sqlite3.connect(str(DB_PATH))
+    cursor = conn.execute("PRAGMA table_info(users)")
+    cols = [row[1] for row in cursor.fetchall()]
+    if "active_background_id" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN active_background_id INTEGER")
+        conn.commit()
+    conn.close()

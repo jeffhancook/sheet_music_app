@@ -1,6 +1,8 @@
 import os
 import re
+import json
 import uuid
+import random
 import subprocess
 import threading
 from datetime import datetime, timezone, timedelta
@@ -11,7 +13,7 @@ from flask_socketio import SocketIO, emit, join_room, disconnect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import or_, and_, func
 
-from models import Session as DBSession, User, Friendship, Message, PortfolioItem, init_db
+from models import Session as DBSession, User, Friendship, Message, PortfolioItem, UserBackground, init_db
 from auth import hash_password, verify_password, login_required
 
 app = Flask(__name__)
@@ -765,6 +767,268 @@ def ws_mark_read(data):
         ).update({"read_at": now})
         db.commit()
         emit("messages_read", {"by": uid}, room=f"user_{friend_id}")
+    finally:
+        db.close()
+
+
+# ── AI Background Generation ─────────────────────────────────────────────────
+
+import anthropic
+
+BACKGROUND_PROMPT = """You are an expert CSS/SVG artist designing immersive backgrounds for a dark-themed web app. Here's an example of the QUALITY LEVEL expected — the app's homepage uses:
+
+- Floating SVG illustrations (music notes, treble clefs) at various positions with slow bobbing animations
+- Abstract SVG brush-stroke curves drifting across the background
+- Geometric "constellation" clusters — nodes connected by lines, slowly drifting
+- Tiny colored dust particles twinkling at different speeds
+- Glowing motes that float upward and fade
+- Subtle staff-line fragments spanning the width
+- A dark warm gradient base with radial color accents
+
+Your job: generate a background of EQUAL complexity that is a visual portrait of this person. EVERY answer should influence the result.
+
+**What's something you could do for hours without getting bored?** {passion}
+**Pick a word that describes your energy:** {energy}
+**If your life had a color palette, what would it look like?** {palette}
+**Describe your perfect Saturday in one sentence:** {saturday}
+**What's a place (real or imaginary) where you feel most like yourself?** {place}
+
+HOW EACH ANSWER SHOULD SHAPE THE BACKGROUND:
+- **Passion answer** → The floating SVG elements MUST be recognizable "remnants" of this activity. If they said violin/music: draw music notes (ellipse noteheads + stems), treble clefs, staff fragments. If coding: angle brackets, curly braces, semicolons. If painting: small brush shapes, paint splatters, palette shapes. If hiking: mountain silhouettes, trail markers, pine trees. These should be IMMEDIATELY recognizable, not abstract.
+- **Energy answer** → Controls animation speeds and density. "calm" = slow floats, sparse. "intense" = faster, denser. "dreamy" = very slow, ethereal. "playful" = varied speeds.
+- **Palette answer** → DIRECTLY determines the gradient colors and accent colors. Use the colors they described. "deep ocean blues and silver" = blue gradient with silver accents. "sunset oranges" = dark orange/amber gradient.
+- **Saturday answer** → Influences the constellation shapes and overall mood. Cozy Saturday = warm clustered nodes. Adventure Saturday = spread-out expansive shapes.
+- **Place answer** → Influences the brush stroke shapes and glow colors. A forest = organic flowing strokes with green-tinted glows. A city rooftop = angular strokes with urban-tinted glows.
+
+Generate a JSON object with these fields:
+
+1. "name": Creative 2-3 word name that captures the person's vibe
+
+2. "gradient": Complex CSS gradient using colors from their palette answer. 4-6 dark color stops. Max luminance ~25%.
+
+3. "accent1": Primary accent hex color drawn from their palette/passion
+4. "accent2": Secondary accent hex color (complementary/analogous)
+
+5. "heroIllustration": A SINGLE large SVG illustration that fills most of the screen as a static background piece — like a faded wallpaper or etching. This is the CENTERPIECE of the entire background. It should be a detailed scene that combines the user's passion AND place answers into one composition. Examples:
+   - Violinist who loves concert halls: A full sheet music page with staff lines, notes, clefs, bar lines, dynamic markings — filling the viewport like an old manuscript page. Add subtle architectural arches of a concert hall framing the edges.
+   - Hiker who loves mountain cabins: A panoramic mountain ridge with pine trees, a winding trail, and a small cabin silhouette — spanning the full width.
+   - Coder who loves their desk at night: A large code editor layout with bracket pairs, indented lines, a terminal prompt, with a window frame showing stars.
+   - Reader who loves libraries: Floor-to-ceiling bookshelves with hundreds of book spines, an arched library doorway.
+   The SVG should:
+   - Use width="100%" height="100%" with a viewBox like "0 0 1200 800" to fill the screen
+   - Use ONLY the accent colors for strokes and fills (stroke-width 0.5-1.5)
+   - Be DETAILED — use many lines, shapes, and paths to create a rich scene. Draw 20-40+ individual elements.
+   - Feel like a faded blueprint, etching, or vintage illustration
+   Return as:
+   - "svg": The full inline SVG string
+   - "opacity": 0.04-0.08 (subtle but visible)
+
+6. "floatingElements": Array of 6-8 smaller SVGs that are LITERAL REMNANTS of their passion. Each has:
+   - "svg": Inline SVG with viewBox. Draw recognizable icons of their hobby/passion using simple shapes (ellipse, line, path, circle). For example, a music note = ellipse notehead + vertical stem line. Keep SVGs simple but RECOGNIZABLE. 20-50px wide.
+   - "top": CSS position like "8%"
+   - "left": CSS position like "12%" (use "right" key instead for right-positioned ones)
+   - "opacity": 0.08-0.15 (must be visible! not too faint)
+   - "animDuration": 6-10 (seconds)
+   - "animDelay": 0-5 (seconds)
+
+6. "constellations": Array of 2 geometric cluster objects. Each has:
+   - "svg": Inline SVG (200-280px wide) with connected lines and circles at nodes. Use accent colors, 5-7 nodes. Keep paths simple.
+   - "top", "left" (or "right"): CSS positions
+   - "opacity": 0.18-0.28
+   - "animDuration": 20-28
+
+7. "brushStrokes": Array of 2 abstract SVG curves. Each has:
+   - "svg": SVG with a single flowing bezier path (300-400px wide). Accent colors, stroke-width 2-3, fill none.
+   - "top", "left": CSS positions
+   - "opacity": 0.04-0.07
+   - "animDuration": 10-16
+
+8. "particles": Array of 10-14 dust particles. Each has:
+   - "top", "left": CSS positions spread across viewport
+   - "size": 2-5 (px)
+   - "color": hex color
+   - "opacity": 0.07-0.18
+   - "animDuration": 3.5-7
+
+9. "motes": Array of 6-8 floating light motes. Each has:
+   - "top", "left": CSS positions
+   - "size": 3-5 (px)
+   - "color": hex color
+   - "floatDuration": 7-14
+   - "floatDistance": 50-90 (px)
+   - "driftX": -15 to 15 (px)
+   - "opacity": 0.2-0.35
+
+10. "glows": Array of 2-3 ambient glow spots:
+    - "color": hex color
+    - "top", "left" (or "right", "bottom"): position
+    - "size": 150-300 (px)
+    - "opacity": 0.06-0.15
+
+CRITICAL RULES:
+- ALL colors must be dark enough that light text (#d6c8b4) is readable
+- SVGs must use the accent colors, NOT white
+- Floating elements must be RECOGNIZABLE and themed — not generic shapes
+- Make every generation UNIQUE — vary positions, colors, shapes, sizes
+- The constellations should feel like abstract art, not literal depictions
+- Spread elements across the full viewport (0%-95% for positions)
+- Keep the small floating SVGs concise. The heroIllustration can be more detailed but keep path data reasonable — prefer many simple shapes over few complex paths.
+
+Return ONLY valid JSON, no markdown fences, no explanation."""
+
+
+def generate_background(answers):
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=16000,
+        messages=[{
+            "role": "user",
+            "content": BACKGROUND_PROMPT.format(
+                passion=answers.get("passion", "creating things"),
+                energy=answers.get("energy", "calm"),
+                palette=answers.get("palette", "warm earthy tones"),
+                saturday=answers.get("saturday", "relaxing at home"),
+                place=answers.get("place", "a quiet room"),
+            ),
+        }],
+    )
+
+    raw = response.content[0].text.strip()
+    # Strip markdown fences if present
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        elif "```" in raw:
+            raw = raw[:raw.rfind("```")]
+    raw = raw.strip()
+
+    css = json.loads(raw)
+
+    # Validate required fields
+    required = ["name", "gradient", "accent1", "accent2",
+                "heroIllustration", "floatingElements", "constellations", "particles", "motes", "glows"]
+    for field in required:
+        if field not in css:
+            raise ValueError(f"Missing field: {field}")
+
+    return css
+
+
+# ── Background API ───────────────────────────────────────────────────────────
+
+@app.route("/api/backgrounds")
+@login_required
+def list_backgrounds():
+    uid = current_user_id()
+    db = get_db()
+    try:
+        bgs = db.query(UserBackground).filter(
+            UserBackground.user_id == uid
+        ).order_by(UserBackground.created_at.desc()).all()
+        user = db.query(User).get(uid)
+        return jsonify({
+            "backgrounds": [b.to_dict() for b in bgs],
+            "active_id": user.active_background_id,
+        })
+    finally:
+        db.close()
+
+
+@app.route("/api/backgrounds", methods=["POST"])
+@login_required
+def create_background():
+    uid = current_user_id()
+    data = request.get_json(silent=True) or {}
+    answers = {
+        "passion": (data.get("passion") or "").strip()[:200],
+        "energy": (data.get("energy") or "").strip()[:50],
+        "palette": (data.get("palette") or "").strip()[:200],
+        "saturday": (data.get("saturday") or "").strip()[:200],
+        "place": (data.get("place") or "").strip()[:200],
+    }
+    if not answers["passion"]:
+        return jsonify({"error": "Please answer at least the first question."}), 400
+
+    db = get_db()
+    try:
+        count = db.query(UserBackground).filter(
+            UserBackground.user_id == uid
+        ).count()
+        if count >= 5:
+            return jsonify({"error": "Maximum 5 backgrounds. Delete one first."}), 400
+
+        try:
+            css = generate_background(answers)
+        except Exception as e:
+            app.logger.error(f"Background generation failed: {e}")
+            return jsonify({"error": "Generation failed. Try again."}), 500
+
+        bg = UserBackground(
+            user_id=uid,
+            name=css["name"],
+            quiz_answers=json.dumps(answers),
+            css_data=json.dumps(css),
+        )
+        db.add(bg)
+        db.commit()
+
+        # Auto-apply the new background
+        user = db.query(User).get(uid)
+        user.active_background_id = bg.id
+        db.commit()
+
+        return jsonify({"background": bg.to_dict(), "active_id": bg.id}), 201
+    finally:
+        db.close()
+
+
+@app.route("/api/backgrounds/<int:bg_id>", methods=["DELETE"])
+@login_required
+def delete_background(bg_id):
+    uid = current_user_id()
+    db = get_db()
+    try:
+        bg = db.query(UserBackground).filter(
+            UserBackground.id == bg_id,
+            UserBackground.user_id == uid,
+        ).first()
+        if not bg:
+            return jsonify({"error": "Not found"}), 404
+
+        user = db.query(User).get(uid)
+        if user.active_background_id == bg_id:
+            user.active_background_id = None
+
+        db.delete(bg)
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@app.route("/api/backgrounds/active", methods=["PATCH"])
+@login_required
+def set_active_background():
+    uid = current_user_id()
+    data = request.get_json(silent=True) or {}
+    bg_id = data.get("background_id")  # null to reset
+
+    db = get_db()
+    try:
+        user = db.query(User).get(uid)
+        if bg_id is not None:
+            bg = db.query(UserBackground).filter(
+                UserBackground.id == bg_id,
+                UserBackground.user_id == uid,
+            ).first()
+            if not bg:
+                return jsonify({"error": "Not found"}), 404
+        user.active_background_id = bg_id
+        db.commit()
+        return jsonify({"active_id": bg_id})
     finally:
         db.close()
 

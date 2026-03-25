@@ -39,6 +39,7 @@
       border-bottom: 1px solid #3a3428;
       background: rgba(40, 36, 28, 0.6);
       position: relative;
+      z-index: 2;
       flex-shrink: 0;
     }
     .topbar::after {
@@ -171,6 +172,8 @@
       display: flex;
       height: calc(100vh - 52px);
       overflow: hidden;
+      position: relative;
+      z-index: 2;
     }
 
     /* ── Left panel: Friends ── */
@@ -420,6 +423,178 @@
       .c-app { position: relative; }
       .mobile-tabs { display: flex; }
     }
+    /* ── Background layer ── */
+    .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+    .bg-layer svg { position: absolute; }
+    .bg-glow {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      filter: blur(80px);
+    }
+    .bg-float {
+      position: absolute;
+      animation: bg-float-anim var(--dur, 7s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes bg-float-anim {
+      0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+      50% { transform: translateY(-14px) rotate(var(--r, 0deg)); }
+    }
+    .bg-geo {
+      position: absolute;
+      animation: bg-geo-drift var(--dur, 24s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes bg-geo-drift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(20px, -15px) rotate(1.5deg); }
+      50% { transform: translate(-12px, -25px) rotate(-1deg); }
+      75% { transform: translate(18px, 10px) rotate(2deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    .bg-stroke {
+      position: absolute;
+      animation: bg-stroke-drift var(--dur, 12s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes bg-stroke-drift {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(4px, -6px); }
+      66% { transform: translate(-3px, -3px); }
+    }
+    .bg-dust {
+      position: absolute; border-radius: 50%;
+      animation: bg-twinkle var(--dur, 4s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes bg-twinkle {
+      0%, 100% { opacity: var(--o, 0.1); }
+      50% { opacity: calc(var(--o, 0.1) + 0.08); }
+    }
+    .bg-mote {
+      position: absolute; border-radius: 50%;
+      animation: bg-mote-float var(--dur, 9s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+      opacity: 0;
+    }
+    @keyframes bg-mote-float {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      15% { opacity: var(--mo, 0.3); }
+      50% { transform: translateY(var(--dy, -60px)) translateX(var(--dx, 10px)); opacity: var(--mo, 0.3); }
+      85% { opacity: var(--mo, 0.3); }
+      100% { transform: translateY(calc(var(--dy, -60px) * 2)) translateX(calc(var(--dx, 10px) * 1.5)); opacity: 0; }
+    }
+
+    /* ── Customize overlay ── */
+    .cz-overlay {
+      display: none; position: fixed; inset: 0; z-index: 10002;
+      background: rgba(36, 31, 21, 0.95); backdrop-filter: blur(12px);
+      align-items: center; justify-content: center;
+      animation: c-fade-in 0.25s ease;
+    }
+    .cz-overlay.active { display: flex; }
+    .cz-card {
+      width: 100%; max-width: 520px; max-height: 85vh;
+      background: rgba(44, 38, 28, 0.85); backdrop-filter: blur(4px);
+      border: 1px solid #3a3428; border-radius: 10px;
+      overflow: hidden; position: relative;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+      display: flex; flex-direction: column;
+    }
+    .cz-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5;
+    }
+    .cz-header {
+      padding: 1.25rem 1.5rem 0; display: flex; align-items: center; justify-content: space-between;
+    }
+    .cz-header h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.3rem; color: #ecdfc8; }
+    .cz-close {
+      background: none; border: 1px solid #3f3930; border-radius: 6px;
+      color: #6a5d50; font-size: 1.2rem; width: 36px; height: 36px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .cz-close:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.35); }
+    .cz-body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
+    .cz-body::-webkit-scrollbar { width: 5px; }
+    .cz-body::-webkit-scrollbar-thumb { background: #3a3428; border-radius: 3px; }
+
+    /* Saved backgrounds grid */
+    .cz-bg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    .cz-bg-card {
+      border: 2px solid #3a3428; border-radius: 8px; overflow: hidden;
+      cursor: pointer; transition: border-color 0.2s, transform 0.2s;
+    }
+    .cz-bg-card:hover { transform: translateY(-2px); }
+    .cz-bg-card.active-bg { border-color: #c2593e; box-shadow: 0 0 12px rgba(194, 89, 62, 0.3); }
+    .cz-bg-swatch { height: 70px; position: relative; }
+    .cz-bg-info { padding: 0.5rem 0.6rem; background: rgba(36, 31, 21, 0.8); }
+    .cz-bg-name { font-size: 0.78rem; color: #e0d2be; font-weight: 600; }
+    .cz-bg-actions { display: flex; gap: 0.3rem; margin-top: 0.3rem; }
+    .cz-bg-btn {
+      padding: 0.2rem 0.4rem; border-radius: 3px; border: none;
+      font-size: 0.62rem; cursor: pointer; font-weight: 600;
+      font-family: "Fira Code", "JetBrains Mono", monospace;
+    }
+    .cz-bg-btn.apply { background: rgba(109, 143, 94, 0.2); color: #6d8f5e; }
+    .cz-bg-btn.apply:hover { background: rgba(109, 143, 94, 0.3); }
+    .cz-bg-btn.remove { background: rgba(194, 89, 62, 0.1); color: #c2593e; }
+    .cz-bg-btn.remove:hover { background: rgba(194, 89, 62, 0.2); }
+    .cz-new-btn {
+      width: 100%; padding: 0.7rem; margin-top: 0.5rem;
+      background: linear-gradient(135deg, #c2593e, #a84a32);
+      border: none; border-radius: 6px; color: #ecdfc8;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .cz-new-btn:hover { opacity: 0.9; }
+    .cz-new-btn:disabled { opacity: 0.4; cursor: default; }
+    .cz-reset-btn {
+      width: 100%; padding: 0.5rem; margin-top: 0.5rem;
+      background: none; border: 1px solid #3a3428; border-radius: 6px;
+      color: #6a5d50; font-size: 0.75rem; cursor: pointer;
+      font-family: "Fira Code", "JetBrains Mono", monospace;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .cz-reset-btn:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.3); }
+
+    /* Quiz */
+    .cz-progress { height: 3px; background: #3a3428; border-radius: 2px; margin-bottom: 1.25rem; }
+    .cz-progress-fill { height: 100%; background: #c2593e; border-radius: 2px; transition: width 0.3s; }
+    .cz-question { font-family: Georgia, "Times New Roman", serif; font-size: 1.05rem; color: #ecdfc8; margin-bottom: 1rem; }
+    .cz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .cz-option {
+      padding: 0.75rem; border: 1px solid #3a3428; border-radius: 8px;
+      background: rgba(36, 31, 21, 0.6); cursor: pointer;
+      text-align: center; font-size: 0.82rem; color: #b0a390;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .cz-option:hover { border-color: #4a4238; color: #d6c8b4; }
+    .cz-option.selected { border-color: #c2593e; color: #ecdfc8; background: rgba(194, 89, 62, 0.1); }
+    .cz-option-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+    .cz-option-label { font-size: 0.72rem; color: #6a5d50; }
+    .cz-quiz-nav { display: flex; justify-content: space-between; margin-top: 1.25rem; }
+    .cz-quiz-btn {
+      padding: 0.5rem 1.2rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .cz-quiz-back { background: none; border: 1px solid #3a3428; color: #6a5d50; }
+    .cz-quiz-back:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.3); }
+    .cz-quiz-next {
+      background: linear-gradient(135deg, #c2593e, #a84a32); border: none; color: #ecdfc8;
+    }
+    .cz-quiz-next:hover { opacity: 0.9; }
+    .cz-quiz-next:disabled { opacity: 0.4; cursor: default; }
+
+    /* Customize account button */
+    .c-customize-btn {
+      padding: 0.25rem 0.5rem; background: none;
+      border: 1px solid #3a3428; border-radius: 4px;
+      color: #6a5d50; font-size: 0.68rem; cursor: pointer;
+      font-family: "Fira Code", "JetBrains Mono", monospace;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .c-customize-btn:hover { color: #b8924a; border-color: rgba(184, 146, 74, 0.3); }
   </style>
 </head>
 <body>
@@ -460,6 +635,17 @@
         <button type="submit" class="c-auth-btn">Create Account</button>
         <div class="c-auth-error" id="cRegErr"></div>
       </form>
+    </div>
+  </div>
+
+  <!-- ── Customize overlay ── -->
+  <div class="cz-overlay" id="czOverlay">
+    <div class="cz-card">
+      <div class="cz-header">
+        <h3 id="czTitle">Customize</h3>
+        <button class="cz-close" onclick="czClose()">&times;</button>
+      </div>
+      <div class="cz-body" id="czBody"></div>
     </div>
   </div>
 
@@ -619,6 +805,7 @@
         renderAccount();
         connectSocket();
         loadFriends(); loadFriendReqs(); loadUnread(); loadMyPf();
+        applyUserBackground();
     }
 
     // ── Avatar ──
@@ -636,6 +823,7 @@
     function renderAccount() {
         $('cAccount').innerHTML = avatar(me, true) +
             '<div class="c-user-info"><div class="c-user-name">' + esc(me.display_name) + '</div></div>' +
+            '<button class="c-customize-btn" onclick="czOpen()">customize</button>' +
             '<button class="c-logout-btn" onclick="cLogout()">logout</button>';
     }
 
@@ -643,6 +831,7 @@
         await fetch(API + '/api/auth/logout', {method: 'POST'});
         if (socket) socket.disconnect();
         me = null; friends = []; activeFriend = null;
+        clearBackground();
         $('topbarUser').style.display = 'none';
         $('cLoginId').value = ''; $('cLoginPass').value = '';
         showAuth();
@@ -927,6 +1116,333 @@
     window.cBackMyPf = loadMyPf;
 
     function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // ── Customize / Backgrounds ──
+    let czView = 'list';
+    let czStep = 0;
+    let czAnswers = {};
+    let czBackgrounds = [];
+    let czActiveId = null;
+
+    const CZ_QUESTIONS = [
+        {
+            key: "passion",
+            q: "What\u2019s something you could do for hours without getting bored?",
+            type: "text",
+            placeholder: "e.g. playing guitar, hiking in the mountains, solving puzzles, cooking for friends..."
+        },
+        {
+            key: "energy",
+            q: "Pick a word that describes your energy",
+            type: "choice",
+            opts: [
+                {val: "calm", icon: "\u{1F54A}\uFE0F", label: "Calm"},
+                {val: "restless", icon: "\u{1F525}", label: "Restless"},
+                {val: "dreamy", icon: "\u{1F319}", label: "Dreamy"},
+                {val: "intense", icon: "\u{26A1}", label: "Intense"},
+                {val: "playful", icon: "\u{1F3AD}", label: "Playful"},
+            ]
+        },
+        {
+            key: "palette",
+            q: "If your life had a color palette, what would it look like?",
+            type: "text",
+            placeholder: "e.g. deep ocean blues and silver, sunset oranges, neon pink and black..."
+        },
+        {
+            key: "saturday",
+            q: "Describe your perfect Saturday in one sentence",
+            type: "text",
+            placeholder: "e.g. reading by a window while it rains, road trip with no destination..."
+        },
+        {
+            key: "place",
+            q: "What\u2019s a place (real or imaginary) where you feel most like yourself?",
+            type: "text",
+            placeholder: "e.g. a cabin in the woods, a rooftop in Tokyo, a library at midnight..."
+        },
+    ];
+
+    window.czOpen = async function() {
+        $('czOverlay').classList.add('active');
+        await czLoadBackgrounds();
+        czShowList();
+    };
+    window.czClose = function() {
+        $('czOverlay').classList.remove('active');
+    };
+
+    async function czLoadBackgrounds() {
+        const d = await (await fetch(API + '/api/backgrounds')).json();
+        czBackgrounds = d.backgrounds || [];
+        czActiveId = d.active_id;
+    }
+
+    function czShowList() {
+        czView = 'list';
+        $('czTitle').textContent = 'My Backgrounds';
+        let h = '';
+        if (czBackgrounds.length) {
+            h += '<div class="cz-bg-grid">';
+            czBackgrounds.forEach(bg => {
+                const css = JSON.parse(bg.css_data);
+                const isActive = bg.id === czActiveId ? ' active-bg' : '';
+                h += '<div class="cz-bg-card' + isActive + '">' +
+                    '<div class="cz-bg-swatch" style="background:' + css.gradient + '"></div>' +
+                    '<div class="cz-bg-info"><div class="cz-bg-name">' + esc(bg.name) + '</div>' +
+                    '<div class="cz-bg-actions">' +
+                    '<button class="cz-bg-btn apply" onclick="czApply(' + bg.id + ')">Apply</button>' +
+                    '<button class="cz-bg-btn remove" onclick="czDelete(' + bg.id + ')">Delete</button>' +
+                    '</div></div></div>';
+            });
+            h += '</div>';
+        } else {
+            h += '<div class="c-empty">No saved backgrounds yet</div>';
+        }
+        const full = czBackgrounds.length >= 5;
+        h += '<button class="cz-new-btn" onclick="czStartHobby()"' + (full ? ' disabled title="Delete one first"' : '') + '>' +
+            (full ? 'Max 5 reached' : 'Generate New Background') + '</button>';
+        if (czActiveId) {
+            h += '<button class="cz-reset-btn" onclick="czReset()">Reset to default</button>';
+        }
+        $('czBody').innerHTML = h;
+    }
+
+    window.czApply = async function(bgId) {
+        await fetch(API + '/api/backgrounds/active', {
+            method: 'PATCH', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({background_id: bgId})
+        });
+        czActiveId = bgId;
+        const bg = czBackgrounds.find(b => b.id === bgId);
+        if (bg) applyBackground(JSON.parse(bg.css_data));
+        czShowList();
+    };
+
+    window.czDelete = async function(bgId) {
+        if (!confirm('Delete this background?')) return;
+        await fetch(API + '/api/backgrounds/' + bgId, {method: 'DELETE'});
+        await czLoadBackgrounds();
+        if (czActiveId === bgId) clearBackground();
+        czShowList();
+    };
+
+    window.czReset = async function() {
+        await fetch(API + '/api/backgrounds/active', {
+            method: 'PATCH', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({background_id: null})
+        });
+        czActiveId = null;
+        clearBackground();
+        czShowList();
+    };
+
+    window.czStartHobby = function() {
+        czView = 'quiz';
+        czStep = 0;
+        czAnswers = {};
+        czRenderStep();
+    };
+
+    function czRenderStep() {
+        const q = CZ_QUESTIONS[czStep];
+        const progress = ((czStep) / CZ_QUESTIONS.length * 100).toFixed(0);
+        $('czTitle').textContent = 'Question ' + (czStep + 1) + ' of ' + CZ_QUESTIONS.length;
+
+        let h = '<div class="cz-progress"><div class="cz-progress-fill" style="width:' + progress + '%"></div></div>';
+        h += '<div class="cz-question">' + q.q + '</div>';
+
+        if (q.type === 'text') {
+            h += '<input type="text" class="c-search" id="czInput" value="' + (esc(czAnswers[q.key] || '')) + '" placeholder="' + q.placeholder + '" style="font-size:0.95rem;padding:0.7rem 0.85rem;margin-bottom:0.5rem">';
+        } else {
+            h += '<div class="cz-options" id="czChoiceOpts">';
+            q.opts.forEach(o => {
+                const sel = czAnswers[q.key] === o.val ? ' selected' : '';
+                h += '<div class="cz-option' + sel + '" data-val="' + o.val + '" onclick="czPickChoice(this)">' +
+                    '<div class="cz-option-icon">' + o.icon + '</div><div>' + o.label + '</div></div>';
+            });
+            h += '</div>';
+        }
+
+        h += '<div class="cz-quiz-nav">';
+        h += '<button class="cz-quiz-btn cz-quiz-back" onclick="' + (czStep > 0 ? 'czBack()' : 'czShowList()') + '">' + (czStep > 0 ? 'Back' : 'Cancel') + '</button>';
+        if (czStep < CZ_QUESTIONS.length - 1) {
+            h += '<button class="cz-quiz-btn cz-quiz-next" onclick="czNext()">Next</button>';
+        } else {
+            h += '<button class="cz-quiz-btn cz-quiz-next" onclick="czGenerate()">Generate</button>';
+        }
+        h += '</div>';
+
+        $('czBody').innerHTML = h;
+        if (q.type === 'text') {
+            $('czInput').focus();
+            $('czInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') { czStep < CZ_QUESTIONS.length - 1 ? czNext() : czGenerate(); }
+            });
+        }
+    }
+
+    window.czPickChoice = function(el) {
+        document.querySelectorAll('#czChoiceOpts .cz-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        czAnswers[CZ_QUESTIONS[czStep].key] = el.dataset.val;
+        // Auto-advance after short delay
+        setTimeout(() => { if (czStep < CZ_QUESTIONS.length - 1) czNext(); }, 300);
+    };
+
+    function czSaveCurrentStep() {
+        const q = CZ_QUESTIONS[czStep];
+        if (q.type === 'text') {
+            const val = ($('czInput') || {}).value || '';
+            if (val.trim()) czAnswers[q.key] = val.trim();
+        }
+    }
+
+    window.czNext = function() {
+        czSaveCurrentStep();
+        czStep++;
+        czRenderStep();
+    };
+
+    window.czBack = function() {
+        czSaveCurrentStep();
+        czStep--;
+        czRenderStep();
+    };
+
+    window.czGenerate = async function() {
+        czSaveCurrentStep();
+        if (!czAnswers.passion) { alert('Please answer at least the first question.'); return; }
+        $('czBody').innerHTML = '<div class="c-empty" style="padding:3rem 1rem">Generating your background with AI...<br><span style="font-size:0.72rem;color:#564c40">This takes a few seconds</span></div>';
+        try {
+            const r = await fetch(API + '/api/backgrounds', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(czAnswers)
+            });
+            const d = await r.json();
+            if (!r.ok) { alert(d.error || 'Failed'); czShowList(); return; }
+            await czLoadBackgrounds();
+            czActiveId = d.active_id;
+            applyBackground(JSON.parse(d.background.css_data));
+            czShowList();
+        } catch(e) {
+            alert('Generation failed. Please try again.');
+            czShowList();
+        }
+    };
+
+    // ── Apply/Clear Background ──
+    function applyBackground(css) {
+        clearBackground();
+        document.body.style.background = css.gradient;
+
+        const layer = document.createElement('div');
+        layer.className = 'bg-layer';
+        layer.id = 'bgLayer';
+
+        // Glows
+        (css.glows || []).forEach(g => {
+            const el = document.createElement('div');
+            el.className = 'bg-glow';
+            el.style.width = (g.size || 200) + 'px';
+            el.style.height = (g.size || 200) + 'px';
+            el.style.background = g.color;
+            el.style.opacity = g.opacity || 0.1;
+            if (g.top) el.style.top = g.top;
+            if (g.left) el.style.left = g.left;
+            if (g.right) el.style.right = g.right;
+            if (g.bottom) el.style.bottom = g.bottom;
+            layer.appendChild(el);
+        });
+
+        // Hero illustration (full-screen static scene)
+        if (css.heroIllustration) {
+            const hero = document.createElement('div');
+            hero.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:' + (css.heroIllustration.opacity || 0.06);
+            hero.innerHTML = css.heroIllustration.svg || '';
+            const svg = hero.querySelector('svg');
+            if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; svg.style.maxWidth = '100vw'; svg.style.maxHeight = '100vh'; }
+            layer.appendChild(hero);
+        }
+
+        // Floating hobby elements
+        (css.floatingElements || []).forEach((f, i) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'bg-float';
+            wrap.style.cssText = 'top:' + (f.top||'10%') + ';' +
+                (f.left ? 'left:'+f.left : '') + (f.right ? 'right:'+f.right+';left:auto' : '') +
+                ';opacity:' + (f.opacity||0.06) +
+                ';--dur:' + (f.animDuration||7) + 's;--d:' + (f.animDelay||0) + 's;--r:' + ((i%2?-1:1)*(3+i*2)) + 'deg';
+            wrap.innerHTML = f.svg || '';
+            layer.appendChild(wrap);
+        });
+
+        // Constellations
+        (css.constellations || []).forEach(c => {
+            const wrap = document.createElement('div');
+            wrap.className = 'bg-geo';
+            wrap.style.cssText = 'top:' + (c.top||'10%') + ';' +
+                (c.left ? 'left:'+c.left : '') + (c.right ? 'right:'+c.right+';left:auto' : '') +
+                ';opacity:' + (c.opacity||0.16) +
+                ';--dur:' + (c.animDuration||24) + 's;--d:0s';
+            wrap.innerHTML = c.svg || '';
+            layer.appendChild(wrap);
+        });
+
+        // Brush strokes
+        (css.brushStrokes || []).forEach(b => {
+            const wrap = document.createElement('div');
+            wrap.className = 'bg-stroke';
+            wrap.style.cssText = 'top:' + (b.top||'50%') + ';' +
+                (b.left ? 'left:'+b.left : '') +
+                ';opacity:' + (b.opacity||0.03) +
+                ';--dur:' + (b.animDuration||12) + 's;--d:0s';
+            wrap.innerHTML = b.svg || '';
+            layer.appendChild(wrap);
+        });
+
+        // Dust particles
+        (css.particles || []).forEach(p => {
+            const el = document.createElement('span');
+            el.className = 'bg-dust';
+            const sz = p.size || 3;
+            el.style.cssText = 'top:' + p.top + ';left:' + p.left +
+                ';width:' + sz + 'px;height:' + sz + 'px;background:' + (p.color||css.accent1) +
+                ';--o:' + (p.opacity||0.12) + ';--dur:' + (p.animDuration||4.5) + 's;--d:' + (Math.random()*3).toFixed(1) + 's';
+            layer.appendChild(el);
+        });
+
+        // Motes
+        (css.motes || []).forEach(m => {
+            const el = document.createElement('span');
+            el.className = 'bg-mote';
+            const sz = m.size || 4;
+            el.style.cssText = 'top:' + m.top + ';left:' + m.left +
+                ';width:' + sz + 'px;height:' + sz + 'px;background:' + (m.color||css.accent2) +
+                ';box-shadow:0 0 6px 1px ' + (m.color||css.accent2) +
+                ';--mo:' + (m.opacity||0.3) +
+                ';--dur:' + (m.floatDuration||9) + 's' +
+                ';--dy:' + -(m.floatDistance||60) + 'px' +
+                ';--dx:' + (m.driftX||0) + 'px' +
+                ';--d:' + (Math.random()*5).toFixed(1) + 's';
+            layer.appendChild(el);
+        });
+
+        document.body.appendChild(layer);
+    }
+
+    function clearBackground() {
+        document.body.style.background = '#241f15';
+        const old = document.getElementById('bgLayer');
+        if (old) old.remove();
+    }
+
+    // Apply background on login if user has one
+    function applyUserBackground() {
+        if (me && me.active_background) {
+            try { applyBackground(JSON.parse(me.active_background)); } catch(e) {}
+        }
+    }
 
     checkSession();
 })();
