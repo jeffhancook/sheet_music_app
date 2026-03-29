@@ -954,6 +954,8 @@ let powerupRng = null; /* seeded RNG for powerup spawning */
 
 function loadMap(name, seed) {
     gameSeed = seed || 0;
+    /* Clear background cache for fresh map */
+    for (const k in bgCache) delete bgCache[k];
     const m = MAPS[name] || MAPS.plains;
     compositePlatforms = m.platforms;
     movingPlatforms = m.moving;
@@ -1173,10 +1175,20 @@ function updatePlayer() {
         else if (keys['ArrowDown'] || keys['KeyS']) player.vy = 4;
         else player.vy *= 0.9;
     } else if (isMega) {
-        /* Pac-man mega — can fly up but can't phase through platforms */
-        if (keys['ArrowUp'] || keys['KeyW'] || keys['Space']) player.vy = -4;
-        else if (keys['ArrowDown'] || keys['KeyS']) player.vy = 4;
-        else player.vy *= 0.9;
+        /* Pac-man mega — one cardinal direction at a time */
+        const wantUp = keys['ArrowUp'] || keys['KeyW'] || keys['Space'];
+        const wantDown = keys['ArrowDown'] || keys['KeyS'];
+        if (wantUp || wantDown) {
+            /* Vertical takes priority — zero out horizontal */
+            player.vx = 0;
+            player.vy = wantUp ? -4 : 4;
+        } else if (moveX !== 0) {
+            /* Horizontal — zero out vertical */
+            player.vy = 0;
+        } else {
+            player.vx = 0;
+            player.vy *= 0.85;
+        }
     } else if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && player.onGround) {
         player.vy = mapJumpVel;
         player.onGround = false;
@@ -1204,20 +1216,31 @@ function updatePlayer() {
 
     const halfW = PLAYER_W / 2;
 
-    /* ── Horizontal movement ── */
-    player.x += player.vx + conveyorPush;
-    if (player.x - halfW < 0) player.x = halfW;
-    if (player.x + halfW > WORLD_W) player.x = WORLD_W - halfW;
-
-    /* Wall collision (horizontal) — skip walls during flappy flight */
-    if (!isFlight) {
-        for (const w of walls) {
-            if (rectOverlap(player.x - halfW, player.y, PLAYER_W, PLAYER_H, w.x, w.y, w.w, w.h)) {
-                if (player.vx > 0) player.x = w.x - halfW;
-                else if (player.vx < 0) player.x = w.x + w.w + halfW;
-                player.vx = 0;
+    /* ── Horizontal movement — substep to prevent wall phasing ── */
+    const totalDx = player.vx + conveyorPush;
+    if (!isFlight && Math.abs(totalDx) > 0) {
+        const hSteps = Math.max(1, Math.ceil(Math.abs(totalDx) / 6));
+        const stepDx = totalDx / hSteps;
+        for (let hs = 0; hs < hSteps; hs++) {
+            player.x += stepDx;
+            if (player.x - halfW < 0) player.x = halfW;
+            if (player.x + halfW > WORLD_W) player.x = WORLD_W - halfW;
+            let blocked = false;
+            for (const w of walls) {
+                if (rectOverlap(player.x - halfW, player.y, PLAYER_W, PLAYER_H, w.x, w.y, w.w, w.h)) {
+                    if (stepDx > 0) player.x = w.x - halfW;
+                    else player.x = w.x + w.w + halfW;
+                    player.vx = 0;
+                    blocked = true;
+                    break;
+                }
             }
+            if (blocked) break;
         }
+    } else {
+        player.x += totalDx;
+        if (player.x - halfW < 0) player.x = halfW;
+        if (player.x + halfW > WORLD_W) player.x = WORLD_W - halfW;
     }
 
     /* ── GROUNDED: stick to current platform surface ── */
@@ -1382,7 +1405,22 @@ function updatePlayer() {
 /* ================================================================
    DRAWING
    ================================================================ */
-function drawSky(){const g=ctx.createLinearGradient(0,0,0,WORLD_H);g.addColorStop(0,SKY_TOP);g.addColorStop(1,SKY_BOT);ctx.fillStyle=g;ctx.fillRect(0,0,WORLD_W,WORLD_H);}
+/* Pre-rendered background cache — avoids recreating gradients every frame */
+const bgCache = {};
+function getOrCreateBg(key, w, h, drawFn) {
+    if (bgCache[key]) return bgCache[key];
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    drawFn(c.getContext('2d'));
+    bgCache[key] = c;
+    return c;
+}
+function drawSky(){
+    const bg = getOrCreateBg('plains_sky', WORLD_W, WORLD_H, (c) => {
+        const g=c.createLinearGradient(0,0,0,WORLD_H);g.addColorStop(0,SKY_TOP);g.addColorStop(1,SKY_BOT);c.fillStyle=g;c.fillRect(0,0,WORLD_W,WORLD_H);
+    });
+    ctx.drawImage(bg, 0, 0);
+}
 function drawSun(){const sx=1050,sy=80,sr=45;const g=ctx.createRadialGradient(sx,sy,sr*0.3,sx,sy,sr*3);g.addColorStop(0,SUN_GLOW);g.addColorStop(1,'rgba(255,235,150,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,sr*3,0,Math.PI*2);ctx.fill();ctx.fillStyle=SUN_COLOR;ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();}
 function drawCloud(c,time){const cx=((c.x+time*c.speed*0.01)%(WORLD_W+200))-100,r=c.r;ctx.fillStyle=CLOUD_COLOR;ctx.beginPath();ctx.arc(cx,c.y,r*0.7,0,Math.PI*2);ctx.arc(cx-r*0.55,c.y+r*0.15,r*0.5,0,Math.PI*2);ctx.arc(cx+r*0.55,c.y+r*0.15,r*0.55,0,Math.PI*2);ctx.arc(cx-r*0.25,c.y-r*0.25,r*0.45,0,Math.PI*2);ctx.arc(cx+r*0.2,c.y-r*0.2,r*0.5,0,Math.PI*2);ctx.fill();}
 function drawHills(){for(const h of hills){ctx.fillStyle=h.color;ctx.beginPath();ctx.ellipse(h.cx,h.y,h.rx,h.ry,0,Math.PI,0);ctx.fill();}}
@@ -1493,65 +1531,59 @@ function drawJumpPad(jp, time) {
 
 /* ── Map-specific backgrounds ── */
 function drawFactoryBg(time) {
-    /* Dark industrial sky */
-    const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
-    g.addColorStop(0, '#2a2a35'); g.addColorStop(0.5, '#3a3540'); g.addColorStop(1, '#4a4045');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-    /* Smokestacks in background */
+    /* Static bg from cache */
+    const bg = getOrCreateBg('factory_sky', WORLD_W, WORLD_H, (c) => {
+        const g=c.createLinearGradient(0,0,0,WORLD_H);
+        g.addColorStop(0,'#2a2a35');g.addColorStop(0.5,'#3a3540');g.addColorStop(1,'#4a4045');
+        c.fillStyle=g;c.fillRect(0,0,WORLD_W,WORLD_H);
+        /* Static ground */
+        c.fillStyle='#4a4540';c.fillRect(0,GROUND_Y,WORLD_W,12);
+        c.fillStyle='#3a3530';c.fillRect(0,GROUND_Y+12,WORLD_W,GROUND_H-12);
+        c.fillStyle='#5a5550';
+        for(let rx=20;rx<WORLD_W;rx+=60){c.beginPath();c.arc(rx,GROUND_Y+6,3,0,Math.PI*2);c.fill();}
+    });
+    ctx.drawImage(bg, 0, 0);
+    /* Smokestacks — simplified, fewer draw calls */
     ctx.fillStyle = '#3a3a42';
-    [{x:100,w:40,h:200},{x:400,w:50,h:250},{x:800,w:45,h:220},{x:1100,w:55,h:240}].forEach(s => {
-        ctx.fillRect(s.x, GROUND_Y - s.h, s.w, s.h);
-        /* Smoke puff */
-        ctx.fillStyle = 'rgba(100,100,110,0.15)';
-        const py = GROUND_Y - s.h - 20 - Math.sin(time*0.001 + s.x)*10;
-        ctx.beginPath(); ctx.arc(s.x + s.w/2, py, 25 + Math.sin(time*0.002+s.x)*5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#3a3a42';
-    });
-    /* Gears in background */
-    ctx.strokeStyle = 'rgba(80,75,70,0.2)'; ctx.lineWidth = 3;
-    [{x:250,y:400,r:60},{x:700,y:300,r:45},{x:1000,y:350,r:55}].forEach(gear => {
-        const a = time * 0.0005 + gear.x;
-        ctx.save(); ctx.translate(gear.x, gear.y); ctx.rotate(a);
-        ctx.beginPath(); ctx.arc(0, 0, gear.r, 0, Math.PI*2); ctx.stroke();
-        for (let i = 0; i < 8; i++) {
-            const ta = (i/8)*Math.PI*2;
-            ctx.beginPath(); ctx.moveTo(Math.cos(ta)*gear.r*0.7, Math.sin(ta)*gear.r*0.7);
-            ctx.lineTo(Math.cos(ta)*gear.r*1.15, Math.sin(ta)*gear.r*1.15); ctx.stroke();
-        }
-        ctx.restore();
-    });
-    /* Industrial ground */
-    ctx.fillStyle = '#4a4540'; ctx.fillRect(0, GROUND_Y, WORLD_W, 12);
-    ctx.fillStyle = '#3a3530'; ctx.fillRect(0, GROUND_Y+12, WORLD_W, GROUND_H-12);
-    /* Metal rivets on ground */
-    ctx.fillStyle = '#5a5550';
-    for (let rx = 20; rx < WORLD_W; rx += 60) {
-        ctx.beginPath(); ctx.arc(rx, GROUND_Y + 6, 3, 0, Math.PI*2); ctx.fill();
-    }
+    ctx.fillRect(100, GROUND_Y-200, 40, 200);
+    ctx.fillRect(400, GROUND_Y-250, 50, 250);
+    ctx.fillRect(800, GROUND_Y-220, 45, 220);
+    ctx.fillRect(1100, GROUND_Y-240, 55, 240);
+    /* Single gear — just a rotating circle, no spokes */
+    ctx.strokeStyle = 'rgba(80,75,70,0.15)'; ctx.lineWidth = 3;
+    const ga = time * 0.0005;
+    ctx.save(); ctx.translate(500, 350); ctx.rotate(ga);
+    ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+    /* ground already in cache */
 }
 
 function drawConveyors(time) {
+    /* Batch all belt bases */
+    ctx.fillStyle = 'rgba(80,80,90,0.6)';
+    for (const cv of conveyors) ctx.fillRect(cv.x, cv.y - 3, cv.w, 6);
+    /* Batch all arrows — wider spacing for performance */
+    ctx.fillStyle = 'rgba(255,200,50,0.4)';
+    ctx.beginPath();
     for (const cv of conveyors) {
-        /* Belt base */
-        ctx.fillStyle = 'rgba(80,80,90,0.6)';
-        ctx.fillRect(cv.x, cv.y - 3, cv.w, 6);
-        /* Animated arrows showing direction */
-        ctx.fillStyle = 'rgba(255,200,50,0.5)';
-        const offset = ((time * cv.speed * cv.dir * 0.03) % 30 + 30) % 30;
-        for (let ax = cv.x + offset; ax < cv.x + cv.w - 5; ax += 30) {
-            const dir = cv.dir;
-            ctx.beginPath();
-            ctx.moveTo(ax, cv.y); ctx.lineTo(ax - 6*dir, cv.y - 4); ctx.lineTo(ax - 6*dir, cv.y + 4);
-            ctx.closePath(); ctx.fill();
+        const offset = ((time * cv.speed * cv.dir * 0.03) % 50 + 50) % 50;
+        for (let ax = cv.x + offset; ax < cv.x + cv.w - 5; ax += 50) {
+            const d = cv.dir;
+            ctx.moveTo(ax, cv.y); ctx.lineTo(ax - 5*d, cv.y - 3); ctx.lineTo(ax - 5*d, cv.y + 3);
         }
     }
+    ctx.fill();
 }
 
 function drawSkyTempleBg(time) {
-    /* Calm sky blue gradient */
-    const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
-    g.addColorStop(0, '#5ab8e0'); g.addColorStop(0.3, '#7ec8ee'); g.addColorStop(0.7, '#b0ddf5'); g.addColorStop(1, '#d8eefb');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    const bg = getOrCreateBg('sky_temple_bg', WORLD_W, WORLD_H, (c) => {
+        const g=c.createLinearGradient(0,0,0,WORLD_H);
+        g.addColorStop(0,'#5ab8e0');g.addColorStop(0.3,'#7ec8ee');g.addColorStop(0.7,'#b0ddf5');g.addColorStop(1,'#d8eefb');
+        c.fillStyle=g;c.fillRect(0,0,WORLD_W,WORLD_H);
+        c.fillStyle='#c0d4e0';c.fillRect(0,GROUND_Y,WORLD_W,12);
+        c.fillStyle='#a8c0d0';c.fillRect(0,GROUND_Y+12,WORLD_W,GROUND_H-12);
+    });
+    ctx.drawImage(bg, 0, 0);
     /* Soft white clouds in background */
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     [{x:80,y:100,r:50},{x:350,y:60,r:40},{x:600,y:130,r:55},{x:900,y:80,r:45},{x:1150,y:110,r:50}].forEach(c => {
@@ -1570,9 +1602,6 @@ function drawSkyTempleBg(time) {
         ctx.beginPath(); ctx.arc(isl.x + isl.w/2, isl.y + isl.h + 8, isl.w*0.3, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = 'rgba(180,210,230,0.3)';
     });
-    /* Soft ground — light stone */
-    ctx.fillStyle = '#c0d4e0'; ctx.fillRect(0, GROUND_Y, WORLD_W, 12);
-    ctx.fillStyle = '#a8c0d0'; ctx.fillRect(0, GROUND_Y+12, WORLD_W, GROUND_H-12);
 }
 
 function drawWindZone(time) {
@@ -1603,10 +1632,12 @@ function drawWindZone(time) {
 }
 
 function drawRiftBg(time) {
-    /* Deep purple void */
-    const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
-    g.addColorStop(0, '#0e0620'); g.addColorStop(0.4, '#1a0a38'); g.addColorStop(1, '#120830');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    const bg = getOrCreateBg('rift_bg', WORLD_W, WORLD_H, (c) => {
+        const g=c.createLinearGradient(0,0,0,WORLD_H);
+        g.addColorStop(0,'#0e0620');g.addColorStop(0.4,'#1a0a38');g.addColorStop(1,'#120830');
+        c.fillStyle=g;c.fillRect(0,0,WORLD_W,WORLD_H);
+    });
+    ctx.drawImage(bg, 0, 0);
     /* Dimensional cracks / lightning in background */
     ctx.strokeStyle = 'rgba(160,80,255,0.08)'; ctx.lineWidth = 2;
     for (let i = 0; i < 6; i++) {
@@ -2286,8 +2317,9 @@ document.getElementById('btn-exit').addEventListener('click', () => {
    GAME LOGIC TICK — runs on setInterval (survives tab minimize)
    ================================================================ */
 const TICK_MS = 16; /* ~60fps physics */
-const SEND_INTERVAL = 25; /* ~40fps network updates */
+const SEND_INTERVAL = 33; /* ~30fps — good enough with no extrapolation */
 let sendTimer = 0;
+let lastSentX = -999, lastSentY = -999; /* delta compression: skip if not moved */
 let gameTickInterval = null;
 
 function gameTick() {
@@ -2298,24 +2330,28 @@ function gameTick() {
     }
     updatePlayer();
 
-    /* Send position to server */
+    /* Send position to server — skip if not moved */
     if (socket && socket.connected) {
         sendTimer += TICK_MS;
         if (sendTimer >= SEND_INTERVAL) {
-            sendTimer = 0;
-            const pn = performance.now();
-            const isInvis = activeEffects.invis && pn < activeEffects.invis;
-            const isMegaNow = activeEffects.mega && pn < activeEffects.mega;
-            socket.emit('player_move', {
-                x: Math.round(player.x),
-                y: Math.round(player.y),
-                vx: Math.round(player.vx * 10) / 10,
-                vy: Math.round(player.vy * 10) / 10,
-                facing: player.facing,
-                invis: !!isInvis,
-                mega: !!isMegaNow,
-                stunned: performance.now() < stunUntil,
-            });
+            const rx = Math.round(player.x), ry = Math.round(player.y);
+            const moved = rx !== lastSentX || ry !== lastSentY;
+            if (moved || player.vx !== 0 || player.vy !== 0) {
+                sendTimer = 0;
+                lastSentX = rx; lastSentY = ry;
+                const pn = performance.now();
+                socket.emit('player_move', {
+                    x: rx, y: ry,
+                    vx: Math.round(player.vx * 10) / 10,
+                    vy: Math.round(player.vy * 10) / 10,
+                    facing: player.facing,
+                    invis: !!(activeEffects.invis && pn < activeEffects.invis),
+                    mega: !!(activeEffects.mega && pn < activeEffects.mega),
+                    stunned: pn < stunUntil,
+                });
+            } else {
+                sendTimer = SEND_INTERVAL - 8; /* check again soon but not every tick */
+            }
         }
     }
 
