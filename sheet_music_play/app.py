@@ -6,8 +6,9 @@ import shutil
 import subprocess
 import threading
 import queue
-from collections import defaultdict
 from pathlib import Path
+
+import numpy as np
 
 from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -49,49 +50,75 @@ _worker_thread.start()
 # Violin range: G3 (MIDI 55) to E7 (MIDI 100)
 VIOLIN_LOW = 55
 VIOLIN_HIGH = 100
+# Frequency range for pyin: G3 = 196 Hz, E7 = 2637 Hz
+FMIN = 196.0
+FMAX = 2637.0
+
+SR = 22050
+HOP_LENGTH = 512
+# Minimum note duration in frames (~70ms at sr=22050, hop=512)
+MIN_NOTE_FRAMES = 3
 
 
 def _run_transcription(job_id, input_path, original_name):
-    """Audio -> quantized MIDI -> music21 notation -> LilyPond -> PDF."""
+    """Audio -> pyin pitch tracking -> MIDI -> music21 notation -> LilyPond -> PDF."""
     job_dir = OUTPUTS_DIR / job_id
     job_dir.mkdir(exist_ok=True)
 
     try:
-        # ── Stage 1: Transcribe audio to MIDI ──
+        # ── Stage 1: Pitch tracking with pyin ──
         jobs[job_id]["status"] = "processing"
         jobs[job_id]["stage"] = "transcribing"
 
-        from basic_pitch.inference import predict
+        import librosa
+        import pretty_midi
 
-        model_output, midi_data, note_events = predict(str(input_path))
+        y, sr = librosa.load(str(input_path), sr=SR, mono=True)
 
-        raw_midi_path = job_dir / "transcription.mid"
-        midi_data.write(str(raw_midi_path))
+        f0, voiced_flag, voiced_prob = librosa.pyin(
+            y, fmin=FMIN, fmax=FMAX, sr=sr,
+            frame_length=2048, hop_length=HOP_LENGTH,
+        )
+        times = librosa.frames_to_time(
+            np.arange(len(f0)), sr=sr, hop_length=HOP_LENGTH,
+        )
 
-        # ── Stage 2: Clean MIDI + build notation ──
+        # Segment voiced frames into notes
+        raw_notes = _segment_notes(f0, voiced_flag, voiced_prob, times)
+
+        if not raw_notes:
+            jobs[job_id]["status"] = "failed"
+            jobs[job_id]["error"] = "No pitched notes detected in audio"
+            return
+
+        # Estimate tempo from onset spacing
+        bpm = _estimate_tempo(y, sr)
+
+        # Quantize to grid and write MIDI
+        midi_path = job_dir / "transcription.mid"
+        _write_quantized_midi(raw_notes, bpm, str(midi_path))
+
+        # ── Stage 2: Notation with music21 ──
         jobs[job_id]["stage"] = "notating"
-
-        clean_midi_path = job_dir / "clean.mid"
-        _quantize_midi(str(raw_midi_path), str(clean_midi_path))
 
         import music21
 
-        score = music21.converter.parse(str(clean_midi_path))
+        score = music21.converter.parse(str(midi_path))
         part = score.parts[0]
 
-        # Detect key from the notes
+        # Detect key signature from the notes
         detected_key = part.flatten().analyze("key")
 
-        # Clamp all notes to violin range
+        # Clamp any out-of-range notes
         for n in part.recurse().notes:
             if n.isNote:
                 _clamp_note(n)
 
-        # Insert instrument and key signature
+        # Set instrument and key
         part.insert(0, music21.instrument.Violin())
         part.insert(0, detected_key)
 
-        # Let music21 handle measure structure, ties, beaming
+        # Let music21 handle measures, ties, beaming
         part.makeNotation(inPlace=True)
 
         # Build score with metadata
@@ -101,10 +128,10 @@ def _run_transcription(job_id, input_path, original_name):
         s.metadata = music21.metadata.Metadata()
         s.metadata.title = base_name
 
-        # Use music21's LilyPond converter (gets notation right)
+        # Write LilyPond via music21 (gets notation right)
         ly_m21_path = s.write("lilypond", fp=str(job_dir / "raw.ly"))
 
-        # ── Stage 3: Post-process LilyPond and render PDF ──
+        # ── Stage 3: Post-process and render PDF ──
         jobs[job_id]["stage"] = "rendering"
 
         with open(str(ly_m21_path)) as f:
@@ -151,81 +178,166 @@ def _run_transcription(job_id, input_path, original_name):
             pass
 
 
-def _quantize_midi(in_path, out_path):
-    """Quantize raw basic-pitch MIDI into a clean monophonic violin melody.
+def _segment_notes(f0, voiced_flag, voiced_prob, times):
+    """Convert pyin pitch frames into a list of (start_time, end_time, midi_pitch).
+
+    Groups consecutive voiced frames with similar pitch into notes.
+    A new note starts when pitch jumps by more than 0.8 semitones.
+    """
+    import librosa
+
+    notes = []
+    current_start = None
+    current_pitches = []
+    current_probs = []
+
+    for i in range(len(f0)):
+        is_voiced = voiced_flag[i] and f0[i] is not None and not np.isnan(f0[i])
+
+        if is_voiced:
+            midi = librosa.hz_to_midi(f0[i])
+            prob = voiced_prob[i] if voiced_prob[i] is not None else 0.5
+
+            if current_start is None:
+                # Start a new note
+                current_start = i
+                current_pitches = [midi]
+                current_probs = [prob]
+            else:
+                # Check if pitch changed enough to be a new note
+                median_pitch = np.median(current_pitches)
+                if abs(midi - median_pitch) > 0.8:
+                    # Save previous note
+                    if len(current_pitches) >= MIN_NOTE_FRAMES:
+                        # Use probability-weighted median for pitch
+                        final_pitch = _weighted_pitch(current_pitches, current_probs)
+                        notes.append((
+                            times[current_start],
+                            times[i],
+                            int(round(final_pitch)),
+                        ))
+                    # Start new note
+                    current_start = i
+                    current_pitches = [midi]
+                    current_probs = [prob]
+                else:
+                    current_pitches.append(midi)
+                    current_probs.append(prob)
+        else:
+            # Unvoiced — end current note
+            if current_start is not None and len(current_pitches) >= MIN_NOTE_FRAMES:
+                final_pitch = _weighted_pitch(current_pitches, current_probs)
+                end_idx = min(i, len(times) - 1)
+                notes.append((
+                    times[current_start],
+                    times[end_idx],
+                    int(round(final_pitch)),
+                ))
+            current_start = None
+            current_pitches = []
+            current_probs = []
+
+    # Don't forget the last note
+    if current_start is not None and len(current_pitches) >= MIN_NOTE_FRAMES:
+        final_pitch = _weighted_pitch(current_pitches, current_probs)
+        notes.append((
+            times[current_start],
+            times[len(f0) - 1],
+            int(round(final_pitch)),
+        ))
+
+    return notes
+
+
+def _weighted_pitch(pitches, probs):
+    """Compute probability-weighted mean pitch, falling back to median."""
+    pitches = np.array(pitches)
+    probs = np.array(probs)
+    total = probs.sum()
+    if total > 0:
+        return float(np.average(pitches, weights=probs))
+    return float(np.median(pitches))
+
+
+def _estimate_tempo(y, sr):
+    """Estimate tempo from audio using librosa's beat tracker."""
+    import librosa
+
+    tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+    bpm = float(np.atleast_1d(tempo)[0])
+    # Clamp to reasonable range
+    if bpm < 40 or bpm > 240:
+        bpm = 120.0
+    return round(bpm)
+
+
+def _write_quantized_midi(notes, bpm, out_path):
+    """Quantize note timings to an 8th-note grid and write MIDI.
 
     Steps:
-      1. Estimate tempo, build an 8th-note grid
-      2. Snap all note start/end times to grid
-      3. At each grid point keep only the highest pitch (melody extraction)
-      4. Remove overlaps so it's strictly monophonic
-      5. Merge consecutive same-pitch notes (removes stuttering)
-      6. Clamp pitches to violin range
-      7. Write a clean single-track MIDI
+      1. Build grid from tempo
+      2. Snap start/end to nearest grid point
+      3. Merge consecutive same-pitch notes
+      4. Clamp to violin range
     """
     import pretty_midi
-
-    pm = pretty_midi.PrettyMIDI(in_path)
-    bpm = round(pm.estimate_tempo())
-    if bpm < 40:
-        bpm = 120
-    elif bpm > 240:
-        bpm = 120
 
     beat_dur = 60.0 / bpm
     grid = beat_dur / 2  # 8th-note grid
 
-    inst = pm.instruments[0]
-    notes = sorted(inst.notes, key=lambda n: n.start)
+    quantized = []
+    for start, end, pitch in notes:
+        q_start = round(start / grid) * grid
+        q_end = round(end / grid) * grid
+        if q_end <= q_start:
+            q_end = q_start + grid
+        quantized.append((q_start, q_end, pitch))
 
-    # Snap to grid
-    for n in notes:
-        n.start = round(n.start / grid) * grid
-        n.end = round(n.end / grid) * grid
-        if n.end <= n.start:
-            n.end = n.start + grid
+    # Remove duplicates at same start time (keep first = highest-confidence)
+    seen_starts = set()
+    deduped = []
+    for start, end, pitch in quantized:
+        if start not in seen_starts:
+            seen_starts.add(start)
+            deduped.append((start, end, pitch))
+    quantized = deduped
 
-    # Monophonic: keep highest pitch at each grid point
-    grid_notes = defaultdict(list)
-    for n in notes:
-        grid_notes[n.start].append(n)
-
-    melody = []
-    for start in sorted(grid_notes.keys()):
-        top = max(grid_notes[start], key=lambda n: n.pitch)
-        melody.append(top)
+    # Sort by start time
+    quantized.sort(key=lambda x: x[0])
 
     # Remove overlaps
-    for i in range(len(melody) - 1):
-        if melody[i].end > melody[i + 1].start:
-            melody[i].end = melody[i + 1].start
+    for i in range(len(quantized) - 1):
+        s, e, p = quantized[i]
+        next_s = quantized[i + 1][0]
+        if e > next_s:
+            quantized[i] = (s, next_s, p)
 
-    # Drop very short notes (less than half a grid unit)
-    melody = [n for n in melody if n.end - n.start >= grid * 0.5]
-
-    # Merge consecutive same-pitch
-    merged = [melody[0]] if melody else []
-    for n in melody[1:]:
-        prev = merged[-1]
-        gap = n.start - prev.end
-        if n.pitch == prev.pitch and gap < grid * 0.5:
-            prev.end = n.end
+    # Merge consecutive same-pitch notes
+    merged = [quantized[0]] if quantized else []
+    for s, e, p in quantized[1:]:
+        ps, pe, pp = merged[-1]
+        gap = s - pe
+        if p == pp and gap < grid * 0.5:
+            merged[-1] = (ps, e, pp)
         else:
-            merged.append(n)
+            merged.append((s, e, p))
 
-    # Clamp to violin range
-    for n in merged:
-        while n.pitch < VIOLIN_LOW:
-            n.pitch += 12
-        while n.pitch > VIOLIN_HIGH:
-            n.pitch -= 12
+    # Clamp pitches to violin range
+    final = []
+    for s, e, p in merged:
+        while p < VIOLIN_LOW:
+            p += 12
+        while p > VIOLIN_HIGH:
+            p -= 12
+        final.append((s, e, p))
 
-    # Write clean MIDI
-    clean = pretty_midi.PrettyMIDI(initial_tempo=bpm)
+    # Write MIDI
+    pm = pretty_midi.PrettyMIDI(initial_tempo=bpm)
     violin = pretty_midi.Instrument(program=40, name="Violin")
-    violin.notes = merged
-    clean.instruments.append(violin)
-    clean.write(out_path)
+    for s, e, p in final:
+        violin.notes.append(pretty_midi.Note(velocity=80, pitch=p, start=s, end=e))
+    pm.instruments.append(violin)
+    pm.write(out_path)
 
 
 def _clamp_note(note):
@@ -237,16 +349,7 @@ def _clamp_note(note):
 
 
 def _postprocess_lilypond(ly):
-    """Fix music21's LilyPond output for standalone PDF rendering.
-
-    - Remove lilypond-book-preamble (causes tiny page sizing)
-    - Remove color function (unused)
-    - Remove autoBeamOff (let LilyPond beam naturally)
-    - Remove manual stem directions (let LilyPond decide)
-    - Remove manual beam brackets (autoBeam handles it)
-    - Add proper paper size and margins
-    - Clean up whitespace
-    """
+    """Fix music21's LilyPond output for standalone PDF rendering."""
     # Remove preamble include (designed for LaTeX embedding, wrong page size)
     ly = ly.replace('\\include "lilypond-book-preamble.ly"', "")
 
@@ -287,8 +390,8 @@ def _postprocess_lilypond(ly):
 def cleanup_old_jobs():
     """Remove jobs and files older than 30 minutes."""
     while True:
-        time.sleep(300)  # Check every 5 min
-        cutoff = time.time() - 1800  # 30 min
+        time.sleep(300)
+        cutoff = time.time() - 1800
         expired = [jid for jid, j in jobs.items() if j["started_at"] < cutoff]
         for jid in expired:
             job_dir = OUTPUTS_DIR / jid

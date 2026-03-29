@@ -506,16 +506,39 @@ def serve_upload(filepath):
 
 # ── Portfolio ────────────────────────────────────────────────────────────────
 
+@app.route("/api/profile", methods=["PATCH"])
+@login_required
+def update_profile():
+    uid = current_user_id()
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    try:
+        user = db.query(User).get(uid)
+        if not user:
+            return jsonify({"error": "Not found"}), 404
+        if "bio" in data:
+            user.bio = (data["bio"] or "").strip()[:500]
+        if "display_name" in data:
+            dn = (data["display_name"] or "").strip()
+            if dn:
+                user.display_name = dn[:64]
+        db.commit()
+        return jsonify({"user": user.to_dict()})
+    finally:
+        db.close()
+
+
 @app.route("/api/portfolio")
 @login_required
 def my_portfolio():
     uid = current_user_id()
     db = get_db()
     try:
+        user = db.query(User).get(uid)
         items = db.query(PortfolioItem).filter(
             PortfolioItem.user_id == uid
         ).order_by(PortfolioItem.created_at.desc()).all()
-        return jsonify({"items": [i.to_dict() for i in items]})
+        return jsonify({"user": user.to_dict(), "items": [i.to_dict() for i in items]})
     finally:
         db.close()
 
@@ -526,6 +549,10 @@ def user_portfolio(user_id):
     uid = current_user_id()
     db = get_db()
     try:
+        user = db.query(User).get(uid)
+        target = db.query(User).get(user_id)
+        if not target:
+            return jsonify({"error": "User not found"}), 404
         if user_id == uid:
             items = db.query(PortfolioItem).filter(PortfolioItem.user_id == uid)
         else:
@@ -534,7 +561,7 @@ def user_portfolio(user_id):
                 PortfolioItem.is_public == True
             )
         items = items.order_by(PortfolioItem.created_at.desc()).all()
-        return jsonify({"items": [i.to_dict() for i in items]})
+        return jsonify({"user": target.to_dict(), "items": [i.to_dict() for i in items]})
     finally:
         db.close()
 

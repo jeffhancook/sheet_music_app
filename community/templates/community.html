@@ -224,14 +224,131 @@
       min-width: 0;
     }
 
-    /* ── Right panel: Portfolio ── */
-    .c-panel-right {
-      width: 340px;
-      border-left: 1px solid #3a3428;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      background: rgba(40, 36, 28, 0.3);
+    /* ── Portfolio overlay ── */
+    .pf-overlay {
+      display: none; position: fixed; inset: 0; z-index: 10002;
+      background: rgba(36, 31, 21, 0.92); backdrop-filter: blur(12px);
+      align-items: center; justify-content: center;
+      animation: c-fade-in 0.25s ease;
+    }
+    .pf-overlay.active { display: flex; }
+    .pf-card .pf-bg-layer {
+      position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
+    }
+    .pf-card .pf-bg-layer svg { position: absolute; }
+    .pf-card .pf-bg-layer .bg-glow { position: absolute; border-radius: 50%; filter: blur(80px); }
+    .pf-card .pf-bg-layer .bg-float {
+      position: absolute;
+      animation: bg-float-anim var(--dur, 7s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    .pf-card .pf-bg-layer .bg-geo {
+      position: absolute;
+      animation: bg-geo-drift var(--dur, 24s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    .pf-card .pf-bg-layer .bg-stroke {
+      position: absolute;
+      animation: bg-stroke-drift var(--dur, 12s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    .pf-card .pf-bg-layer .bg-dust {
+      position: absolute; border-radius: 50%;
+      animation: bg-twinkle var(--dur, 4s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    .pf-card .pf-bg-layer .bg-mote {
+      position: absolute; border-radius: 50%;
+      animation: bg-mote-float var(--dur, 9s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+      opacity: 0;
+    }
+    .pf-card {
+      width: 95%; max-width: 900px; max-height: 90vh;
+      background: rgba(44, 38, 28, 0.85); backdrop-filter: blur(8px);
+      border: 1px solid #3a3428; border-radius: 10px;
+      overflow: hidden; position: relative; z-index: 1;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+      display: flex; flex-direction: column;
+    }
+    .pf-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5;
+    }
+    .pf-header {
+      padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #3a3428; flex-shrink: 0;
+      position: relative; z-index: 1;
+      background: rgba(44, 38, 28, 0.7);
+    }
+    .pf-header-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; color: #ecdfc8; font-weight: 700; }
+    .pf-body { flex: 1; overflow-y: auto; padding: 1.5rem; position: relative; z-index: 1; }
+    .pf-body::-webkit-scrollbar { width: 5px; }
+    .pf-body::-webkit-scrollbar-thumb { background: #3a3428; border-radius: 3px; }
+
+    /* Profile header inside overlay */
+    .pf-profile { display: flex; gap: 1.25rem; margin-bottom: 1.5rem; align-items: flex-start; }
+    .pf-avatar-lg {
+      width: 64px; height: 64px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.6rem; color: #241f15; flex-shrink: 0;
+    }
+    .pf-profile-info { flex: 1; min-width: 0; }
+    .pf-profile-name { font-family: Georgia, "Times New Roman", serif; font-size: 1.3rem; color: #ecdfc8; font-weight: 700; }
+    .pf-profile-username { font-size: 0.75rem; color: #6a5d50; font-family: "Fira Code", "JetBrains Mono", monospace; }
+    .pf-profile-since { font-size: 0.68rem; color: #564c40; margin-top: 0.15rem; }
+    .pf-bio { margin-top: 0.6rem; font-size: 0.88rem; color: #b0a390; line-height: 1.6; }
+    .pf-bio-empty { font-style: italic; color: #564c40; }
+    .pf-bio-edit {
+      width: 100%; padding: 0.55rem 0.7rem; margin-top: 0.5rem; resize: vertical; min-height: 60px;
+      background: rgba(36, 31, 21, 0.8); border: 1px solid #3a3428; border-radius: 6px;
+      color: #d6c8b4; font-size: 0.85rem; outline: none; font-family: inherit;
+    }
+    .pf-bio-edit:focus { border-color: #c2593e; }
+    .pf-bio-actions { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+    .pf-edit-btn {
+      padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+      font-family: "Fira Code", "JetBrains Mono", monospace; border: none;
+    }
+    .pf-edit-save { background: rgba(109, 143, 94, 0.2); color: #6d8f5e; }
+    .pf-edit-save:hover { background: rgba(109, 143, 94, 0.3); }
+    .pf-edit-cancel { background: none; border: 1px solid #3a3428 !important; color: #6a5d50; }
+
+    /* Section dividers */
+    .pf-section { display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0 1rem; }
+    .pf-section-title {
+      font-family: Georgia, "Times New Roman", serif; font-size: 0.8rem; font-weight: 600;
+      color: #b8924a; text-transform: uppercase; letter-spacing: 0.15em; white-space: nowrap;
+    }
+    .pf-section-line { flex: 1; height: 1px; background: linear-gradient(90deg, #3f3930, transparent); }
+
+    /* Items grid */
+    .pf-items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    /* Empty state template */
+    .pf-empty-template { text-align: center; padding: 2rem 1rem; }
+    .pf-empty-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.1rem; color: #ecdfc8; margin-bottom: 0.5rem; }
+    .pf-empty-sub { font-size: 0.82rem; color: #6a5d50; margin-bottom: 1.5rem; }
+    .pf-prompt-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+    .pf-prompt-card {
+      padding: 1.25rem 0.75rem; border: 2px dashed #3a3428; border-radius: 8px;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s; text-align: center;
+    }
+    .pf-prompt-card:hover { border-color: #c2593e; background: rgba(194, 89, 62, 0.04); }
+    .pf-prompt-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+    .pf-prompt-label { font-size: 0.82rem; color: #e0d2be; font-weight: 600; margin-bottom: 0.2rem; }
+    .pf-prompt-hint { font-size: 0.68rem; color: #6a5d50; }
+
+    /* Upload zone inside overlay */
+    .pf-upload-zone { padding: 0.8rem; margin-bottom: 1rem; border: 2px dashed #3a3428; border-radius: 8px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+    .pf-upload-zone:hover { border-color: #c2593e; }
+    .pf-upload-zone p { font-size: 0.75rem; color: #6a5d50; }
+
+    @media (max-width: 600px) {
+      .pf-card { width: 100%; max-height: 100vh; border-radius: 0; }
+      .pf-items-grid { grid-template-columns: 1fr; }
+      .pf-prompt-cards { grid-template-columns: 1fr; }
+      .pf-profile { flex-direction: column; align-items: center; text-align: center; }
     }
 
     /* ── Shared component styles ── */
@@ -414,8 +531,6 @@
 
     /* ── Responsive ── */
     @media (max-width: 900px) {
-      .c-panel-right { display: none; }
-      .c-panel-right.mobile-active { display: flex; position: absolute; inset: 52px 0 40px 0; z-index: 100; background: #241f15; width: 100%; }
       .c-panel-left { display: none; }
       .c-panel-left.mobile-active { display: flex; position: absolute; inset: 52px 0 40px 0; z-index: 100; background: #241f15; width: 100%; }
       .c-panel-center { display: none; }
@@ -681,29 +796,16 @@
       </div>
     </div>
 
-    <!-- Right: Portfolio -->
-    <div class="c-panel-right" id="panelPortfolio">
-      <div class="c-panel-header" style="display:flex;align-items:center;justify-content:space-between">
-        <h2 id="cPfTitle">My Portfolio</h2>
-        <button id="cBackMyPfBtn" onclick="cBackMyPf()" style="display:none;background:none;border:1px solid #3a3428;border-radius:4px;color:#c2593e;cursor:pointer;font-size:0.68rem;padding:0.25rem 0.5rem;font-family:'Fira Code','JetBrains Mono',monospace;transition:border-color 0.2s">&larr; My Portfolio</button>
+  </div>
+
+  <!-- ── Portfolio overlay ── -->
+  <div class="pf-overlay" id="pfOverlay">
+    <div class="pf-card">
+      <div class="pf-header">
+        <span class="pf-header-title" id="pfHeaderTitle">Portfolio</span>
+        <button class="cz-close" onclick="closePf()">&times;</button>
       </div>
-      <div class="c-panel-body">
-        <div class="c-upload-zone" id="cUploadZone">
-          <div class="c-upload-icon">+</div>
-          <p>Upload MP3, MP4, or PDF</p>
-        </div>
-        <div class="c-upload-form" id="cUploadForm">
-          <input type="file" id="cPfFileInput" accept=".mp3,.mp4,.pdf" style="display:none">
-          <div style="font-size:0.78rem;color:#d6c8b4;margin-bottom:0.4rem" id="cUploadFN"></div>
-          <input type="text" id="cUploadTitle" placeholder="Title (required)">
-          <textarea id="cUploadDesc" placeholder="Description (optional)"></textarea>
-          <div class="c-upload-actions">
-            <button class="c-upload-submit" id="cUploadSubmit">Upload</button>
-            <button class="c-upload-cancel" id="cUploadCancel" type="button">Cancel</button>
-          </div>
-        </div>
-        <div id="cPfItems"></div>
-      </div>
+      <div class="pf-body" id="pfBody"></div>
     </div>
   </div>
 
@@ -711,7 +813,7 @@
   <div class="mobile-tabs" id="mobileTabs">
     <button class="mobile-tab active" data-panel="Friends" onclick="mobileSwitch(this)">Friends</button>
     <button class="mobile-tab" data-panel="Chat" onclick="mobileSwitch(this)">Chat</button>
-    <button class="mobile-tab" data-panel="Portfolio" onclick="mobileSwitch(this)">Portfolio</button>
+    <button class="mobile-tab" onclick="openPf()">Portfolio</button>
   </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
@@ -741,7 +843,11 @@
         $('cAuthOverlay').classList.remove('active');
     };
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && me) cCloseAuth();
+        if (e.key === 'Escape') {
+            if ($('pfOverlay').classList.contains('active')) closePf();
+            else if ($('czOverlay').classList.contains('active')) czClose();
+            else if (me) cCloseAuth();
+        }
     });
 
     // ── Auth tabs ──
@@ -804,7 +910,7 @@
         $('topbarName').textContent = me.display_name;
         renderAccount();
         connectSocket();
-        loadFriends(); loadFriendReqs(); loadUnread(); loadMyPf();
+        loadFriends(); loadFriendReqs(); loadUnread();
         applyUserBackground();
     }
 
@@ -822,9 +928,12 @@
 
     function renderAccount() {
         $('cAccount').innerHTML = avatar(me, true) +
-            '<div class="c-user-info"><div class="c-user-name">' + esc(me.display_name) + '</div></div>' +
+            '<div class="c-user-info"><div class="c-user-name">' + esc(me.display_name) + '</div>' +
+            '<div style="display:flex;gap:0.3rem;margin-top:0.2rem">' +
+            '<button class="c-customize-btn" onclick="openPf()">portfolio</button>' +
             '<button class="c-customize-btn" onclick="czOpen()">customize</button>' +
-            '<button class="c-logout-btn" onclick="cLogout()">logout</button>';
+            '<button class="c-logout-btn" onclick="cLogout()">logout</button>' +
+            '</div></div>';
     }
 
     window.cLogout = async function() {
@@ -1025,95 +1134,173 @@
         this.value = '';
     });
 
-    // ── Portfolio ──
+    // ── Portfolio Overlay ──
+    let pfViewingId = null; // null = own, number = friend's
     let pfFile = null;
-    $('cUploadZone').addEventListener('click', () => $('cPfFileInput').click());
-    $('cPfFileInput').addEventListener('change', function() {
-        if (!this.files[0]) return;
-        pfFile = this.files[0];
-        $('cUploadFN').textContent = pfFile.name;
-        $('cUploadZone').style.display = 'none';
-        $('cUploadForm').style.display = 'block';
-        $('cUploadTitle').value = pfFile.name.replace(/\.[^.]+$/, '');
-        $('cUploadTitle').focus();
-    });
-    $('cUploadCancel').addEventListener('click', () => {
-        pfFile = null; $('cUploadForm').style.display = 'none';
-        $('cUploadZone').style.display = 'block'; $('cPfFileInput').value = '';
-    });
-    $('cUploadSubmit').addEventListener('click', async () => {
-        if (!pfFile || !$('cUploadTitle').value.trim()) return;
+
+    window.openPf = async function(userId) {
+        pfViewingId = userId || null;
+        const overlay = $('pfOverlay');
+        overlay.classList.add('active');
+        clearPfBg();
+        $('pfBody').innerHTML = '<div class="c-empty">Loading...</div>';
+        const url = pfViewingId ? API + '/api/portfolio/' + pfViewingId : API + '/api/portfolio';
+        const d = await (await fetch(url)).json();
+        // Apply the viewed user's background to the portfolio card
+        if (d.user && d.user.active_background) {
+            try { applyPfBg(JSON.parse(d.user.active_background), document.querySelector('.pf-card')); } catch(e) {}
+        }
+        renderPfOverlay(d.user, d.items || [], !pfViewingId || pfViewingId === me.id);
+    };
+    window.closePf = function() { $('pfOverlay').classList.remove('active'); clearPfBg(); };
+
+    window.cViewFriendPf = function(uid) { openPf(uid); };
+
+    function renderPfOverlay(user, items, isOwn) {
+        const u = user || me;
+        $('pfHeaderTitle').textContent = isOwn ? 'My Portfolio' : u.display_name + '\u2019s Portfolio';
+
+        // Profile header
+        const ini = (u.display_name || u.username || '?')[0].toUpperCase();
+        const since = u.created_at ? new Date(u.created_at + 'Z').toLocaleDateString(undefined, {year:'numeric',month:'long'}) : '';
+        let h = '<div class="pf-profile">';
+        h += '<div class="pf-avatar-lg" style="background:' + (u.avatar_color||'#c2593e') + '">' + ini + '</div>';
+        h += '<div class="pf-profile-info">';
+        h += '<div class="pf-profile-name">' + esc(u.display_name) + '</div>';
+        h += '<div class="pf-profile-username">@' + esc(u.username) + '</div>';
+        if (since) h += '<div class="pf-profile-since">Member since ' + since + '</div>';
+
+        // Bio
+        if (isOwn) {
+            h += '<div id="pfBioArea">';
+            if (u.bio) {
+                h += '<div class="pf-bio" id="pfBioText">' + esc(u.bio) + '</div>';
+                h += '<button class="pf-edit-btn pf-edit-cancel" onclick="pfEditBio()" style="margin-top:0.4rem;border:1px solid #3a3428">edit bio</button>';
+            } else {
+                h += '<div class="pf-bio pf-bio-empty">No bio yet \u2014 tell people about yourself!</div>';
+                h += '<button class="pf-edit-btn pf-edit-save" onclick="pfEditBio()">add bio</button>';
+            }
+            h += '</div>';
+        } else {
+            h += u.bio ? '<div class="pf-bio">' + esc(u.bio) + '</div>' : '';
+        }
+        h += '</div></div>';
+
+        // Empty state with template
+        if (items.length === 0 && isOwn) {
+            h += '<div class="pf-empty-template">';
+            h += '<div class="pf-empty-title">Let\u2019s build your portfolio</div>';
+            h += '<div class="pf-empty-sub">Share who you are and what you create</div>';
+            h += '<div class="pf-prompt-cards">';
+            h += '<div class="pf-prompt-card" onclick="pfEditBio()"><div class="pf-prompt-icon">\u{270D}\uFE0F</div><div class="pf-prompt-label">About Me</div><div class="pf-prompt-hint">Tell people who you are</div></div>';
+            h += '<div class="pf-prompt-card" onclick="pfEditBio()"><div class="pf-prompt-icon">\u{1F3A8}</div><div class="pf-prompt-label">What I Do</div><div class="pf-prompt-hint">Share your craft or passion</div></div>';
+            h += '<div class="pf-prompt-card" onclick="pfTriggerUpload()"><div class="pf-prompt-icon">\u{1F4C1}</div><div class="pf-prompt-label">My Work</div><div class="pf-prompt-hint">Upload your first project</div></div>';
+            h += '</div></div>';
+        }
+
+        // Upload section (own only)
+        if (isOwn) {
+            h += '<div class="pf-section"><span class="pf-section-title">Upload</span><span class="pf-section-line"></span></div>';
+            h += '<div class="pf-upload-zone" id="pfUploadZone" onclick="pfTriggerUpload()"><div style="font-size:1.3rem;color:#564c40">+</div><p>Upload MP3, MP4, or PDF</p></div>';
+            h += '<input type="file" id="pfFileInput" accept=".mp3,.mp4,.pdf" style="display:none">';
+            h += '<div id="pfUploadForm" style="display:none;padding:0.6rem;margin-bottom:0.6rem;border:1px solid #3a3428;border-radius:8px;background:rgba(36,31,21,0.5)">';
+            h += '<div style="font-size:0.78rem;color:#d6c8b4;margin-bottom:0.4rem" id="pfUploadFN"></div>';
+            h += '<input type="text" id="pfUploadTitle" placeholder="Title (required)" style="width:100%;padding:0.45rem 0.6rem;margin-bottom:0.4rem;background:rgba(36,31,21,0.8);border:1px solid #3a3428;border-radius:4px;color:#d6c8b4;font-size:0.78rem;outline:none">';
+            h += '<textarea id="pfUploadDesc" placeholder="Description (optional)" style="width:100%;padding:0.45rem 0.6rem;margin-bottom:0.4rem;background:rgba(36,31,21,0.8);border:1px solid #3a3428;border-radius:4px;color:#d6c8b4;font-size:0.78rem;outline:none;resize:vertical;min-height:40px;font-family:inherit"></textarea>';
+            h += '<div style="display:flex;gap:0.4rem"><button class="c-upload-submit" id="pfUploadSubmit" onclick="pfDoUpload()">Upload</button><button class="c-upload-cancel" onclick="pfCancelUpload()">Cancel</button></div>';
+            h += '</div>';
+        }
+
+        // Items
+        if (items.length > 0) {
+            h += '<div class="pf-section"><span class="pf-section-title">Projects</span><span class="pf-section-line"></span></div>';
+            h += '<div class="pf-items-grid">';
+            items.forEach(it => {
+                const sz = it.file_size > 1048576 ? (it.file_size/1048576).toFixed(1)+' MB' : (it.file_size/1024).toFixed(0)+' KB';
+                const vl = it.is_public ? 'Public' : 'Private';
+                const url = API+'/api/portfolio/file/'+it.id;
+                let acts = '';
+                if (isOwn) {
+                    acts = '<button class="c-vis-toggle'+(it.is_public?' public':'')+'" onclick="pfToggleVis('+it.id+','+(!it.is_public)+')"><span class="c-toggle-track"><span class="c-toggle-thumb"></span></span><span class="c-toggle-label">'+vl+'</span></button>' +
+                        '<a class="c-dl-btn" href="'+url+'" target="_blank">Open</a>' +
+                        '<button class="c-del-btn" onclick="pfDelItem('+it.id+')">Delete</button>';
+                } else {
+                    acts = '<a class="c-dl-btn" href="'+url+'" target="_blank">Open</a>';
+                }
+                h += '<div class="c-pf-item"><div class="c-pf-item-hdr"><span class="c-pf-item-title">'+esc(it.title)+'</span><span class="c-pf-item-type">'+it.file_type+'</span></div>'+
+                    (it.description ? '<div class="c-pf-item-desc">'+esc(it.description)+'</div>' : '')+
+                    '<div class="c-pf-item-actions">'+acts+'<span style="font-size:0.58rem;color:#564c40;margin-left:auto">'+sz+'</span></div></div>';
+            });
+            h += '</div>';
+        } else if (!isOwn) {
+            h += '<div class="c-empty" style="margin-top:2rem">No public projects yet</div>';
+        }
+
+        $('pfBody').innerHTML = h;
+
+        // Bind file input after render
+        if (isOwn) {
+            $('pfFileInput').addEventListener('change', function() {
+                if (!this.files[0]) return;
+                pfFile = this.files[0];
+                $('pfUploadFN').textContent = pfFile.name;
+                $('pfUploadZone').style.display = 'none';
+                $('pfUploadForm').style.display = 'block';
+                $('pfUploadTitle').value = pfFile.name.replace(/\.[^.]+$/, '');
+                $('pfUploadTitle').focus();
+            });
+        }
+    }
+
+    // Bio editing
+    window.pfEditBio = function() {
+        const area = $('pfBioArea');
+        if (!area) return;
+        area.innerHTML = '<textarea class="pf-bio-edit" id="pfBioInput" placeholder="Tell people about yourself \u2014 your interests, what you do, what drives you...">' + esc(me.bio || '') + '</textarea>' +
+            '<div class="pf-bio-actions"><button class="pf-edit-btn pf-edit-save" onclick="pfSaveBio()">Save</button><button class="pf-edit-btn pf-edit-cancel" onclick="openPf()" style="border:1px solid #3a3428">Cancel</button></div>';
+        $('pfBioInput').focus();
+    };
+    window.pfSaveBio = async function() {
+        const bio = ($('pfBioInput') || {}).value || '';
+        await fetch(API + '/api/profile', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({bio})});
+        me.bio = bio.trim();
+        openPf();
+    };
+
+    // Upload
+    window.pfTriggerUpload = function() { const fi = $('pfFileInput'); if (fi) fi.click(); };
+    window.pfCancelUpload = function() {
+        pfFile = null;
+        const z = $('pfUploadZone'); if (z) z.style.display = 'block';
+        const f = $('pfUploadForm'); if (f) f.style.display = 'none';
+        const fi = $('pfFileInput'); if (fi) fi.value = '';
+    };
+    window.pfDoUpload = async function() {
+        if (!pfFile) return;
+        const title = ($('pfUploadTitle') || {}).value || '';
+        if (!title.trim()) return;
         const fd = new FormData();
         fd.append('file', pfFile);
-        fd.append('title', $('cUploadTitle').value.trim());
-        fd.append('description', $('cUploadDesc').value.trim());
-        $('cUploadSubmit').disabled = true; $('cUploadSubmit').textContent = 'Uploading...';
+        fd.append('title', title.trim());
+        fd.append('description', (($('pfUploadDesc') || {}).value || '').trim());
+        const btn = $('pfUploadSubmit');
+        if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
         const r = await fetch(API + '/api/portfolio/upload', {method: 'POST', body: fd});
         const d = await r.json();
-        $('cUploadSubmit').disabled = false; $('cUploadSubmit').textContent = 'Upload';
-        if (r.ok) {
-            pfFile = null; $('cUploadForm').style.display = 'none';
-            $('cUploadZone').style.display = 'block'; $('cPfFileInput').value = '';
-            $('cUploadTitle').value = ''; $('cUploadDesc').value = '';
-            loadMyPf();
-        } else { alert(d.error || 'Upload failed'); }
-    });
-
-    async function loadMyPf() {
-        viewingPfUser = null;
-        $('cPfTitle').textContent = 'My Portfolio';
-        $('cBackMyPfBtn').style.display = 'none';
-        $('cUploadZone').style.display = 'block';
-        const d = await (await fetch(API + '/api/portfolio')).json();
-        renderPfItems(d.items || [], true);
-    }
-
-    window.cViewFriendPf = async function(uid) {
-        const f = friends.find(x => x.id === uid);
-        if (!f) return;
-        viewingPfUser = f;
-        $('cPfTitle').textContent = f.display_name + "'s Portfolio";
-        $('cBackMyPfBtn').style.display = 'inline-block';
-        $('cUploadZone').style.display = 'none';
-        $('cUploadForm').style.display = 'none';
-        const d = await (await fetch(API + '/api/portfolio/' + uid)).json();
-        renderPfItems(d.items || [], false);
-        // On mobile, switch to portfolio panel
-        if (window.innerWidth <= 900) {
-            const pfTab = document.querySelector('.mobile-tab[data-panel="Portfolio"]');
-            if (pfTab) mobileSwitch(pfTab);
-        }
+        if (r.ok) { pfFile = null; openPf(); }
+        else { alert(d.error || 'Upload failed'); if (btn) { btn.disabled = false; btn.textContent = 'Upload'; } }
     };
 
-    function renderPfItems(items, own) {
-        const el = $('cPfItems');
-        if (!items.length) { el.innerHTML = '<div class="c-empty">No items yet</div>'; return; }
-        const back = viewingPfUser ? '<div class="c-pf-view-label"><button onclick="cBackMyPf()" style="background:none;border:none;color:#c2593e;cursor:pointer;font-size:0.72rem;font-family:inherit">&larr; Back to mine</button></div>' : '';
-        el.innerHTML = back + items.map(it => {
-            const sz = it.file_size > 1048576 ? (it.file_size/1048576).toFixed(1)+' MB' : (it.file_size/1024).toFixed(0)+' KB';
-            const vl = it.is_public ? 'Public' : 'Private';
-            const url = API+'/api/portfolio/file/'+it.id;
-            const acts = own
-                ? '<button class="c-vis-toggle'+(it.is_public?' public':'')+'" onclick="cToggleVis('+it.id+','+(!it.is_public)+')"><span class="c-toggle-track"><span class="c-toggle-thumb"></span></span><span class="c-toggle-label">'+vl+'</span></button>' +
-                  '<a class="c-dl-btn" href="'+url+'" target="_blank">Open</a>' +
-                  '<button class="c-del-btn" onclick="cDelItem('+it.id+')">Delete</button>'
-                : '<a class="c-dl-btn" href="'+url+'" target="_blank">Open</a>';
-            return '<div class="c-pf-item"><div class="c-pf-item-hdr"><span class="c-pf-item-title">'+esc(it.title)+'</span><span class="c-pf-item-type">'+it.file_type+'</span></div>'+
-                (it.description ? '<div class="c-pf-item-desc">'+esc(it.description)+'</div>' : '')+
-                '<div class="c-pf-item-actions">'+acts+'<span style="font-size:0.58rem;color:#564c40;margin-left:auto">'+sz+'</span></div></div>';
-        }).join('');
-    }
-
-    window.cToggleVis = async function(id, pub) {
+    // Item actions
+    window.pfToggleVis = async function(id, pub) {
         await fetch(API+'/api/portfolio/'+id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({is_public:pub})});
-        loadMyPf();
+        openPf(pfViewingId);
     };
-    window.cDelItem = async function(id) {
+    window.pfDelItem = async function(id) {
         if (!confirm('Delete this item?')) return;
         await fetch(API+'/api/portfolio/'+id, {method:'DELETE'});
-        loadMyPf();
+        openPf(pfViewingId);
     };
-    window.cBackMyPf = loadMyPf;
 
     function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
@@ -1323,6 +1510,7 @@
             if (!r.ok) { alert(d.error || 'Failed'); czShowList(); return; }
             await czLoadBackgrounds();
             czActiveId = d.active_id;
+            me.active_background = d.background.css_data;
             applyBackground(JSON.parse(d.background.css_data));
             czShowList();
         } catch(e) {
@@ -1442,6 +1630,114 @@
         if (me && me.active_background) {
             try { applyBackground(JSON.parse(me.active_background)); } catch(e) {}
         }
+    }
+
+    // ── Portfolio overlay background (shows viewed user's theme) ──
+    function applyPfBg(css, card) {
+        clearPfBg();
+        card.style.background = css.gradient || 'rgba(44, 38, 28, 0.85)';
+        card.style.overflow = 'hidden';
+
+        const layer = document.createElement('div');
+        layer.className = 'pf-bg-layer';
+        layer.id = 'pfBgLayer';
+
+        // Glows
+        (css.glows || []).forEach(g => {
+            const el = document.createElement('div');
+            el.className = 'bg-glow';
+            el.style.width = (g.size || 200) + 'px';
+            el.style.height = (g.size || 200) + 'px';
+            el.style.background = g.color;
+            el.style.opacity = g.opacity || 0.1;
+            if (g.top) el.style.top = g.top;
+            if (g.left) el.style.left = g.left;
+            if (g.right) el.style.right = g.right;
+            if (g.bottom) el.style.bottom = g.bottom;
+            layer.appendChild(el);
+        });
+
+        // Hero illustration
+        if (css.heroIllustration) {
+            const hero = document.createElement('div');
+            hero.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:' + (css.heroIllustration.opacity || 0.06);
+            hero.innerHTML = css.heroIllustration.svg || '';
+            const svg = hero.querySelector('svg');
+            if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; svg.style.maxWidth = '100vw'; svg.style.maxHeight = '100vh'; }
+            layer.appendChild(hero);
+        }
+
+        // Floating elements
+        (css.floatingElements || []).forEach((f, i) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'bg-float';
+            wrap.style.cssText = 'top:' + (f.top||'10%') + ';' +
+                (f.left ? 'left:'+f.left : '') + (f.right ? 'right:'+f.right+';left:auto' : '') +
+                ';opacity:' + (f.opacity||0.06) +
+                ';--dur:' + (f.animDuration||7) + 's;--d:' + (f.animDelay||0) + 's;--r:' + ((i%2?-1:1)*(3+i*2)) + 'deg';
+            wrap.innerHTML = f.svg || '';
+            layer.appendChild(wrap);
+        });
+
+        // Constellations
+        (css.constellations || []).forEach(c => {
+            const wrap = document.createElement('div');
+            wrap.className = 'bg-geo';
+            wrap.style.cssText = 'top:' + (c.top||'10%') + ';' +
+                (c.left ? 'left:'+c.left : '') + (c.right ? 'right:'+c.right+';left:auto' : '') +
+                ';opacity:' + (c.opacity||0.16) +
+                ';--dur:' + (c.animDuration||24) + 's;--d:0s';
+            wrap.innerHTML = c.svg || '';
+            layer.appendChild(wrap);
+        });
+
+        // Brush strokes
+        (css.brushStrokes || []).forEach(b => {
+            const wrap = document.createElement('div');
+            wrap.className = 'bg-stroke';
+            wrap.style.cssText = 'top:' + (b.top||'50%') + ';' +
+                (b.left ? 'left:'+b.left : '') +
+                ';opacity:' + (b.opacity||0.03) +
+                ';--dur:' + (b.animDuration||12) + 's;--d:0s';
+            wrap.innerHTML = b.svg || '';
+            layer.appendChild(wrap);
+        });
+
+        // Dust particles
+        (css.particles || []).forEach(p => {
+            const el = document.createElement('span');
+            el.className = 'bg-dust';
+            const sz = p.size || 3;
+            el.style.cssText = 'top:' + p.top + ';left:' + p.left +
+                ';width:' + sz + 'px;height:' + sz + 'px;background:' + (p.color||css.accent1) +
+                ';--o:' + (p.opacity||0.12) + ';--dur:' + (p.animDuration||4.5) + 's;--d:' + (Math.random()*3).toFixed(1) + 's';
+            layer.appendChild(el);
+        });
+
+        // Motes
+        (css.motes || []).forEach(m => {
+            const el = document.createElement('span');
+            el.className = 'bg-mote';
+            const sz = m.size || 4;
+            el.style.cssText = 'top:' + m.top + ';left:' + m.left +
+                ';width:' + sz + 'px;height:' + sz + 'px;background:' + (m.color||css.accent2) +
+                ';box-shadow:0 0 6px 1px ' + (m.color||css.accent2) +
+                ';--mo:' + (m.opacity||0.3) +
+                ';--dur:' + (m.floatDuration||9) + 's' +
+                ';--dy:' + -(m.floatDistance||60) + 'px' +
+                ';--dx:' + (m.driftX||0) + 'px' +
+                ';--d:' + (Math.random()*5).toFixed(1) + 's';
+            layer.appendChild(el);
+        });
+
+        card.insertBefore(layer, card.firstChild);
+    }
+
+    function clearPfBg() {
+        const card = document.querySelector('.pf-card');
+        if (card) card.style.background = '';
+        const old = document.getElementById('pfBgLayer');
+        if (old) old.remove();
     }
 
     checkSession();
