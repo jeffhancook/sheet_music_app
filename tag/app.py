@@ -1,6 +1,8 @@
 import os
+import time
 import string
 import random
+import eventlet
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -11,11 +13,12 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32).hex())
 
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 
-# { code: { players: { sid: {avatar, ready, name} }, host: sid } }
+# { code: { players, host, state, game_start_time, timer_greenlet } }
 lobbies = {}
 sid_to_lobby = {}
 
 MAX_PLAYERS = 4
+GAME_DURATION = 180  # seconds
 
 
 def gen_code():
@@ -49,20 +52,61 @@ def lobby_state(code):
     }
 
 
-def check_auto_start(code):
+def game_timer_loop(code):
+    """Server-side game timer. Runs in a greenlet, emits time_sync every second."""
     lobby = lobbies.get(code)
     if not lobby:
+        return
+    start = lobby["game_start_time"]
+    while code in lobbies and lobbies[code].get("state") == "playing":
+        elapsed = time.time() - start
+        remaining = max(0, GAME_DURATION - int(elapsed))
+        socketio.emit("time_sync", {"remaining": remaining}, room=code)
+        if remaining <= 0:
+            socketio.emit("game_end", {}, room=code)
+            # Reset lobby back to waiting state
+            if code in lobbies:
+                lobby = lobbies[code]
+                lobby["state"] = "lobby"
+                lobby["game_start_time"] = None
+                lobby["timer_greenlet"] = None
+                for p in lobby["players"].values():
+                    p["ready"] = False
+                # Send updated lobby state so clients can re-enter lobby
+                eventlet.sleep(3)  # Brief pause on end screen
+                if code in lobbies:
+                    socketio.emit("return_to_lobby", lobby_state(code), room=code)
+            return
+        eventlet.sleep(1)
+
+
+def check_auto_start(code):
+    lobby = lobbies.get(code)
+    if not lobby or lobby.get("state") == "playing":
         return
     players = lobby["players"]
     total = len(players)
     if total < 2:
         return
-    # All must have an avatar to start
     if any(not p["avatar"] for p in players.values()):
         return
     ready_count = sum(1 for p in players.values() if p["ready"])
     if ready_count == total:
+        # Start countdown
         socketio.emit("game_starting", {"countdown": 3}, room=code)
+        # After 3 seconds, start the game
+        eventlet.spawn_after(3, start_game, code)
+
+
+def start_game(code):
+    lobby = lobbies.get(code)
+    if not lobby:
+        return
+    lobby["state"] = "playing"
+    lobby["game_start_time"] = time.time()
+    socketio.emit("game_started", {"duration": GAME_DURATION}, room=code)
+    # Start the timer greenlet
+    lobby["timer_greenlet"] = eventlet.spawn(game_timer_loop, code)
 
 
 @app.route("/")
@@ -86,6 +130,9 @@ def on_create_lobby(data):
     lobbies[code] = {
         "players": {sid: {"avatar": None, "ready": False, "name": name}},
         "host": sid,
+        "state": "lobby",
+        "game_start_time": None,
+        "timer_greenlet": None,
     }
     sid_to_lobby[sid] = code
     join_room(code)
@@ -103,6 +150,9 @@ def on_join_lobby(data):
         return
 
     lobby = lobbies[code]
+    if lobby.get("state") == "playing":
+        emit("error", {"msg": "Game already in progress"})
+        return
     if len(lobby["players"]) >= MAX_PLAYERS:
         emit("error", {"msg": "Lobby is full"})
         return
@@ -132,7 +182,6 @@ def on_pick_avatar(data):
         emit("error", {"msg": "Invalid avatar"})
         return
 
-    # Check if already taken by someone else
     for other_sid, info in lobby["players"].items():
         if other_sid != sid and info["avatar"] == avatar:
             emit("error", {"msg": "Avatar already taken"})
@@ -151,7 +200,6 @@ def on_set_ready(data):
     lobby = lobbies[code]
     if sid not in lobby["players"]:
         return
-    # Must have avatar to ready up
     if not lobby["players"][sid]["avatar"]:
         emit("error", {"msg": "Pick an avatar first"})
         return
@@ -162,7 +210,6 @@ def on_set_ready(data):
 
 @socketio.on("player_move")
 def on_player_move(data):
-    """Relay player position to everyone else in the lobby."""
     sid = request.sid
     code = sid_to_lobby.get(sid)
     if not code or code not in lobbies:
@@ -170,11 +217,12 @@ def on_player_move(data):
     lobby = lobbies[code]
     if sid not in lobby["players"]:
         return
-    # Broadcast to room (skip_sid sends to everyone except sender)
     emit("remote_move", {
         "sid": sid,
         "x": data.get("x", 0),
         "y": data.get("y", 0),
+        "vx": data.get("vx", 0),
+        "vy": data.get("vy", 0),
         "facing": data.get("facing", 1),
         "avatar": lobby["players"][sid]["avatar"],
         "name": lobby["players"][sid]["name"],
@@ -192,6 +240,8 @@ def on_leave_lobby():
     leave_room(code)
 
     if not lobby["players"]:
+        if lobby.get("timer_greenlet"):
+            lobby["timer_greenlet"].kill()
         del lobbies[code]
     else:
         if lobby["host"] == sid:
@@ -209,6 +259,8 @@ def on_disconnect():
     lobby["players"].pop(sid, None)
 
     if not lobby["players"]:
+        if lobby.get("timer_greenlet"):
+            lobby["timer_greenlet"].kill()
         del lobbies[code]
     else:
         if lobby["host"] == sid:

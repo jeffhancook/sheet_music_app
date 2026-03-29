@@ -13,6 +13,7 @@ sheet_music_app/
 ├── audio_enhancement/        # Audio effects (Flask+pydub, port 5003) — echo, vinyl
 ├── sheet_music_play/         # Audio→violin PDF (Flask+basic-pitch+music21+LilyPond, port 5005)
 ├── community/                # Community system (Flask-SocketIO, port 5004) — auth, friends, chat, portfolios, AI backgrounds
+├── tag/                      # Multiplayer tag game (Flask-SocketIO, port 5007) — platformer, lobby, real-time movement
 ├── ScienceEssence/           # Physics education app (vanilla JS, own .git repo)
 └── .claude/                  # Claude Code settings
 ```
@@ -89,6 +90,11 @@ sheet_music_app/
 - `PATCH /api/backgrounds/active` — Set active background
 - `GET /api/users/search?q=` — Search users
 
+### tag (port 5007)
+- `GET /` — Game UI (avatar select → lobby → game)
+- Socket.IO events: `create_lobby`, `join_lobby`, `pick_avatar`, `set_ready`, `player_move`, `leave_lobby`
+- Socket.IO broadcasts: `lobby_joined`, `lobby_update`, `game_starting`, `remote_move`, `error`
+
 ## Key Gotchas
 - **StartPage replaced DuckDuckGo** for sheet music search (DDG returned 0 results)
 - **Search interleaving**: 3 IMSLP + 2 StartPage results, repeating
@@ -102,3 +108,7 @@ sheet_music_app/
 - **HEVC transcoding**: Pixel phones record H.265, desktop browsers need H.264
 - **AFlipperStory**: Unlimited file upload sizes
 - **AI backgrounds**: Claude Sonnet 4.6, ~$0.04/gen, max 5 saved per user, 16000 max_tokens
+- **Tag app port is 5007** (NOT 5006) — test-app/Pitch Straightener already uses 5006
+- **Tag nginx needs WebSocket headers** — proxy_http_version 1.1, Upgrade, Connection "upgrade"
+- **Tag uses eventlet** — gunicorn must use `--worker-class eventlet --workers 1`
+- **sites-enabled/default is a file copy** on VPS, not a symlink — must update both sites-available AND sites-enabled

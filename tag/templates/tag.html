@@ -445,13 +445,14 @@ for (let i=0;i<20;i++) flowers.push({x:30+Math.random()*(WORLD_W-60),color:FLOWE
 /* ── Player ── */
 const PLAYER_W = 26, PLAYER_H = 50;
 const MOVE_SPEED = 4.5, JUMP_VEL = -11, GRAVITY = 0.55, MAX_FALL = 14;
-const AVATAR_FOOT_OFFSET = { ninja: 15, chicken: 18, stickman: 15 };
+/* All avatars use same draw offset so hitbox interaction is identical */
+const AVATAR_FOOT_OFFSET = 16;
 
 const player = { x: WORLD_W/2, y: GROUND_Y-PLAYER_H, vx:0, vy:0, onGround:false, facing:1 };
 
-/* Remote players: { sid: { x, y, facing, avatar, name, targetX, targetY, targetFacing } } */
+/* Remote players with velocity for extrapolation between packets */
 const remotePlayers = {};
-const LERP_SPEED = 0.25; /* interpolation factor per frame */
+const LERP_SPEED = 0.45;
 
 const keys = {};
 window.addEventListener('keydown', e => {
@@ -461,30 +462,141 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 /* ================================================================
-   COLLISION
+   COLLISION — swept / substep to prevent tunneling
    ================================================================ */
-function segmentYAtX(p1,p2,x){const mn=Math.min(p1.x,p2.x),mx=Math.max(p1.x,p2.x);if(x<mn||x>mx)return null;if(p2.x===p1.x)return Math.min(p1.y,p2.y);const t=(x-p1.x)/(p2.x-p1.x);return p1.y+t*(p2.y-p1.y);}
-function checkCompositeCollision(footX,footY,headY,vy,plat){const pts=plat.points;for(let i=0;i<pts.length-1;i++){const surfY=segmentYAtX(pts[i],pts[i+1],footX);if(surfY===null)continue;if(footY>=surfY-6&&headY<surfY-4&&vy>=-1)return surfY;}return null;}
-function rectOverlap(ax,ay,aw,ah,bx,by,bw,bh){return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;}
+function segmentYAtX(p1, p2, x) {
+    const mn = Math.min(p1.x, p2.x), mx = Math.max(p1.x, p2.x);
+    if (x < mn || x > mx) return null;
+    if (p2.x === p1.x) return Math.min(p1.y, p2.y);
+    const t = (x - p1.x) / (p2.x - p1.x);
+    return p1.y + t * (p2.y - p1.y);
+}
 
-function updatePlayer(){
-    let moveX=0;
-    if(keys['ArrowLeft']||keys['KeyA'])moveX-=1;
-    if(keys['ArrowRight']||keys['KeyD'])moveX+=1;
-    player.vx=moveX*MOVE_SPEED;
-    if(moveX!==0)player.facing=moveX;
-    if((keys['ArrowUp']||keys['KeyW']||keys['Space'])&&player.onGround){player.vy=JUMP_VEL;player.onGround=false;}
-    player.vy+=GRAVITY;if(player.vy>MAX_FALL)player.vy=MAX_FALL;
-    player.x+=player.vx;
-    const halfW=PLAYER_W/2;
-    if(player.x-halfW<0)player.x=halfW;if(player.x+halfW>WORLD_W)player.x=WORLD_W-halfW;
-    for(const w of walls){if(rectOverlap(player.x-halfW,player.y,PLAYER_W,PLAYER_H,w.x,w.y,w.w,w.h)){if(player.vx>0)player.x=w.x-halfW;else if(player.vx<0)player.x=w.x+w.w+halfW;player.vx=0;}}
-    player.y+=player.vy;player.onGround=false;
-    if(player.y+PLAYER_H>=GROUND_Y){player.y=GROUND_Y-PLAYER_H;player.vy=0;player.onGround=true;}
-    for(const plat of compositePlatforms){const surfY=checkCompositeCollision(player.x,player.y+PLAYER_H,player.y,player.vy,plat);if(surfY!==null){player.y=surfY-PLAYER_H;player.vy=0;player.onGround=true;break;}}
-    for(const mp of movingPlatforms){if(mp.currentY===undefined)continue;const fY=player.y+PLAYER_H;if(player.x>=mp.x&&player.x<=mp.x+mp.w&&fY>=mp.currentY-6&&player.y<mp.currentY-4&&player.vy>=-1){player.y=mp.currentY-PLAYER_H;player.vy=0;player.onGround=true;}}
-    for(const w of walls){if(rectOverlap(player.x-halfW,player.y,PLAYER_W,PLAYER_H,w.x,w.y,w.w,w.h)){if(player.vy<0){player.y=w.y+w.h;player.vy=0;}else if(player.vy>0&&!player.onGround){player.y=w.y-PLAYER_H;player.vy=0;player.onGround=true;}}}
-    if(player.y+PLAYER_H>WORLD_H){player.y=GROUND_Y-PLAYER_H;player.vy=0;player.onGround=true;}
+/* Check if feet crossed downward through a composite platform surface.
+   prevFootY must be at or just above the surface, footY must be at or below.
+   The +2 tolerance on prevFootY handles slope walking where the surface Y
+   shifts as X changes, but is small enough to never trigger while jumping up. */
+function checkCompositeCollision(footX, prevFootY, footY, plat) {
+    const pts = plat.points;
+    for (let i = 0; i < pts.length - 1; i++) {
+        const surfY = segmentYAtX(pts[i], pts[i + 1], footX);
+        if (surfY === null) continue;
+        if (prevFootY <= surfY + 2 && footY >= surfY) {
+            return surfY;
+        }
+    }
+    return null;
+}
+
+function rectOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+
+/* Get current moving platform Y based on real time */
+function getMovingPlatY(mp) {
+    const t = (Math.sin(performance.now() * 0.001 * mp.speed + mp.phase) + 1) / 2;
+    return mp.y0 + (mp.y1 - mp.y0) * t;
+}
+
+function updatePlayer() {
+    let moveX = 0;
+    if (keys['ArrowLeft'] || keys['KeyA']) moveX -= 1;
+    if (keys['ArrowRight'] || keys['KeyD']) moveX += 1;
+    player.vx = moveX * MOVE_SPEED;
+    if (moveX !== 0) player.facing = moveX;
+    if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && player.onGround) {
+        player.vy = JUMP_VEL;
+        player.onGround = false;
+    }
+
+    player.vy += GRAVITY;
+    if (player.vy > MAX_FALL) player.vy = MAX_FALL;
+
+    const halfW = PLAYER_W / 2;
+
+    /* ── Horizontal movement + wall collision ── */
+    player.x += player.vx;
+    if (player.x - halfW < 0) player.x = halfW;
+    if (player.x + halfW > WORLD_W) player.x = WORLD_W - halfW;
+    for (const w of walls) {
+        if (rectOverlap(player.x - halfW, player.y, PLAYER_W, PLAYER_H, w.x, w.y, w.w, w.h)) {
+            if (player.vx > 0) player.x = w.x - halfW;
+            else if (player.vx < 0) player.x = w.x + w.w + halfW;
+            player.vx = 0;
+        }
+    }
+
+    /* ── Vertical movement — substep to prevent tunneling ── */
+    const SUBSTEPS = Math.max(1, Math.ceil(Math.abs(player.vy) / 2));
+    const stepVy = player.vy / SUBSTEPS;
+    player.onGround = false;
+
+    for (let s = 0; s < SUBSTEPS; s++) {
+        const prevFootY = player.y + PLAYER_H;
+        player.y += stepVy;
+        const footY = player.y + PLAYER_H;
+        const footX = player.x;
+
+        /* Ground */
+        if (footY >= GROUND_Y) {
+            player.y = GROUND_Y - PLAYER_H;
+            player.vy = 0;
+            player.onGround = true;
+            break;
+        }
+
+        /* Composite platforms — only when moving downward */
+        if (stepVy > 0) {
+            let landed = false;
+            for (const plat of compositePlatforms) {
+                const surfY = checkCompositeCollision(footX, prevFootY, footY, plat);
+                if (surfY !== null) {
+                    player.y = surfY - PLAYER_H;
+                    player.vy = 0;
+                    player.onGround = true;
+                    landed = true;
+                    break;
+                }
+            }
+            if (landed) break;
+
+            /* Moving platforms */
+            for (const mp of movingPlatforms) {
+                const mpTop = getMovingPlatY(mp);
+                if (footX >= mp.x && footX <= mp.x + mp.w &&
+                    prevFootY <= mpTop + 2 && footY >= mpTop) {
+                    player.y = mpTop - PLAYER_H;
+                    player.vy = 0;
+                    player.onGround = true;
+                    landed = true;
+                    break;
+                }
+            }
+            if (landed) break;
+        }
+
+        /* Wall collision (vertical — head bump or land on top) */
+        for (const w of walls) {
+            if (rectOverlap(player.x - halfW, player.y, PLAYER_W, PLAYER_H, w.x, w.y, w.w, w.h)) {
+                if (stepVy < 0) {
+                    player.y = w.y + w.h;
+                    player.vy = 0;
+                } else {
+                    player.y = w.y - PLAYER_H;
+                    player.vy = 0;
+                    player.onGround = true;
+                }
+                break;
+            }
+        }
+        if (player.onGround || player.vy === 0) break;
+    }
+
+    if (player.y + PLAYER_H > WORLD_H) {
+        player.y = GROUND_Y - PLAYER_H;
+        player.vy = 0;
+        player.onGround = true;
+    }
 }
 
 /* ================================================================
@@ -499,7 +611,7 @@ function drawBush(b){ctx.fillStyle=BUSH_COLOR;ctx.beginPath();ctx.arc(b.x,b.y,22
 function drawFlowers(time){for(const f of flowers){const sw=Math.sin(time*0.002+f.swayOffset)*2,fx=f.x+sw,fy=GROUND_Y-2;ctx.strokeStyle='#3a8a3a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx+sw*0.5,fy-f.size*3);ctx.stroke();ctx.fillStyle=f.color;const py=fy-f.size*3;for(let a=0;a<5;a++){const an=(a/5)*Math.PI*2;ctx.beginPath();ctx.arc(fx+Math.cos(an)*f.size,py+Math.sin(an)*f.size,f.size*0.6,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#ffe066';ctx.beginPath();ctx.arc(fx,py,f.size*0.4,0,Math.PI*2);ctx.fill();}}
 function drawGround(){ctx.fillStyle=GROUND_TOP;ctx.fillRect(0,GROUND_Y,WORLD_W,12);ctx.fillStyle='#6ec86e';for(let gx=0;gx<WORLD_W;gx+=8){const gh=3+Math.sin(gx*0.3)*2;ctx.fillRect(gx,GROUND_Y-gh,4,gh);}ctx.fillStyle=GROUND_DIRT;ctx.fillRect(0,GROUND_Y+12,WORLD_W,GROUND_H-12);ctx.strokeStyle=GROUND_DARK;ctx.lineWidth=1;for(let dy=20;dy<GROUND_H-12;dy+=18){ctx.beginPath();ctx.moveTo(0,GROUND_Y+12+dy);for(let dx=0;dx<WORLD_W;dx+=30)ctx.lineTo(dx+15,GROUND_Y+12+dy+(Math.sin(dx*0.1+dy)*3));ctx.stroke();}ctx.fillStyle='#9a8060';for(let i=0;i<25;i++){const px=(i*53+17)%WORLD_W,py=GROUND_Y+18+(i*37%(GROUND_H-30));ctx.beginPath();ctx.ellipse(px,py,3+(i%3),2+(i%2),0,0,Math.PI*2);ctx.fill();}}
 function drawCompositePlatform(plat){const pts=plat.points,th=plat.thickness;if(pts.length<2)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);for(let i=pts.length-1;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y+th);ctx.closePath();ctx.fillStyle=PLAT_SIDE;ctx.fill();ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);for(let i=pts.length-1;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y+th-4);ctx.closePath();ctx.fillStyle=PLAT_TOP;ctx.fill();ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);for(let i=pts.length-1;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y+5);ctx.closePath();ctx.fillStyle=PLAT_GRASS;ctx.fill();ctx.fillStyle='#a0ee80';for(let i=0;i<pts.length-1;i++){const p1=pts[i],p2=pts[i+1],sl=Math.hypot(p2.x-p1.x,p2.y-p1.y),st=Math.floor(sl/12);for(let s=1;s<st;s++){const t=s/st,gx=p1.x+(p2.x-p1.x)*t,gy=p1.y+(p2.y-p1.y)*t,gh=2+Math.sin(gx*0.4)*1.5;ctx.fillRect(gx-1.5,gy-gh,3,gh);}}}
-function drawMovingPlatform(mp,time){const t=(Math.sin(time*0.001*mp.speed+mp.phase)+1)/2;mp.currentY=mp.y0+(mp.y1-mp.y0)*t;const{x,w,h}=mp,y=mp.currentY,cr=6;ctx.fillStyle=PLAT_SIDE;ctx.beginPath();ctx.roundRect(x,y+4,w,h,[0,0,cr,cr]);ctx.fill();ctx.fillStyle=PLAT_TOP;ctx.beginPath();ctx.roundRect(x,y,w,h,cr);ctx.fill();ctx.fillStyle=PLAT_GRASS;ctx.beginPath();ctx.roundRect(x,y,w,6,[cr,cr,0,0]);ctx.fill();ctx.fillStyle='#a0ee80';for(let gx=x+6;gx<x+w-6;gx+=10){const gh=2+Math.sin(gx*0.4)*1.5;ctx.fillRect(gx,y-gh,3,gh);}const cx=x+w/2;ctx.fillStyle='rgba(255,255,255,0.2)';ctx.beginPath();ctx.moveTo(cx,mp.y1-12);ctx.lineTo(cx-5,mp.y1-5);ctx.lineTo(cx+5,mp.y1-5);ctx.fill();ctx.beginPath();ctx.moveTo(cx,mp.y0+26);ctx.lineTo(cx-5,mp.y0+19);ctx.lineTo(cx+5,mp.y0+19);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.beginPath();ctx.moveTo(cx,mp.y1);ctx.lineTo(cx,mp.y0+18);ctx.stroke();ctx.setLineDash([]);}
+function drawMovingPlatform(mp){const t=(Math.sin(performance.now()*0.001*mp.speed+mp.phase)+1)/2;mp.currentY=mp.y0+(mp.y1-mp.y0)*t;const{x,w,h}=mp,y=mp.currentY,cr=6;ctx.fillStyle=PLAT_SIDE;ctx.beginPath();ctx.roundRect(x,y+4,w,h,[0,0,cr,cr]);ctx.fill();ctx.fillStyle=PLAT_TOP;ctx.beginPath();ctx.roundRect(x,y,w,h,cr);ctx.fill();ctx.fillStyle=PLAT_GRASS;ctx.beginPath();ctx.roundRect(x,y,w,6,[cr,cr,0,0]);ctx.fill();ctx.fillStyle='#a0ee80';for(let gx=x+6;gx<x+w-6;gx+=10){const gh=2+Math.sin(gx*0.4)*1.5;ctx.fillRect(gx,y-gh,3,gh);}const cx=x+w/2;ctx.fillStyle='rgba(255,255,255,0.2)';ctx.beginPath();ctx.moveTo(cx,mp.y1-12);ctx.lineTo(cx-5,mp.y1-5);ctx.lineTo(cx+5,mp.y1-5);ctx.fill();ctx.beginPath();ctx.moveTo(cx,mp.y0+26);ctx.lineTo(cx-5,mp.y0+19);ctx.lineTo(cx+5,mp.y0+19);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.beginPath();ctx.moveTo(cx,mp.y1);ctx.lineTo(cx,mp.y0+18);ctx.stroke();ctx.setLineDash([]);}
 function drawWall(wall){const{x,y,w,h}=wall;ctx.fillStyle=WALL_COLOR;ctx.fillRect(x,y,w,h);ctx.fillStyle=WALL_DARK;ctx.fillRect(x+w-4,y,4,h);ctx.strokeStyle=WALL_LINE;ctx.lineWidth=1;let odd=false;for(let by=y+10;by<y+h;by+=12){ctx.beginPath();ctx.moveTo(x,by);ctx.lineTo(x+w,by);ctx.stroke();if(odd){ctx.beginPath();ctx.moveTo(x+w/2,by-12);ctx.lineTo(x+w/2,by);ctx.stroke();}odd=!odd;}ctx.fillStyle='#9a8a70';ctx.fillRect(x-2,y-3,w+4,6);}
 
 /* ── Avatar drawing ── */
@@ -539,7 +651,6 @@ const countdownOverlay = document.getElementById('countdown-overlay');
 const endScreen = document.getElementById('end-screen');
 const gameTimerEl = document.getElementById('game-timer');
 
-let gameTimerInterval = null;
 let gameSecondsLeft = 180;
 
 function showScreen(name) {
@@ -549,36 +660,12 @@ function showScreen(name) {
     endScreen.style.display = name === 'end' ? 'flex' : 'none';
     gameTimerEl.style.display = name === 'playing' ? 'block' : 'none';
     gameState = name;
-
-    if (name === 'playing') startGameTimer();
-    if (name === 'end') stopGameTimer();
 }
 
 function formatTime(s) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return m + ':' + (sec < 10 ? '0' : '') + sec;
-}
-
-function startGameTimer() {
-    gameSecondsLeft = 180;
-    gameTimerEl.textContent = formatTime(gameSecondsLeft);
-    gameTimerEl.classList.remove('warning');
-    if (gameTimerInterval) clearInterval(gameTimerInterval);
-    gameTimerInterval = setInterval(() => {
-        gameSecondsLeft--;
-        if (gameSecondsLeft <= 0) {
-            gameSecondsLeft = 0;
-            showScreen('end');
-            return;
-        }
-        gameTimerEl.textContent = formatTime(gameSecondsLeft);
-        if (gameSecondsLeft <= 30) gameTimerEl.classList.add('warning');
-    }, 1000);
-}
-
-function stopGameTimer() {
-    if (gameTimerInterval) { clearInterval(gameTimerInterval); gameTimerInterval = null; }
 }
 
 /* ================================================================
@@ -822,7 +909,7 @@ function connectSocket(onConnect) {
             count--;
             if (count <= 0) {
                 clearInterval(interval);
-                showScreen('playing');
+                /* Wait for server game_started event */
             } else {
                 document.getElementById('countdown-number').textContent = count;
                 /* Re-trigger animation */
@@ -834,19 +921,61 @@ function connectSocket(onConnect) {
         }, 1000);
     });
 
+    /* Server says game has started */
+    socket.on('game_started', () => { showScreen('playing'); });
+
+    /* Server-authoritative timer */
+    socket.on('time_sync', (data) => {
+        gameSecondsLeft = data.remaining;
+        gameTimerEl.textContent = formatTime(gameSecondsLeft);
+        gameTimerEl.classList.toggle('warning', gameSecondsLeft <= 30);
+    });
+
+    /* Server says time's up */
+    socket.on('game_end', () => {
+        showScreen('end');
+        /* Clear remote players */
+        for (const sid in remotePlayers) delete remotePlayers[sid];
+    });
+
+    /* Server sends everyone back to lobby after end screen */
+    socket.on('return_to_lobby', (state) => {
+        lobbyCode = state.code;
+        lobbyPlayers = state.players;
+        const me = state.players.find(p => p.sid === socket.id);
+        chosenAvatar = me ? me.avatar : null;
+        myReady = false;
+        document.getElementById('btn-ready').textContent = 'Ready';
+        document.getElementById('btn-ready').classList.remove('ready-active');
+        document.getElementById('lobby-code').textContent = state.code;
+        renderPlayerList(state);
+        updateAvatarCards(state.takenAvatars || [], state.players);
+        /* Reset player position */
+        player.x = WORLD_W / 2;
+        player.y = GROUND_Y - PLAYER_H;
+        player.vx = 0; player.vy = 0;
+        player.onGround = false;
+        showScreen('lobby');
+    });
+
     socket.on('remote_move', (data) => {
         const rp = remotePlayers[data.sid];
         if (rp) {
             rp.targetX = data.x;
             rp.targetY = data.y;
+            rp.vx = data.vx || 0;
+            rp.vy = data.vy || 0;
             rp.targetFacing = data.facing;
             rp.avatar = data.avatar;
             rp.name = data.name;
+            rp.lastUpdate = performance.now();
         } else {
             remotePlayers[data.sid] = {
                 x: data.x, y: data.y, facing: data.facing,
                 targetX: data.x, targetY: data.y, targetFacing: data.facing,
+                vx: data.vx || 0, vy: data.vy || 0,
                 avatar: data.avatar, name: data.name,
+                lastUpdate: performance.now(),
             };
         }
     });
@@ -878,37 +1007,67 @@ document.getElementById('btn-exit').addEventListener('click', () => {
 });
 
 /* ================================================================
-   MAIN LOOP
+   GAME LOGIC TICK — runs on setInterval (survives tab minimize)
    ================================================================ */
-let startTime = performance.now();
+const TICK_MS = 16; /* ~60fps physics */
+const SEND_INTERVAL = 33; /* ~30fps network updates */
 let sendTimer = 0;
-const SEND_INTERVAL = 50; /* ms between position broadcasts (~20fps) */
+let gameTickInterval = null;
 
-function draw(timestamp) {
-    if (gameState !== 'playing') { requestAnimationFrame(draw); return; }
-    const time = timestamp - startTime;
+function gameTick() {
+    if (gameState !== 'playing') return;
     updatePlayer();
 
     /* Send position to server */
     if (socket && socket.connected) {
-        sendTimer += 16; /* approx frame time */
+        sendTimer += TICK_MS;
         if (sendTimer >= SEND_INTERVAL) {
             sendTimer = 0;
             socket.emit('player_move', {
                 x: Math.round(player.x),
                 y: Math.round(player.y),
+                vx: Math.round(player.vx * 10) / 10,
+                vy: Math.round(player.vy * 10) / 10,
                 facing: player.facing,
             });
         }
     }
 
-    /* Interpolate remote players toward their targets */
+    /* Interpolate remote players — extrapolate with velocity, lerp to target */
     for (const sid in remotePlayers) {
         const rp = remotePlayers[sid];
-        rp.x += (rp.targetX - rp.x) * LERP_SPEED;
-        rp.y += (rp.targetY - rp.y) * LERP_SPEED;
+        const age = performance.now() - rp.lastUpdate;
+        /* Extrapolate target based on velocity and time since last update */
+        const predX = rp.targetX + rp.vx * (age / TICK_MS) * 0.5;
+        const predY = rp.targetY + rp.vy * (age / TICK_MS) * 0.3;
+        /* Lerp toward predicted position */
+        rp.x += (predX - rp.x) * LERP_SPEED;
+        rp.y += (predY - rp.y) * LERP_SPEED;
         rp.facing = rp.targetFacing;
     }
+}
+
+/* Start/stop the logic tick when game state changes */
+const _origShowScreen = showScreen;
+showScreen = function(name) {
+    _origShowScreen(name);
+    if (name === 'playing' && !gameTickInterval) {
+        gameTickInterval = setInterval(gameTick, TICK_MS);
+    }
+    if ((name === 'end' || name === 'lobby' || name === 'name') && gameTickInterval) {
+        clearInterval(gameTickInterval);
+        gameTickInterval = null;
+    }
+};
+
+/* ================================================================
+   RENDER LOOP — requestAnimationFrame (pauses when hidden, that's fine)
+   ================================================================ */
+let startTime = performance.now();
+
+function draw(timestamp) {
+    if (gameState !== 'playing') { requestAnimationFrame(draw); return; }
+    const time = timestamp - startTime;
 
     const scaleX=canvas.width/WORLD_W, scaleY=canvas.height/WORLD_H;
     const scale=Math.min(scaleX,scaleY);
@@ -923,7 +1082,7 @@ function draw(timestamp) {
     clouds.forEach(c=>drawCloud(c,time));drawHills();bgTrees.forEach(t=>drawTree(t));
     bushes.forEach(b=>drawBush(b));drawFlowers(time);drawGround();
     compositePlatforms.forEach(p=>drawCompositePlatform(p));
-    movingPlatforms.forEach(mp=>drawMovingPlatform(mp,time));
+    movingPlatforms.forEach(mp=>drawMovingPlatform(mp));
     walls.forEach(w=>drawWall(w));
 
     /* Draw remote players */
@@ -932,9 +1091,8 @@ function draw(timestamp) {
         const rpDraw = avatarDrawFns[rp.avatar];
         if (rpDraw) {
             const fY = rp.y + PLAYER_H;
-            const fO = AVATAR_FOOT_OFFSET[rp.avatar] || 15;
+            const fO = AVATAR_FOOT_OFFSET;
             rpDraw(ctx, rp.x, fY - fO, 28, rp.facing);
-            /* Name tag above head */
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.font = '11px Segoe UI, sans-serif';
             const tw = ctx.measureText(rp.name).width;
@@ -949,9 +1107,8 @@ function draw(timestamp) {
     /* Draw local player */
     const drawFn=avatarDrawFns[chosenAvatar];
     if(drawFn){
-        const fY=player.y+PLAYER_H,fO=AVATAR_FOOT_OFFSET[chosenAvatar]||15;
+        const fY=player.y+PLAYER_H,fO=AVATAR_FOOT_OFFSET;
         drawFn(ctx,player.x,fY-fO,28,player.facing);
-        /* Name tag for local player too */
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
         ctx.font = '11px Segoe UI, sans-serif';
         const tw = ctx.measureText(playerName).width;
