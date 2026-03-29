@@ -163,6 +163,71 @@ class UserBackground(Base):
         }
 
 
+class GroupChat(Base):
+    __tablename__ = "group_chats"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), nullable=False)
+    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    avatar_color = Column(String(7), default=_random_color)
+    created_at = Column(DateTime, default=utcnow)
+
+    creator = relationship("User", foreign_keys=[creator_id])
+    members = relationship("GroupMember", back_populates="group", cascade="all, delete-orphan")
+
+    def to_dict(self, include_members=False):
+        d = {
+            "id": self.id,
+            "name": self.name,
+            "creator_id": self.creator_id,
+            "avatar_color": self.avatar_color,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+        if include_members:
+            d["members"] = [m.user.to_dict() for m in self.members if m.user]
+        return d
+
+
+class GroupMember(Base):
+    __tablename__ = "group_members"
+    __table_args__ = (
+        UniqueConstraint("group_id", "user_id", name="uq_group_member"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("group_chats.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    joined_at = Column(DateTime, default=utcnow)
+
+    group = relationship("GroupChat", back_populates="members")
+    user = relationship("User", foreign_keys=[user_id])
+
+
+class GroupMessage(Base):
+    __tablename__ = "group_messages"
+
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("group_chats.id"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=True)
+    image_path = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
+
+    sender = relationship("User", foreign_keys=[sender_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "group_id": self.group_id,
+            "sender_id": self.sender_id,
+            "sender_name": self.sender.display_name if self.sender else None,
+            "sender_color": self.sender.avatar_color if self.sender else None,
+            "content": self.content,
+            "image_path": self.image_path,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 def init_db():
     Base.metadata.create_all(engine)
     # Add active_background_id column to users if missing (SQLite migration)

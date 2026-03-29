@@ -710,6 +710,46 @@
       transition: color 0.2s, border-color 0.2s;
     }
     .c-customize-btn:hover { color: #b8924a; border-color: rgba(184, 146, 74, 0.3); }
+
+    /* ── Group chat ── */
+    .c-group-header { display: flex; align-items: center; justify-content: space-between; margin-top: 0.3rem; }
+    .c-new-group-btn {
+      padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid #3a3428;
+      background: none; color: #6a5d50; font-size: 0.62rem; cursor: pointer;
+      font-family: "Fira Code", "JetBrains Mono", monospace;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .c-new-group-btn:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.3); }
+    .c-group-avatar {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.7rem; color: #241f15; flex-shrink: 0;
+    }
+    .c-msg-sender { font-size: 0.68rem; font-weight: 600; margin-bottom: 0.15rem; }
+    .gc-overlay {
+      display: none; position: fixed; inset: 0; z-index: 10003;
+      background: rgba(36, 31, 21, 0.95); backdrop-filter: blur(12px);
+      align-items: center; justify-content: center;
+      animation: c-fade-in 0.25s ease;
+    }
+    .gc-overlay.active { display: flex; }
+    .gc-card {
+      width: 100%; max-width: 400px;
+      background: rgba(44, 38, 28, 0.85); border: 1px solid #3a3428; border-radius: 10px;
+      overflow: hidden; position: relative;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+    }
+    .gc-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5;
+    }
+    .gc-body { padding: 1.25rem; }
+    .gc-body h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.1rem; color: #ecdfc8; margin-bottom: 1rem; }
+    .gc-friend-check { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; cursor: pointer; }
+    .gc-friend-check input[type="checkbox"] { accent-color: #c2593e; }
+    .gc-friend-check label { font-size: 0.82rem; color: #d6c8b4; cursor: pointer; }
+    .gc-actions { display: flex; gap: 0.4rem; margin-top: 1rem; }
+    .gc-members-list { font-size: 0.72rem; color: #6a5d50; margin-top: 0.2rem; }
   </style>
 </head>
 <body>
@@ -772,6 +812,7 @@
       <div class="c-panel-body">
         <input type="text" class="c-search" id="cUserSearch" placeholder="Search users...">
         <div class="c-search-results" id="cSearchRes"></div>
+        <div id="cGroupsList"></div>
         <div id="cFriendReqs"></div>
         <div id="cFriendsList"></div>
       </div>
@@ -781,7 +822,7 @@
     <!-- Center: Chat -->
     <div class="c-panel-center" id="panelChat">
       <div class="c-chat-hdr" id="cChatHdr" style="display:none"></div>
-      <div class="c-chat-placeholder" id="cChatPH">Select a friend to start chatting</div>
+      <div class="c-chat-placeholder" id="cChatPH">Select a friend or group to start chatting</div>
       <div class="c-chat-msgs" id="cChatMsgs" style="display:none"></div>
       <div class="c-typing" id="cTyping"></div>
       <div class="c-chat-input-area" id="cChatInputArea" style="display:none">
@@ -809,6 +850,13 @@
     </div>
   </div>
 
+  <!-- ── Create Group overlay ── -->
+  <div class="gc-overlay" id="gcOverlay">
+    <div class="gc-card">
+      <div class="gc-body" id="gcBody"></div>
+    </div>
+  </div>
+
   <!-- Mobile tab bar -->
   <div class="mobile-tabs" id="mobileTabs">
     <button class="mobile-tab active" data-panel="Friends" onclick="mobileSwitch(this)">Friends</button>
@@ -824,6 +872,7 @@
 
     let me = null, socket = null, friends = [], activeFriend = null;
     let unread = {}, typingTO = null, typingDispTO = null, viewingPfUser = null;
+    let groups = [], activeGroup = null, activeChat = null; // {type:'dm',friend} or {type:'group',group}
 
     // ── Mobile panel switching ──
     window.mobileSwitch = function(tabEl) {
@@ -844,7 +893,8 @@
     };
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-            if ($('pfOverlay').classList.contains('active')) closePf();
+            if ($('gcOverlay').classList.contains('active')) gcCloseCreate();
+            else if ($('pfOverlay').classList.contains('active')) closePf();
             else if ($('czOverlay').classList.contains('active')) czClose();
             else if (me) cCloseAuth();
         }
@@ -910,7 +960,7 @@
         $('topbarName').textContent = me.display_name;
         renderAccount();
         connectSocket();
-        loadFriends(); loadFriendReqs(); loadUnread();
+        loadFriends(); loadFriendReqs(); loadUnread(); loadGroups();
         applyUserBackground();
     }
 
@@ -968,6 +1018,19 @@
         });
         socket.on('friend_request', () => loadFriendReqs());
         socket.on('friend_accepted', () => loadFriends());
+        socket.on('group_created', () => loadGroups());
+        socket.on('new_group_message', msg => {
+            if (activeChat && activeChat.type === 'group' && activeChat.group.id === msg.group_id) {
+                appendGroupMsg(msg);
+            }
+        });
+        socket.on('group_typing', d => {
+            if (activeChat && activeChat.type === 'group' && activeChat.group.id === d.group_id && d.from !== me.id) {
+                $('cTyping').textContent = d.name + ' is typing...';
+                clearTimeout(typingDispTO);
+                typingDispTO = setTimeout(() => $('cTyping').textContent = '', 2000);
+            }
+        });
     }
 
     // ── Friends ──
@@ -1059,7 +1122,9 @@
         const f = friends.find(x => x.id === fid);
         if (!f) return;
         activeFriend = f;
-        renderFriends();
+        activeGroup = null;
+        activeChat = {type: 'dm', friend: f};
+        renderFriends(); renderGroups();
         // Show chat header and input
         $('cChatHdr').style.display = 'flex';
         $('cChatHdr').innerHTML =
@@ -1106,17 +1171,24 @@
     $('cSendBtn').addEventListener('click', sendMsg);
     $('cChatInput').addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-        if (activeFriend && socket) {
+        if (socket) {
             clearTimeout(typingTO);
-            typingTO = setTimeout(() => socket.emit('typing', {to: activeFriend.id}), 100);
+            if (activeChat && activeChat.type === 'group') {
+                typingTO = setTimeout(() => socket.emit('group_typing', {group_id: activeChat.group.id}), 100);
+            } else if (activeFriend) {
+                typingTO = setTimeout(() => socket.emit('typing', {to: activeFriend.id}), 100);
+            }
         }
     });
 
     function sendMsg() {
-        if (!activeFriend) return;
         const c = $('cChatInput').value.trim();
         if (!c) return;
-        socket.emit('send_message', {to: activeFriend.id, content: c});
+        if (activeChat && activeChat.type === 'group') {
+            socket.emit('send_group_message', {group_id: activeChat.group.id, content: c});
+        } else if (activeFriend) {
+            socket.emit('send_message', {to: activeFriend.id, content: c});
+        } else return;
         $('cChatInput').value = '';
         $('cChatInput').style.height = 'auto';
     }
@@ -1127,12 +1199,185 @@
     });
 
     $('cChatImgInput').addEventListener('change', async function() {
-        if (!this.files[0] || !activeFriend) return;
+        if (!this.files[0]) return;
+        if (!activeFriend && !(activeChat && activeChat.type === 'group')) return;
         const fd = new FormData(); fd.append('file', this.files[0]);
         const d = await (await fetch(API + '/api/messages/image', {method: 'POST', body: fd})).json();
-        if (d.image_path) socket.emit('send_message', {to: activeFriend.id, content: '', image_path: d.image_path});
+        if (d.image_path) {
+            if (activeChat && activeChat.type === 'group') {
+                socket.emit('send_group_message', {group_id: activeChat.group.id, content: '', image_path: d.image_path});
+            } else if (activeFriend) {
+                socket.emit('send_message', {to: activeFriend.id, content: '', image_path: d.image_path});
+            }
+        }
         this.value = '';
     });
+
+    // ── Groups ──
+    async function loadGroups() {
+        const d = await (await fetch(API + '/api/groups')).json();
+        groups = d.groups || [];
+        renderGroups();
+    }
+
+    function renderGroups() {
+        const el = $('cGroupsList');
+        if (!groups.length) { el.innerHTML = '<div class="c-group-header"><div class="c-section-label">Groups</div><button class="c-new-group-btn" onclick="gcOpenCreate()">+ New</button></div>'; return; }
+        let h = '<div class="c-group-header"><div class="c-section-label">Groups</div><button class="c-new-group-btn" onclick="gcOpenCreate()">+ New</button></div>';
+        groups.forEach(g => {
+            const act = activeChat && activeChat.type === 'group' && activeChat.group.id === g.id ? ' active' : '';
+            const ini = (g.name || '?')[0].toUpperCase();
+            h += '<div class="c-user-row' + act + '" onclick="cSelectGroup(' + g.id + ')">' +
+                '<div class="c-group-avatar" style="background:' + (g.avatar_color||'#5a8fa8') + '">' + ini + '</div>' +
+                '<div class="c-user-info"><div class="c-user-name">' + esc(g.name) + '</div>' +
+                '<div class="c-user-meta">' + g.member_count + ' members</div></div></div>';
+        });
+        el.innerHTML = h;
+    }
+
+    window.cSelectGroup = async function(gid) {
+        const g = groups.find(x => x.id === gid);
+        if (!g) return;
+        activeGroup = g;
+        activeFriend = null;
+        activeChat = {type: 'group', group: g};
+        renderFriends(); renderGroups();
+
+        $('cChatHdr').style.display = 'flex';
+        const memberNames = (g.members || []).map(m => m.display_name).join(', ');
+        $('cChatHdr').innerHTML =
+            '<div class="c-chat-hdr-info"><div class="c-group-avatar" style="background:' + (g.avatar_color||'#5a8fa8') + ';width:26px;height:26px;font-size:0.6rem">' + (g.name||'?')[0].toUpperCase() + '</div><div><div class="c-chat-hdr-name">' +
+            esc(g.name) + '</div><div class="gc-members-list">' + esc(memberNames) + '</div></div></div>' +
+            '<button class="c-chat-hdr-btn" onclick="gcLeave(' + g.id + ')">Leave</button>';
+        $('cChatPH').style.display = 'none';
+        $('cChatMsgs').style.display = 'flex';
+        $('cChatInputArea').style.display = 'flex';
+        $('cChatMsgs').innerHTML = '';
+
+        const d = await (await fetch(API + '/api/groups/' + gid + '/messages?limit=50')).json();
+        (d.messages || []).forEach(m => appendGroupMsg(m));
+        scrollChat();
+
+        if (window.innerWidth <= 900) {
+            const chatTab = document.querySelector('.mobile-tab[data-panel="Chat"]');
+            if (chatTab) mobileSwitch(chatTab);
+        }
+    };
+
+    function appendGroupMsg(msg) {
+        const el = document.createElement('div');
+        const mine = msg.from === me.id || msg.sender_id === me.id;
+        el.className = 'c-msg ' + (mine ? 'c-msg-sent' : 'c-msg-recv');
+        let h = '';
+        if (!mine) {
+            h += '<div class="c-msg-sender" style="color:' + (msg.sender_color||'#c2593e') + '">' + esc(msg.sender_name||'') + '</div>';
+        }
+        if (msg.content) h += esc(msg.content);
+        if (msg.image_path) h += '<br><img class="c-msg-img" src="' + API + '/uploads/' + esc(msg.image_path) + '" onclick="window.open(this.src)">';
+        const t = msg.created_at ? new Date(msg.created_at + (msg.created_at.endsWith('Z') ? '' : 'Z')).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+        h += '<div class="c-msg-time">' + t + '</div>';
+        el.innerHTML = h;
+        $('cChatMsgs').appendChild(el);
+        scrollChat();
+    }
+
+    // Create group overlay
+    let gcSelectedMembers = [];
+
+    window.gcOpenCreate = function() {
+        gcSelectedMembers = [];
+        $('gcOverlay').classList.add('active');
+        gcRenderCreate();
+    };
+    window.gcCloseCreate = function() { $('gcOverlay').classList.remove('active'); };
+
+    function gcRenderCreate() {
+        let h = '<h3>Create Group</h3>';
+        h += '<input type="text" class="c-search" id="gcNameInput" placeholder="Group name" style="margin-bottom:0.75rem">';
+        h += '<div class="c-section-label">Add friends</div>';
+        h += '<input type="text" class="c-search" id="gcFriendSearch" placeholder="Search friends..." style="margin-bottom:0.4rem">';
+        h += '<div id="gcSearchResults" style="max-height:150px;overflow-y:auto;margin-bottom:0.5rem"></div>';
+        // Selected members
+        if (gcSelectedMembers.length) {
+            h += '<div class="c-section-label">Selected (' + gcSelectedMembers.length + ')</div>';
+            h += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.5rem">';
+            gcSelectedMembers.forEach(m => {
+                h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;background:rgba(194,89,62,0.1);border:1px solid rgba(194,89,62,0.2);border-radius:12px;font-size:0.72rem;color:#d6c8b4">' +
+                    esc(m.display_name) +
+                    '<button onclick="gcRemoveMember(' + m.id + ')" style="background:none;border:none;color:#c2593e;cursor:pointer;font-size:0.8rem;padding:0;line-height:1">&times;</button></span>';
+            });
+            h += '</div>';
+        }
+        h += '<div class="gc-actions"><button class="cz-new-btn" onclick="gcCreate()">Create</button><button class="cz-reset-btn" onclick="gcCloseCreate()">Cancel</button></div>';
+        $('gcBody').innerHTML = h;
+        $('gcNameInput').focus();
+
+        // Show all friends initially, filter on type
+        gcFilterFriends('');
+        $('gcFriendSearch').addEventListener('input', function() { gcFilterFriends(this.value); });
+    }
+
+    function gcFilterFriends(query) {
+        const q = query.toLowerCase().trim();
+        const results = $('gcSearchResults');
+        const available = friends.filter(f => !gcSelectedMembers.some(m => m.id === f.id));
+        const filtered = q ? available.filter(f =>
+            f.display_name.toLowerCase().includes(q) || f.username.toLowerCase().includes(q)
+        ) : available;
+        if (!filtered.length) {
+            results.innerHTML = '<div style="padding:0.4rem;font-size:0.72rem;color:#564c40;font-style:italic">' + (available.length ? 'No matches' : 'All friends added') + '</div>';
+            return;
+        }
+        results.innerHTML = filtered.map(f =>
+            '<div class="c-user-row" onclick="gcAddMember(' + f.id + ')" style="cursor:pointer">' +
+            avatar(f, true) + '<div class="c-user-info"><div class="c-user-name">' + esc(f.display_name) +
+            '</div><div class="c-user-meta">@' + esc(f.username) + '</div></div>' +
+            '<span style="font-size:0.62rem;color:#6d8f5e">+ Add</span></div>'
+        ).join('');
+    }
+
+    window.gcAddMember = function(fid) {
+        const f = friends.find(x => x.id === fid);
+        if (f && !gcSelectedMembers.some(m => m.id === fid)) {
+            gcSelectedMembers.push(f);
+            gcRenderCreate();
+        }
+    };
+    window.gcRemoveMember = function(fid) {
+        gcSelectedMembers = gcSelectedMembers.filter(m => m.id !== fid);
+        gcRenderCreate();
+    };
+
+    window.gcCreate = async function() {
+        const name = ($('gcNameInput') || {}).value || '';
+        if (!name.trim()) return;
+        const ids = gcSelectedMembers.map(m => m.id);
+        if (!ids.length) { alert('Select at least one friend.'); return; }
+        const r = await fetch(API + '/api/groups', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name.trim(), member_ids: ids})
+        });
+        if (r.ok) {
+            gcCloseCreate();
+            await loadGroups();
+            const d = await r.json();
+            if (d.group) cSelectGroup(d.group.id);
+        } else {
+            const d = await r.json();
+            alert(d.error || 'Failed');
+        }
+    };
+
+    window.gcLeave = async function(gid) {
+        if (!confirm('Leave this group?')) return;
+        await fetch(API + '/api/groups/' + gid + '/leave', {method: 'POST'});
+        activeChat = null; activeGroup = null;
+        $('cChatHdr').style.display = 'none';
+        $('cChatPH').style.display = 'flex';
+        $('cChatMsgs').style.display = 'none';
+        $('cChatInputArea').style.display = 'none';
+        loadGroups();
+    };
 
     // ── Portfolio Overlay ──
     let pfViewingId = null; // null = own, number = friend's

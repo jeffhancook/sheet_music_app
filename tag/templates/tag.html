@@ -403,48 +403,77 @@ const FLOWER_COLORS = ['#ff6b8a', '#ffcc44', '#ff8844', '#cc66ff', '#44bbff'];
 const WORLD_W = 1280, WORLD_H = 720;
 const GROUND_Y = 620, GROUND_H = 100;
 
-/* ── Platforms — max ~90px vertical between reachable surfaces ──
-   Jump height ≈ 110px (JUMP_VEL=-11, GRAVITY=0.55)
-   Ground at 620. Tiers: ~535, ~450, ~365, ~280, ~200 */
+/* ── Platforms — jump height ≈ 110px, max gap ~95px ── */
 const compositePlatforms = [
-    /* Tier 1 — low, near ground (~535) */
-    { points: [{x:30,y:535},{x:160,y:535},{x:220,y:560}], thickness: 18 },
-    { points: [{x:400,y:540},{x:550,y:540}], thickness: 16 },
-    { points: [{x:750,y:530},{x:850,y:530},{x:920,y:555}], thickness: 18 },
-    { points: [{x:1050,y:535},{x:1240,y:535}], thickness: 16 },
+    /* Long left ground shelf with a dip */
+    { points: [{x:20,y:540},{x:180,y:540},{x:230,y:560},{x:330,y:560}], thickness: 20 },
 
-    /* Tier 2 — mid-low (~450) */
-    { points: [{x:80,y:450},{x:200,y:450}], thickness: 18 },
-    { points: [{x:300,y:455},{x:400,y:455},{x:470,y:430},{x:570,y:430}], thickness: 18 },
-    { points: [{x:680,y:445},{x:820,y:445}], thickness: 18 },
-    { points: [{x:960,y:440},{x:1060,y:440},{x:1130,y:465}], thickness: 18 },
+    /* Tiny hop stone */
+    { points: [{x:500,y:550},{x:560,y:550}], thickness: 14 },
 
-    /* Tier 3 — middle (~365) */
-    { points: [{x:20,y:365},{x:130,y:365}], thickness: 16 },
-    { points: [{x:220,y:360},{x:310,y:360},{x:370,y:340},{x:460,y:340}], thickness: 18 },
-    { points: [{x:580,y:355},{x:740,y:355}], thickness: 18 },
-    { points: [{x:880,y:350},{x:980,y:350}], thickness: 16 },
-    { points: [{x:1100,y:360},{x:1250,y:360}], thickness: 16 },
+    /* Far right long ramp up */
+    { points: [{x:900,y:555},{x:1000,y:555},{x:1100,y:520},{x:1250,y:520}], thickness: 20 },
 
-    /* Tier 4 — upper (~280) */
-    { points: [{x:100,y:275},{x:250,y:275}], thickness: 16 },
-    { points: [{x:380,y:265},{x:440,y:265},{x:500,y:245},{x:600,y:245}], thickness: 18 },
-    { points: [{x:730,y:270},{x:870,y:270}], thickness: 16 },
-    { points: [{x:1000,y:275},{x:1150,y:275}], thickness: 16 },
+    /* Left mid — wide */
+    { points: [{x:40,y:450},{x:260,y:450}], thickness: 18 },
 
-    /* Tier 5 — high (~200) */
-    { points: [{x:50,y:195},{x:170,y:195}], thickness: 14 },
-    { points: [{x:310,y:185},{x:520,y:185}], thickness: 16 },
-    { points: [{x:650,y:190},{x:790,y:190}], thickness: 14 },
-    { points: [{x:920,y:195},{x:1080,y:195}], thickness: 16 },
+    /* Center mid — long with slope down */
+    { points: [{x:380,y:440},{x:520,y:440},{x:600,y:465}], thickness: 18 },
+
+    /* Right mid — short */
+    { points: [{x:800,y:435},{x:920,y:435}], thickness: 16 },
+
+    /* Left upper — short ledge */
+    { points: [{x:120,y:355},{x:220,y:355}], thickness: 16 },
+
+    /* Center upper — big wide platform with a bump */
+    { points: [{x:340,y:350},{x:480,y:350},{x:530,y:330},{x:580,y:350},{x:720,y:350}], thickness: 18 },
+
+    /* Far right upper */
+    { points: [{x:1000,y:345},{x:1180,y:345}], thickness: 16 },
+
+    /* Left high — tiny */
+    { points: [{x:30,y:265},{x:110,y:265}], thickness: 14 },
+
+    /* Center-left high with ramp up */
+    { points: [{x:220,y:275},{x:330,y:275},{x:400,y:250},{x:500,y:250}], thickness: 18 },
+
+    /* Right high — wide */
+    { points: [{x:680,y:260},{x:900,y:260}], thickness: 16 },
+
+    /* Skybox left */
+    { points: [{x:100,y:175},{x:300,y:175}], thickness: 14 },
+
+    /* Skybox center — long */
+    { points: [{x:450,y:165},{x:750,y:165}], thickness: 16 },
+
+    /* Skybox right — tiny perch */
+    { points: [{x:950,y:180},{x:1050,y:180}], thickness: 14 },
 ];
 const movingPlatforms = [
-    { x:620, w:100, h:18, y0:535, y1:445, speed:0.6, phase:0 },
-    { x:1150, w:90, h:18, y0:450, y1:280, speed:0.5, phase:Math.PI },
+    /* Ground↔mid left side */
+    { x:280, w:90, h:18, y0:545, y1:450, speed:0.55, phase:0 },
+    /* Mid↔upper right side */
+    { x:920, w:100, h:18, y0:435, y1:345, speed:0.7, phase:Math.PI*0.5 },
+    /* Upper↔high center */
+    { x:560, w:85, h:18, y0:350, y1:260, speed:0.6, phase:Math.PI },
+    /* High↔skybox right */
+    { x:1100, w:90, h:18, y0:345, y1:180, speed:0.4, phase:Math.PI*1.5 },
+    /* Fast ground shuttle */
+    { x:650, w:110, h:18, y0:555, y1:440, speed:0.9, phase:Math.PI*0.3 },
 ];
 const walls = [
-    {x:350,y:530,w:18,h:90},{x:730,y:440,w:18,h:90},
-    {x:550,y:340,w:18,h:50},{x:1050,y:260,w:18,h:50},
+    {x:470,y:535,w:18,h:85},
+    {x:760,y:425,w:18,h:70},
+    {x:310,y:250,w:18,h:50},
+];
+
+/* ── Jump pads — { x, y (top of pad), w, h } placed on surfaces ── */
+const JUMPPAD_VEL = -33; /* ~3x normal jump (-11) */
+const jumpPads = [
+    { x: 140, y: GROUND_Y - 10, w: 40, h: 10 },  /* ground left */
+    { x: 1000, y: GROUND_Y - 10, w: 40, h: 10 },  /* ground right */
+    { x: 500, y: 350 - 10, w: 40, h: 10 },         /* on center upper platform */
 ];
 
 /* ── Background ── */
@@ -570,10 +599,20 @@ function updatePlayer() {
         }
 
         if (surfY !== null) {
-            /* Snap feet to surface — handles slopes perfectly */
             player.y = surfY - PLAYER_H;
             player.vy = 0;
             player.onGround = true;
+            /* Check jump pads while grounded */
+            const footY = player.y + PLAYER_H;
+            for (const jp of jumpPads) {
+                if (player.x + halfW > jp.x && player.x - halfW < jp.x + jp.w &&
+                    footY >= jp.y && footY <= jp.y + jp.h + 4) {
+                    player.vy = JUMPPAD_VEL;
+                    player.onGround = false;
+                    player.onPlatIdx = null;
+                    return;
+                }
+            }
             return; /* done this frame */
         } else {
             /* Walked off the edge — start falling */
@@ -663,6 +702,20 @@ function updatePlayer() {
         player.onGround = true;
         player.onPlatIdx = -1;
     }
+
+    /* Jump pad check after landing from air */
+    if (player.onGround) {
+        const fY = player.y + PLAYER_H;
+        for (const jp of jumpPads) {
+            if (player.x + halfW > jp.x && player.x - halfW < jp.x + jp.w &&
+                fY >= jp.y && fY <= jp.y + jp.h + 4) {
+                player.vy = JUMPPAD_VEL;
+                player.onGround = false;
+                player.onPlatIdx = null;
+                break;
+            }
+        }
+    }
 }
 
 /* ================================================================
@@ -679,6 +732,38 @@ function drawGround(){ctx.fillStyle=GROUND_TOP;ctx.fillRect(0,GROUND_Y,WORLD_W,1
 function drawCompositePlatform(plat){const pts=plat.points,th=plat.thickness;if(pts.length<2)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);for(let i=pts.length-1;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y+th);ctx.closePath();ctx.fillStyle=PLAT_SIDE;ctx.fill();ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);for(let i=pts.length-1;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y+th-4);ctx.closePath();ctx.fillStyle=PLAT_TOP;ctx.fill();ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);for(let i=pts.length-1;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y+5);ctx.closePath();ctx.fillStyle=PLAT_GRASS;ctx.fill();ctx.fillStyle='#a0ee80';for(let i=0;i<pts.length-1;i++){const p1=pts[i],p2=pts[i+1],sl=Math.hypot(p2.x-p1.x,p2.y-p1.y),st=Math.floor(sl/12);for(let s=1;s<st;s++){const t=s/st,gx=p1.x+(p2.x-p1.x)*t,gy=p1.y+(p2.y-p1.y)*t,gh=2+Math.sin(gx*0.4)*1.5;ctx.fillRect(gx-1.5,gy-gh,3,gh);}}}
 function drawMovingPlatform(mp){const t=(Math.sin(performance.now()*0.001*mp.speed+mp.phase)+1)/2;mp.currentY=mp.y0+(mp.y1-mp.y0)*t;const{x,w,h}=mp,y=mp.currentY,cr=6;ctx.fillStyle=PLAT_SIDE;ctx.beginPath();ctx.roundRect(x,y+4,w,h,[0,0,cr,cr]);ctx.fill();ctx.fillStyle=PLAT_TOP;ctx.beginPath();ctx.roundRect(x,y,w,h,cr);ctx.fill();ctx.fillStyle=PLAT_GRASS;ctx.beginPath();ctx.roundRect(x,y,w,6,[cr,cr,0,0]);ctx.fill();ctx.fillStyle='#a0ee80';for(let gx=x+6;gx<x+w-6;gx+=10){const gh=2+Math.sin(gx*0.4)*1.5;ctx.fillRect(gx,y-gh,3,gh);}const cx=x+w/2;ctx.fillStyle='rgba(255,255,255,0.2)';ctx.beginPath();ctx.moveTo(cx,mp.y1-12);ctx.lineTo(cx-5,mp.y1-5);ctx.lineTo(cx+5,mp.y1-5);ctx.fill();ctx.beginPath();ctx.moveTo(cx,mp.y0+26);ctx.lineTo(cx-5,mp.y0+19);ctx.lineTo(cx+5,mp.y0+19);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.beginPath();ctx.moveTo(cx,mp.y1);ctx.lineTo(cx,mp.y0+18);ctx.stroke();ctx.setLineDash([]);}
 function drawWall(wall){const{x,y,w,h}=wall;ctx.fillStyle=WALL_COLOR;ctx.fillRect(x,y,w,h);ctx.fillStyle=WALL_DARK;ctx.fillRect(x+w-4,y,4,h);ctx.strokeStyle=WALL_LINE;ctx.lineWidth=1;let odd=false;for(let by=y+10;by<y+h;by+=12){ctx.beginPath();ctx.moveTo(x,by);ctx.lineTo(x+w,by);ctx.stroke();if(odd){ctx.beginPath();ctx.moveTo(x+w/2,by-12);ctx.lineTo(x+w/2,by);ctx.stroke();}odd=!odd;}ctx.fillStyle='#9a8a70';ctx.fillRect(x-2,y-3,w+4,6);}
+
+function drawJumpPad(jp, time) {
+    const {x, y, w, h} = jp;
+    /* Base */
+    ctx.fillStyle = '#c4a020';
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 3);
+    ctx.fill();
+    /* Bright top stripe — pulses */
+    const pulse = 0.7 + Math.sin(time * 0.005) * 0.3;
+    ctx.fillStyle = `rgba(255,240,60,${pulse})`;
+    ctx.beginPath();
+    ctx.roundRect(x + 2, y, w - 4, 4, [3,3,0,0]);
+    ctx.fill();
+    /* Glow */
+    const glow = ctx.createRadialGradient(x + w/2, y, 2, x + w/2, y, w * 0.8);
+    glow.addColorStop(0, `rgba(255,240,80,${0.15 * pulse})`);
+    glow.addColorStop(1, 'rgba(255,240,80,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - w*0.3, y - w*0.5, w*1.6, w);
+    /* Arrow chevrons above */
+    ctx.strokeStyle = `rgba(255,240,60,${0.3 + Math.sin(time * 0.008) * 0.2})`;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 2; i++) {
+        const ay = y - 8 - i * 10 - ((time * 0.03) % 12);
+        ctx.beginPath();
+        ctx.moveTo(x + 8, ay + 6);
+        ctx.lineTo(x + w/2, ay);
+        ctx.lineTo(x + w - 8, ay + 6);
+        ctx.stroke();
+    }
+}
 
 /* ── Avatar drawing ── */
 function drawNinja(c,x,y,size,facing){const s=size/30,f=facing||1;c.save();c.translate(x,y);c.scale(f,1);c.fillStyle='#2a2a2a';c.fillRect(-8*s,-20*s,16*s,22*s);c.fillStyle='#333';c.beginPath();c.arc(0,-24*s,10*s,0,Math.PI*2);c.fill();c.fillStyle='#cc3333';c.fillRect(-10*s,-28*s,20*s,5*s);c.strokeStyle='#cc3333';c.lineWidth=2*s;c.beginPath();c.moveTo(-10*s,-26*s);c.quadraticCurveTo(-16*s,-22*s,-18*s,-18*s);c.stroke();c.beginPath();c.moveTo(-10*s,-24*s);c.quadraticCurveTo(-14*s,-20*s,-16*s,-15*s);c.stroke();c.fillStyle='#fff';c.fillRect(-6*s,-26*s,4*s,3*s);c.fillRect(2*s,-26*s,4*s,3*s);c.fillStyle='#111';c.fillRect(-4*s,-26*s,2*s,3*s);c.fillRect(4*s,-26*s,2*s,3*s);c.fillStyle='#cc3333';c.fillRect(-9*s,-6*s,18*s,3*s);c.fillStyle='#222';c.fillRect(-7*s,2*s,6*s,12*s);c.fillRect(1*s,2*s,6*s,12*s);c.fillStyle='#444';c.fillRect(-8*s,13*s,7*s,3*s);c.fillRect(1*s,13*s,7*s,3*s);c.restore();}
@@ -1150,6 +1235,7 @@ function draw(timestamp) {
     compositePlatforms.forEach(p=>drawCompositePlatform(p));
     movingPlatforms.forEach(mp=>drawMovingPlatform(mp));
     walls.forEach(w=>drawWall(w));
+    jumpPads.forEach(jp=>drawJumpPad(jp, time));
 
     /* Draw remote players */
     for (const sid in remotePlayers) {

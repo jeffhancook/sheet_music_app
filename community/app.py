@@ -13,7 +13,8 @@ from flask_socketio import SocketIO, emit, join_room, disconnect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import or_, and_, func
 
-from models import Session as DBSession, User, Friendship, Message, PortfolioItem, UserBackground, init_db
+from models import (Session as DBSession, User, Friendship, Message, PortfolioItem,
+                    UserBackground, GroupChat, GroupMember, GroupMessage, init_db)
 from auth import hash_password, verify_password, login_required
 
 app = Flask(__name__)
@@ -725,6 +726,10 @@ def ws_connect():
         if user:
             user.last_seen = datetime.now(timezone.utc)
             db.commit()
+        # Join all group rooms
+        memberships = db.query(GroupMember).filter(GroupMember.user_id == uid).all()
+        for m in memberships:
+            join_room(f"group_{m.group_id}")
     finally:
         db.close()
 
@@ -794,6 +799,174 @@ def ws_mark_read(data):
         ).update({"read_at": now})
         db.commit()
         emit("messages_read", {"by": uid}, room=f"user_{friend_id}")
+    finally:
+        db.close()
+
+
+@socketio.on("send_group_message")
+def ws_send_group_message(data):
+    uid = session.get("user_id")
+    group_id = data.get("group_id")
+    content = (data.get("content") or "").strip()
+    image_path = data.get("image_path")
+    if not uid or not group_id:
+        return
+    if not content and not image_path:
+        return
+
+    db = get_db()
+    try:
+        member = db.query(GroupMember).filter(
+            GroupMember.group_id == group_id, GroupMember.user_id == uid
+        ).first()
+        if not member:
+            return
+        user = db.query(User).get(uid)
+        msg = GroupMessage(
+            group_id=group_id, sender_id=uid,
+            content=content if content else None,
+            image_path=image_path,
+        )
+        db.add(msg)
+        db.commit()
+        emit("new_group_message", {
+            "id": msg.id, "group_id": group_id, "from": uid,
+            "sender_name": user.display_name if user else "Unknown",
+            "sender_color": user.avatar_color if user else "#c2593e",
+            "content": msg.content, "image_path": msg.image_path,
+            "created_at": msg.created_at.isoformat(),
+        }, room=f"group_{group_id}")
+    finally:
+        db.close()
+
+
+@socketio.on("group_typing")
+def ws_group_typing(data):
+    uid = session.get("user_id")
+    group_id = data.get("group_id")
+    if not uid or not group_id:
+        return
+    db = get_db()
+    try:
+        user = db.query(User).get(uid)
+        name = user.display_name if user else "Someone"
+    finally:
+        db.close()
+    emit("group_typing", {"group_id": group_id, "from": uid, "name": name},
+         room=f"group_{group_id}", include_self=False)
+
+
+# ── Group Chat API ───────────────────────────────────────────────────────────
+
+@app.route("/api/groups")
+@login_required
+def list_groups():
+    uid = current_user_id()
+    db = get_db()
+    try:
+        memberships = db.query(GroupMember).filter(GroupMember.user_id == uid).all()
+        groups = []
+        for m in memberships:
+            g = db.query(GroupChat).get(m.group_id)
+            if not g:
+                continue
+            gd = g.to_dict(include_members=True)
+            # Get last message
+            last = db.query(GroupMessage).filter(
+                GroupMessage.group_id == g.id
+            ).order_by(GroupMessage.created_at.desc()).first()
+            if last:
+                gd["last_message"] = last.to_dict()
+            gd["member_count"] = len(g.members)
+            groups.append(gd)
+        return jsonify({"groups": groups})
+    finally:
+        db.close()
+
+
+@app.route("/api/groups", methods=["POST"])
+@login_required
+def create_group():
+    uid = current_user_id()
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()[:64]
+    member_ids = data.get("member_ids", [])
+
+    if not name:
+        return jsonify({"error": "Group name is required."}), 400
+    if not member_ids or len(member_ids) < 1:
+        return jsonify({"error": "Add at least one friend."}), 400
+
+    db = get_db()
+    try:
+        group = GroupChat(name=name, creator_id=uid)
+        db.add(group)
+        db.flush()
+
+        # Add creator as member
+        db.add(GroupMember(group_id=group.id, user_id=uid))
+        # Add other members (must be friends)
+        for mid in member_ids:
+            if mid == uid:
+                continue
+            if _are_friends(db, uid, mid):
+                db.add(GroupMember(group_id=group.id, user_id=mid))
+        db.commit()
+
+        # Notify members via socket
+        for m in group.members:
+            socketio.emit("group_created", {"group_id": group.id}, room=f"user_{m.user_id}")
+
+        return jsonify({"group": group.to_dict(include_members=True)}), 201
+    finally:
+        db.close()
+
+
+@app.route("/api/groups/<int:group_id>/messages")
+@login_required
+def group_messages(group_id):
+    uid = current_user_id()
+    db = get_db()
+    try:
+        member = db.query(GroupMember).filter(
+            GroupMember.group_id == group_id, GroupMember.user_id == uid
+        ).first()
+        if not member:
+            return jsonify({"error": "Not a member"}), 403
+
+        limit = min(int(request.args.get("limit", 50)), 100)
+        msgs = db.query(GroupMessage).filter(
+            GroupMessage.group_id == group_id
+        ).order_by(GroupMessage.created_at.desc()).limit(limit).all()
+        msgs.reverse()
+        return jsonify({"messages": [m.to_dict() for m in msgs]})
+    finally:
+        db.close()
+
+
+@app.route("/api/groups/<int:group_id>/leave", methods=["POST"])
+@login_required
+def leave_group(group_id):
+    uid = current_user_id()
+    db = get_db()
+    try:
+        member = db.query(GroupMember).filter(
+            GroupMember.group_id == group_id, GroupMember.user_id == uid
+        ).first()
+        if not member:
+            return jsonify({"error": "Not a member"}), 404
+
+        group = db.query(GroupChat).get(group_id)
+
+        # If creator leaves, delete the whole group
+        if group and group.creator_id == uid:
+            db.query(GroupMessage).filter(GroupMessage.group_id == group_id).delete()
+            db.query(GroupMember).filter(GroupMember.group_id == group_id).delete()
+            db.delete(group)
+        else:
+            db.delete(member)
+        db.commit()
+        return jsonify({"ok": True})
     finally:
         db.close()
 
