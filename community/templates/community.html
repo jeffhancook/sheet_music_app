@@ -1291,29 +1291,22 @@
     };
     window.gcCloseCreate = function() { $('gcOverlay').classList.remove('active'); };
 
+    let gcCreating = false;
+
     function gcRenderCreate() {
         let h = '<h3>Create Group</h3>';
         h += '<input type="text" class="c-search" id="gcNameInput" placeholder="Group name" style="margin-bottom:0.75rem">';
         h += '<div class="c-section-label">Add friends</div>';
         h += '<input type="text" class="c-search" id="gcFriendSearch" placeholder="Search friends..." style="margin-bottom:0.4rem">';
         h += '<div id="gcSearchResults" style="max-height:150px;overflow-y:auto;margin-bottom:0.5rem"></div>';
-        // Selected members
-        if (gcSelectedMembers.length) {
-            h += '<div class="c-section-label">Selected (' + gcSelectedMembers.length + ')</div>';
-            h += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.5rem">';
-            gcSelectedMembers.forEach(m => {
-                h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;background:rgba(194,89,62,0.1);border:1px solid rgba(194,89,62,0.2);border-radius:12px;font-size:0.72rem;color:#d6c8b4">' +
-                    esc(m.display_name) +
-                    '<button onclick="gcRemoveMember(' + m.id + ')" style="background:none;border:none;color:#c2593e;cursor:pointer;font-size:0.8rem;padding:0;line-height:1">&times;</button></span>';
-            });
-            h += '</div>';
-        }
-        h += '<div class="gc-actions"><button class="cz-new-btn" onclick="gcCreate()">Create</button><button class="cz-reset-btn" onclick="gcCloseCreate()">Cancel</button></div>';
+        h += '<div id="gcSelectedArea"></div>';
+        h += '<div class="gc-actions"><button class="cz-new-btn" id="gcCreateBtn" onclick="gcCreate()">Create</button><button class="cz-reset-btn" onclick="gcCloseCreate()">Cancel</button></div>';
         $('gcBody').innerHTML = h;
         $('gcNameInput').focus();
+        gcCreating = false;
 
-        // Show all friends initially, filter on type
         gcFilterFriends('');
+        gcRenderSelectedChips();
         $('gcFriendSearch').addEventListener('input', function() { gcFilterFriends(this.value); });
     }
 
@@ -1340,30 +1333,52 @@
         const f = friends.find(x => x.id === fid);
         if (f && !gcSelectedMembers.some(m => m.id === fid)) {
             gcSelectedMembers.push(f);
-            gcRenderCreate();
+            // Re-filter the search results without re-rendering the whole form
+            gcFilterFriends(($('gcFriendSearch') || {}).value || '');
+            // Update selected chips
+            gcRenderSelectedChips();
         }
     };
     window.gcRemoveMember = function(fid) {
         gcSelectedMembers = gcSelectedMembers.filter(m => m.id !== fid);
-        gcRenderCreate();
+        gcFilterFriends(($('gcFriendSearch') || {}).value || '');
+        gcRenderSelectedChips();
     };
 
+    function gcRenderSelectedChips() {
+        let el = $('gcSelectedArea');
+        if (!el) return;
+        if (!gcSelectedMembers.length) { el.innerHTML = ''; return; }
+        let h = '<div class="c-section-label">Selected (' + gcSelectedMembers.length + ')</div>';
+        h += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.5rem">';
+        gcSelectedMembers.forEach(m => {
+            h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;background:rgba(194,89,62,0.1);border:1px solid rgba(194,89,62,0.2);border-radius:12px;font-size:0.72rem;color:#d6c8b4">' +
+                esc(m.display_name) +
+                '<button onclick="gcRemoveMember(' + m.id + ')" style="background:none;border:none;color:#c2593e;cursor:pointer;font-size:0.8rem;padding:0;line-height:1">&times;</button></span>';
+        });
+        h += '</div>';
+        el.innerHTML = h;
+    }
+
     window.gcCreate = async function() {
+        if (gcCreating) return;
         const name = ($('gcNameInput') || {}).value || '';
         if (!name.trim()) return;
         const ids = gcSelectedMembers.map(m => m.id);
         if (!ids.length) { alert('Select at least one friend.'); return; }
+        gcCreating = true;
+        const btn = $('gcCreateBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Creating...'; }
         const r = await fetch(API + '/api/groups', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({name: name.trim(), member_ids: ids})
         });
+        const d = await r.json();
         if (r.ok) {
             gcCloseCreate();
             await loadGroups();
-            const d = await r.json();
             if (d.group) cSelectGroup(d.group.id);
         } else {
-            const d = await r.json();
             alert(d.error || 'Failed');
         }
     };
