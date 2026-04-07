@@ -112,3 +112,5 @@ sheet_music_app/
 - **Tag nginx needs WebSocket headers** — proxy_http_version 1.1, Upgrade, Connection "upgrade"
 - **Tag uses eventlet** — gunicorn must use `--worker-class eventlet --workers 1`
 - **sites-enabled/default is a file copy** on VPS, not a symlink — must update both sites-available AND sites-enabled
+- **Enhancer must use 1 gunicorn worker** — in-memory job dict not shared; has disk fallback but 1 worker avoids race
+- **Audio enhancement effects use ffmpeg subprocess** — not pydub processing; much faster for filters/noise generation

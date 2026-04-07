@@ -19,7 +19,11 @@ sid_to_lobby = {}
 
 MAX_PLAYERS = 4
 GAME_DURATION = 180
-AVAILABLE_MAPS = ["plains", "factory", "sky_temple", "dimensional_rift"]
+AVAILABLE_MAPS = ["plains", "factory", "sky_temple", "dimensional_rift", "airport", "star_wars"]
+# Avatars banned per map
+MAP_BANNED_AVATARS = {
+    "star_wars": ["chicken", "flappy"],
+}
 
 
 def gen_code():
@@ -134,12 +138,15 @@ def start_game(code):
     lobby["seed"] = random.randint(0, 999999)
     # Track which powerups are active (by index)
     lobby["powerups_taken"] = set()
+    selected_map = lobby.get("selected_map", "plains")
+    banned = MAP_BANNED_AVATARS.get(selected_map, [])
     socketio.emit("game_started", {
         "duration": GAME_DURATION,
-        "map": lobby.get("selected_map", "plains"),
+        "map": selected_map,
         "tagger": tagger,
         "seed": lobby["seed"],
-        "playerOrder": sids,  # for assigning spawn points
+        "playerOrder": sids,
+        "bannedAvatars": banned,
     }, room=code)
     lobby["timer_greenlet"] = eventlet.spawn(game_timer_loop, code)
 
@@ -296,6 +303,68 @@ def on_pickup_powerup(data):
         shuffled = sids[:]
         random.shuffle(shuffled)
         socketio.emit("swap_positions", {"order": shuffled}, room=code)
+
+
+@socketio.on("chat_msg")
+def on_chat_msg(data):
+    sid = request.sid
+    code = sid_to_lobby.get(sid)
+    if not code or code not in lobbies:
+        return
+    lobby = lobbies[code]
+    if sid not in lobby["players"]:
+        return
+    msg = data.get("msg", "")[:100]  # limit length
+    if not msg:
+        return
+    name = lobby["players"][sid]["name"]
+    socketio.emit("chat_message", {"sid": sid, "name": name, "msg": msg}, room=code)
+
+
+@socketio.on("lock_gates")
+def on_lock_gates(data):
+    sid = request.sid
+    code = sid_to_lobby.get(sid)
+    if not code or code not in lobbies:
+        return
+    lobby = lobbies[code]
+    if lobby.get("tagger") != sid:
+        return
+    # Check shared cooldown
+    now = time.time()
+    if now < lobby.get("gate_lock_cooldown", 0):
+        return
+    lobby["gate_lock_cooldown"] = now + 30  # 30s shared cooldown
+    socketio.emit("gates_locked", {"duration": 5000, "cooldown": 30000}, room=code)
+
+
+@socketio.on("fire_projectile")
+def on_fire_projectile(data):
+    sid = request.sid
+    code = sid_to_lobby.get(sid)
+    if not code or code not in lobbies:
+        return
+    lobby = lobbies[code]
+    if lobby.get("tagger") != sid:
+        return  # only tagger can fire
+    socketio.emit("projectile_fired", {
+        "sid": sid,
+        "x": data.get("x", 0),
+        "y": data.get("y", 0),
+        "vx": data.get("vx", 0),
+        "vy": data.get("vy", 0),
+    }, room=code)
+
+
+@socketio.on("gate_activate")
+def on_gate_activate(data):
+    sid = request.sid
+    code = sid_to_lobby.get(sid)
+    if not code or code not in lobbies:
+        return
+    idx = data.get("idx")
+    action = data.get("action", "raise")
+    socketio.emit("gate_activated", {"idx": idx, "action": action, "sid": sid}, room=code)
 
 
 @socketio.on("stun_player")

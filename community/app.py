@@ -13,8 +13,15 @@ from flask_socketio import SocketIO, emit, join_room, disconnect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import or_, and_, func
 
+import bleach
 from models import (Session as DBSession, User, Friendship, Message, PortfolioItem,
-                    UserBackground, GroupChat, GroupMember, GroupMessage, init_db)
+                    UserBackground, GroupChat, GroupMember, GroupMessage,
+                    UserPage, GuestbookEntry, PageImage, init_db)
+
+ALLOWED_TAGS = ["p", "br", "b", "i", "em", "strong", "a", "ul", "ol", "li",
+                "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "img", "span", "div"]
+ALLOWED_ATTRS = {"a": ["href", "title", "target"], "img": ["src", "alt", "width", "height"],
+                 "span": ["style"], "div": ["style"]}
 from auth import hash_password, verify_password, login_required
 
 app = Flask(__name__)
@@ -27,8 +34,10 @@ socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 UPLOADS_DIR = Path(__file__).parent / "uploads"
 PORTFOLIO_DIR = UPLOADS_DIR / "portfolios"
 CHAT_IMAGES_DIR = UPLOADS_DIR / "chat_images"
+PAGE_UPLOADS = UPLOADS_DIR / "pages"
 PORTFOLIO_DIR.mkdir(parents=True, exist_ok=True)
 CHAT_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+PAGE_UPLOADS.mkdir(parents=True, exist_ok=True)
 
 PORTFOLIO_EXTENSIONS = {".mp3", ".mp4", ".pdf"}
 CHAT_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
@@ -489,7 +498,17 @@ def unread_counts():
         db.close()
 
 
-# ── Chat image serving ───────────────────────────────────────────────────────
+# ── File serving ──────────────────────────────────────────────────────────────
+
+@app.route("/uploads/pages/<path:filepath>")
+def serve_page_image(filepath):
+    return send_file(str(PAGE_UPLOADS / filepath))
+
+
+@app.route("/uploads/avatars/<path:filepath>")
+def serve_avatar(filepath):
+    return send_file(str(UPLOADS_DIR / "avatars" / filepath))
+
 
 @app.route("/uploads/<path:filepath>")
 @login_required
@@ -506,6 +525,32 @@ def serve_upload(filepath):
 
 
 # ── Portfolio ────────────────────────────────────────────────────────────────
+
+@app.route("/api/profile/avatar", methods=["POST"])
+@login_required
+def upload_avatar():
+    uid = current_user_id()
+    if "file" not in request.files:
+        return jsonify({"error": "No file"}), 400
+    f = request.files["file"]
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+        return jsonify({"error": "Only images allowed"}), 400
+    user_dir = UPLOADS_DIR / "avatars"
+    user_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"avatar_{uid}_{uuid.uuid4().hex[:6]}{ext}"
+    filepath = user_dir / filename
+    f.save(str(filepath))
+    avatar_url = f"/community/uploads/avatars/{filename}"
+    db = get_db()
+    try:
+        user = db.query(User).get(uid)
+        user.avatar_url = avatar_url
+        db.commit()
+        return jsonify({"avatar_url": avatar_url, "user": user.to_dict()})
+    finally:
+        db.close()
+
 
 @app.route("/api/profile", methods=["PATCH"])
 @login_required
@@ -712,6 +757,354 @@ def serve_portfolio_file(item_id):
 
 
 # ── WebSocket ────────────────────────────────────────────────────────────────
+
+# ── Personal Pages ────────────────────────────────────────────────────────────
+
+PAGE_GEN_PROMPT = """You are designing a personal webpage for someone named {display_name}. Based on their quiz answers, generate a page layout as JSON.
+
+**Answers:**
+- Passions: {passion}
+- Energy: {energy}
+- Color palette: {palette}
+- Perfect day: {saturday}
+- Place they feel like themselves: {place}
+- Music taste: {music}
+- Page vibe: {vibe}
+- Visitor greeting vibe: {greeting}
+
+Generate a JSON object with:
+1. "theme": {{
+     "gradient": "A dark CSS gradient (max luminance 25%) using colors from their palette answer. 3-4 stops.",
+     "accentColor": "hex accent from palette",
+     "secondaryAccent": "hex secondary accent",
+     "textColor": "#d6c8b4",
+     "fontFamily": "pick one: Georgia, serif / Courier New, monospace / system-ui, sans-serif / Palatino, serif",
+     "headingFont": "same options"
+   }}
+2. "backgroundSymbols": An array of 6-10 simple SVG strings representing their hobbies/passions. Each SVG should be 30-50px, use the accent colors, and depict a recognizable symbol of their interests (music notes, paintbrushes, code brackets, cameras, game controllers, books, etc). Keep SVGs simple.
+3. "sections": An ordered array of section objects. Include 4-6 from: hero, about, links, guestbook, quote, music, gallery.
+   Each section: {{"type": "...", "content": {{...}}}}
+   - hero: {{"name": "{display_name}", "tagline": a poetic/creative tagline about them based on their answers}}
+   - about: {{"html": "<p>Write 2-3 paragraphs in THIRD PERSON about {display_name}. Start with something evocative like 'A creative and soulful spirit, {display_name}...' or 'Driven by curiosity and a love for [passion], {display_name}...' Reference their passions, energy, ideal place, music taste. Make it read like a beautifully written character introduction. Do NOT use first person (I/me/my). Use they/them or {display_name}.</p>"}}
+   - quote: {{"text": "a quote that fits their vibe", "attribution": "who said it"}}
+   - links: {{"links": [{{"platform": "spotify|youtube|instagram|github|twitter|custom", "url": "", "label": "display text"}}]}}
+   - guestbook: {{}}
+   - music: {{"description": "a third-person note about their music taste"}}
+   - gallery: {{"description": "a third-person note about what they might share"}}
+4. "meta_title": "{display_name}'s Page" or something creative
+5. "meta_description": One sentence describing this person in third person
+
+IMPORTANT: All text must be THIRD PERSON. Never use I/me/my. Write about {display_name} as if introducing them to the world.
+
+Return ONLY valid JSON, no markdown."""
+
+
+def generate_page(answers, display_name="Someone"):
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=3000,
+        messages=[{"role": "user", "content": PAGE_GEN_PROMPT.format(
+            display_name=display_name,
+            passion=answers.get("passion", "creating things"),
+            energy=answers.get("energy", "calm"),
+            palette=answers.get("palette", "warm tones"),
+            saturday=answers.get("saturday", "relaxing"),
+            place=answers.get("place", "home"),
+            music=answers.get("music", "anything"),
+            vibe=answers.get("vibe", "cozy"),
+            greeting=answers.get("greeting", "welcome!"),
+        )}],
+    )
+    raw = response.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1]
+        if "```" in raw:
+            raw = raw[:raw.rfind("```")]
+    return json.loads(raw.strip())
+
+
+@app.route("/api/page/generate", methods=["POST"])
+@login_required
+def generate_user_page():
+    uid = current_user_id()
+    data = request.get_json(silent=True) or {}
+    answers = {k: (data.get(k) or "").strip()[:200] for k in
+               ["passion", "energy", "palette", "saturday", "place", "music", "vibe", "greeting"]}
+    if not answers.get("passion"):
+        return jsonify({"error": "Answer at least the first question."}), 400
+
+    db = get_db()
+    try:
+        user = db.query(User).get(uid)
+        existing = db.query(UserPage).filter(UserPage.user_id == uid).first()
+
+        try:
+            page_result = generate_page(answers, display_name=user.display_name)
+        except Exception as e:
+            app.logger.error(f"Page generation failed: {e}")
+            return jsonify({"error": "Generation failed. Try again."}), 500
+
+        # Build page_data JSON
+        sections = []
+        for i, s in enumerate(page_result.get("sections", [])):
+            sections.append({
+                "id": str(uuid.uuid4())[:8],
+                "type": s.get("type", "about"),
+                "order": i,
+                "visible": True,
+                "content": s.get("content", {}),
+                "style": {},
+            })
+
+        theme = page_result.get("theme", {})
+        page_data = {
+            "version": 1,
+            "theme": theme,
+            "layout": {"maxWidth": "900px", "style": "single-column"},
+            "sections": sections,
+            "backgroundSymbols": page_result.get("backgroundSymbols", []),
+            "drawings": [],
+            "insertedElements": [],
+            "backgroundAudio": None,
+            "custom_css": "",
+        }
+
+        if existing:
+            existing.page_data = json.dumps(page_data)
+            existing.quiz_answers = json.dumps(answers)
+            existing.meta_title = page_result.get("meta_title", f"{user.display_name}'s Page")
+            existing.meta_description = page_result.get("meta_description", "")
+            existing.is_published = True
+            existing.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            return jsonify({"page": existing.to_dict()})
+        else:
+            # Ensure unique slug
+            slug = user.username
+            conflict = db.query(UserPage).filter(UserPage.slug == slug).first()
+            if conflict:
+                slug = f"{user.username}-{user.id}"
+            page = UserPage(
+                user_id=uid,
+                slug=slug,
+                page_data=json.dumps(page_data),
+                quiz_answers=json.dumps(answers),
+                meta_title=page_result.get("meta_title", f"{user.display_name}'s Page"),
+                meta_description=page_result.get("meta_description", ""),
+                is_published=True,
+            )
+            db.add(page)
+            db.commit()
+            return jsonify({"page": page.to_dict()}), 201
+    finally:
+        db.close()
+
+
+@app.route("/api/page")
+@login_required
+def get_my_page():
+    uid = current_user_id()
+    db = get_db()
+    try:
+        page = db.query(UserPage).filter(UserPage.user_id == uid).first()
+        if not page:
+            return jsonify({"page": None})
+        return jsonify({"page": page.to_dict()})
+    finally:
+        db.close()
+
+
+@app.route("/api/page", methods=["PATCH"])
+@login_required
+def save_page():
+    uid = current_user_id()
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    try:
+        page = db.query(UserPage).filter(UserPage.user_id == uid).first()
+        if not page:
+            return jsonify({"error": "No page found. Generate one first."}), 404
+        if "page_data" in data:
+            # Sanitize HTML in sections
+            pd = json.loads(data["page_data"]) if isinstance(data["page_data"], str) else data["page_data"]
+            for s in pd.get("sections", []):
+                if s.get("type") in ("about", "blog") and "html" in s.get("content", {}):
+                    s["content"]["html"] = bleach.clean(
+                        s["content"]["html"], tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+            page.page_data = json.dumps(pd)
+        if "meta_title" in data:
+            page.meta_title = (data["meta_title"] or "")[:128]
+        if "meta_description" in data:
+            page.meta_description = (data["meta_description"] or "")[:256]
+        if "slug" in data:
+            new_slug = re.sub(r'[^a-z0-9_-]', '', (data["slug"] or "").strip().lower())[:32]
+            if new_slug and new_slug != page.slug:
+                conflict = db.query(UserPage).filter(UserPage.slug == new_slug, UserPage.id != page.id).first()
+                if not conflict:
+                    page.slug = new_slug
+        page.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        return jsonify({"page": page.to_dict()})
+    finally:
+        db.close()
+
+
+@app.route("/api/page/delete", methods=["POST"])
+@login_required
+def delete_page():
+    uid = current_user_id()
+    db = get_db()
+    try:
+        page = db.query(UserPage).filter(UserPage.user_id == uid).first()
+        if not page:
+            return jsonify({"error": "No page"}), 404
+        db.query(GuestbookEntry).filter(GuestbookEntry.page_id == page.id).delete()
+        db.delete(page)
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@app.route("/api/page/publish", methods=["PATCH"])
+@login_required
+def toggle_publish():
+    uid = current_user_id()
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    try:
+        page = db.query(UserPage).filter(UserPage.user_id == uid).first()
+        if not page:
+            return jsonify({"error": "No page found."}), 404
+        page.is_published = bool(data.get("publish", not page.is_published))
+        page.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        return jsonify({"page": page.to_dict()})
+    finally:
+        db.close()
+
+
+@app.route("/p/<slug>")
+def view_page(slug):
+    db = get_db()
+    try:
+        page = db.query(UserPage).filter(UserPage.slug == slug).first()
+        if not page or not page.is_published:
+            return "Page not found", 404
+        page.view_count += 1
+        db.commit()
+        user = db.query(User).get(page.user_id)
+        page_data = json.loads(page.page_data)
+        return render_template("page_view.html",
+            page=page, user=user, page_data=page_data,
+            meta_title=page.meta_title, meta_description=page.meta_description)
+    finally:
+        db.close()
+
+
+@app.route("/api/page/guestbook/<slug>")
+def get_guestbook(slug):
+    db = get_db()
+    try:
+        page = db.query(UserPage).filter(UserPage.slug == slug).first()
+        if not page:
+            return jsonify({"error": "Not found"}), 404
+        entries = db.query(GuestbookEntry).filter(
+            GuestbookEntry.page_id == page.id
+        ).order_by(GuestbookEntry.created_at.desc()).limit(50).all()
+        return jsonify({"entries": [e.to_dict() for e in entries]})
+    finally:
+        db.close()
+
+
+@app.route("/api/page/guestbook/<slug>", methods=["POST"])
+def post_guestbook(slug):
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "Anonymous").strip()[:64]
+    content = (data.get("content") or "").strip()[:500]
+    if not content:
+        return jsonify({"error": "Message is required."}), 400
+
+    db = get_db()
+    try:
+        page = db.query(UserPage).filter(UserPage.slug == slug).first()
+        if not page or not page.is_published:
+            return jsonify({"error": "Not found"}), 404
+        uid = session.get("user_id")
+        entry = GuestbookEntry(
+            page_id=page.id, author_name=name,
+            author_user_id=uid, content=bleach.clean(content, tags=[], strip=True),
+        )
+        db.add(entry)
+        db.commit()
+        return jsonify({"entry": entry.to_dict()}), 201
+    finally:
+        db.close()
+
+
+@app.route("/api/page/guestbook/<int:entry_id>", methods=["DELETE"])
+@login_required
+def delete_guestbook_entry(entry_id):
+    uid = current_user_id()
+    db = get_db()
+    try:
+        entry = db.query(GuestbookEntry).get(entry_id)
+        if not entry:
+            return jsonify({"error": "Not found"}), 404
+        page = db.query(UserPage).get(entry.page_id)
+        if not page or page.user_id != uid:
+            return jsonify({"error": "Not authorized"}), 403
+        db.delete(entry)
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@app.route("/api/page/audio", methods=["POST"])
+@login_required
+def upload_page_audio():
+    uid = current_user_id()
+    if "file" not in request.files:
+        return jsonify({"error": "No file"}), 400
+    f = request.files["file"]
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in (".mp3", ".wav", ".ogg"):
+        return jsonify({"error": "Only MP3, WAV, OGG allowed"}), 400
+    user_dir = PAGE_UPLOADS / str(uid)
+    user_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"audio_{uuid.uuid4().hex[:8]}{ext}"
+    filepath = user_dir / filename
+    f.save(str(filepath))
+    rel_path = f"pages/{uid}/{filename}"
+    return jsonify({"audio_path": f"/community/uploads/{rel_path}"})
+
+
+@app.route("/api/page/image", methods=["POST"])
+@login_required
+def upload_page_image():
+    uid = current_user_id()
+    if "file" not in request.files:
+        return jsonify({"error": "No file"}), 400
+    f = request.files["file"]
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+        return jsonify({"error": "Only images allowed"}), 400
+    user_dir = PAGE_UPLOADS / str(uid)
+    user_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"img_{uuid.uuid4().hex[:8]}{ext}"
+    filepath = user_dir / filename
+    f.save(str(filepath))
+    rel_path = f"pages/{uid}/{filename}"
+    return jsonify({"image_path": f"/community/uploads/{rel_path}"})
+
+
+@app.route("/editor")
+@login_required
+def page_editor():
+    return render_template("page_editor.html")
+
 
 @socketio.on("connect")
 def ws_connect():

@@ -36,6 +36,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
     avatar_color = Column(String(7), default=_random_color)
+    avatar_url = Column(String(512), nullable=True)
     bio = Column(Text, default="")
     created_at = Column(DateTime, default=utcnow)
     last_seen = Column(DateTime, default=utcnow)
@@ -49,6 +50,7 @@ class User(Base):
             "username": self.username,
             "display_name": self.display_name,
             "avatar_color": self.avatar_color,
+            "avatar_url": self.avatar_url,
             "bio": self.bio,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_seen": self.last_seen.isoformat() if self.last_seen else None,
@@ -163,6 +165,68 @@ class UserBackground(Base):
         }
 
 
+class UserPage(Base):
+    __tablename__ = "user_pages"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    slug = Column(String(32), unique=True, nullable=False)
+    page_data = Column(Text, nullable=False, default="{}")
+    is_published = Column(Boolean, default=False)
+    meta_title = Column(String(128), default="")
+    meta_description = Column(String(256), default="")
+    quiz_answers = Column(Text, default="{}")
+    view_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow)
+
+    owner = relationship("User", foreign_keys=[user_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "slug": self.slug,
+            "page_data": self.page_data,
+            "is_published": self.is_published,
+            "meta_title": self.meta_title,
+            "meta_description": self.meta_description,
+            "view_count": self.view_count,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class GuestbookEntry(Base):
+    __tablename__ = "guestbook_entries"
+
+    id = Column(Integer, primary_key=True)
+    page_id = Column(Integer, ForeignKey("user_pages.id"), nullable=False)
+    author_name = Column(String(64), nullable=False)
+    author_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "author_name": self.author_name,
+            "author_user_id": self.author_user_id,
+            "content": self.content,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class PageImage(Base):
+    __tablename__ = "page_images"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    file_path = Column(String(512), nullable=False)
+    file_size = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+
+
 class GroupChat(Base):
     __tablename__ = "group_chats"
 
@@ -237,5 +301,8 @@ def init_db():
     cols = [row[1] for row in cursor.fetchall()]
     if "active_background_id" not in cols:
         conn.execute("ALTER TABLE users ADD COLUMN active_background_id INTEGER")
+        conn.commit()
+    if "avatar_url" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
         conn.commit()
     conn.close()

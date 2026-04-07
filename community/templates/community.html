@@ -90,6 +90,13 @@
       transition: color 0.2s, border-color 0.2s;
     }
     .topbar-logout:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.3); }
+    .topbar-action {
+      background: none; border: 1px solid #3a3428; border-radius: 6px;
+      color: #6a5d50; padding: 0.3rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .topbar-action:hover { color: #b8924a; border-color: rgba(184, 146, 74, 0.3); }
 
     /* ── Auth overlay ── */
     .c-auth-overlay {
@@ -207,12 +214,12 @@
     .c-panel-body::-webkit-scrollbar-thumb { background: #3a3428; border-radius: 3px; }
 
     .c-account {
-      padding: 0.6rem 1rem;
+      padding: 0.65rem 1rem;
       border-top: 1px solid #3a3428;
       display: flex;
       align-items: center;
       gap: 0.6rem;
-      background: rgba(40, 36, 28, 0.6);
+      background: rgba(36, 31, 21, 0.5);
       flex-shrink: 0;
     }
 
@@ -734,17 +741,18 @@
     }
     .gc-overlay.active { display: flex; }
     .gc-card {
-      width: 100%; max-width: 400px;
-      background: rgba(44, 38, 28, 0.85); border: 1px solid #3a3428; border-radius: 10px;
+      width: 100%; max-width: 420px;
+      background: rgba(44, 38, 28, 0.92); backdrop-filter: blur(4px);
+      border: 1px solid #3a3428; border-radius: 10px;
       overflow: hidden; position: relative;
-      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
     }
     .gc-card::before {
       content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
       background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5;
     }
-    .gc-body { padding: 1.25rem; }
-    .gc-body h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.1rem; color: #ecdfc8; margin-bottom: 1rem; }
+    .gc-body { padding: 1.5rem; }
+    .gc-body h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; color: #ecdfc8; margin-bottom: 1.25rem; }
     .gc-friend-check { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; cursor: pointer; }
     .gc-friend-check input[type="checkbox"] { accent-color: #c2593e; }
     .gc-friend-check label { font-size: 0.82rem; color: #d6c8b4; cursor: pointer; }
@@ -759,6 +767,15 @@
     <a class="topbar-back" href="/">&larr; Home</a>
     <span class="topbar-title">Community</span>
     <div class="topbar-user" id="topbarUser" style="display:none">
+      <button class="topbar-action" onclick="openPf()" title="My Portfolio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+      <button class="topbar-action" onclick="openPageBuilder()" title="My Page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+      <button class="topbar-action" onclick="czOpen()" title="Customize Background">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
       <span class="topbar-username" id="topbarName"></span>
       <button class="topbar-logout" onclick="cLogout()">logout</button>
     </div>
@@ -806,11 +823,11 @@
 
   <!-- ── Three-panel layout ── -->
   <div class="c-app">
-    <!-- Left: Friends -->
+    <!-- Left: People -->
     <div class="c-panel-left mobile-active" id="panelFriends">
-      <div class="c-panel-header"><h2>Friends</h2></div>
+      <div class="c-panel-header"><h2>People</h2></div>
       <div class="c-panel-body">
-        <input type="text" class="c-search" id="cUserSearch" placeholder="Search users...">
+        <input type="text" class="c-search" id="cUserSearch" placeholder="Find people...">
         <div class="c-search-results" id="cSearchRes"></div>
         <div id="cGroupsList"></div>
         <div id="cFriendReqs"></div>
@@ -822,7 +839,12 @@
     <!-- Center: Chat -->
     <div class="c-panel-center" id="panelChat">
       <div class="c-chat-hdr" id="cChatHdr" style="display:none"></div>
-      <div class="c-chat-placeholder" id="cChatPH">Select a friend or group to start chatting</div>
+      <div class="c-chat-placeholder" id="cChatPH">
+        <div style="text-align:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="color:#3a3428;margin-bottom:0.75rem"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <div style="color:#564c40;font-size:0.88rem">Select a friend or group to start chatting</div>
+        </div>
+      </div>
       <div class="c-chat-msgs" id="cChatMsgs" style="display:none"></div>
       <div class="c-typing" id="cTyping"></div>
       <div class="c-chat-input-area" id="cChatInputArea" style="display:none">
@@ -967,8 +989,11 @@
     // ── Avatar ──
     function avatar(u, sm) {
         const cls = sm ? 'c-avatar c-avatar-sm' : 'c-avatar';
-        const ini = (u.display_name || u.username || '?')[0].toUpperCase();
         const on = isOnline(u) ? '<span class="c-online-dot"></span>' : '';
+        if (u.avatar_url) {
+            return '<div class="' + cls + '" style="background:none;overflow:hidden"><img src="' + u.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' + on + '</div>';
+        }
+        const ini = (u.display_name || u.username || '?')[0].toUpperCase();
         return '<div class="' + cls + '" style="background:' + (u.avatar_color || '#c2593e') + '">' + ini + on + '</div>';
     }
     function isOnline(u) {
@@ -979,11 +1004,7 @@
     function renderAccount() {
         $('cAccount').innerHTML = avatar(me, true) +
             '<div class="c-user-info"><div class="c-user-name">' + esc(me.display_name) + '</div>' +
-            '<div style="display:flex;gap:0.3rem;margin-top:0.2rem">' +
-            '<button class="c-customize-btn" onclick="openPf()">portfolio</button>' +
-            '<button class="c-customize-btn" onclick="czOpen()">customize</button>' +
-            '<button class="c-logout-btn" onclick="cLogout()">logout</button>' +
-            '</div></div>';
+            '<div class="c-user-meta">@' + esc(me.username) + '</div></div>';
     }
 
     window.cLogout = async function() {
@@ -1222,16 +1243,21 @@
 
     function renderGroups() {
         const el = $('cGroupsList');
-        if (!groups.length) { el.innerHTML = '<div class="c-group-header"><div class="c-section-label">Groups</div><button class="c-new-group-btn" onclick="gcOpenCreate()">+ New</button></div>'; return; }
         let h = '<div class="c-group-header"><div class="c-section-label">Groups</div><button class="c-new-group-btn" onclick="gcOpenCreate()">+ New</button></div>';
-        groups.forEach(g => {
-            const act = activeChat && activeChat.type === 'group' && activeChat.group.id === g.id ? ' active' : '';
-            const ini = (g.name || '?')[0].toUpperCase();
-            h += '<div class="c-user-row' + act + '" onclick="cSelectGroup(' + g.id + ')">' +
-                '<div class="c-group-avatar" style="background:' + (g.avatar_color||'#5a8fa8') + '">' + ini + '</div>' +
-                '<div class="c-user-info"><div class="c-user-name">' + esc(g.name) + '</div>' +
-                '<div class="c-user-meta">' + g.member_count + ' members</div></div></div>';
-        });
+        if (!groups.length) {
+            h += '<div style="padding:0.3rem 0.65rem;font-size:0.72rem;color:#564c40;font-style:italic">No groups yet</div>';
+        } else {
+            groups.forEach(g => {
+                const act = activeChat && activeChat.type === 'group' && activeChat.group.id === g.id ? ' active' : '';
+                const ini = (g.name || '?')[0].toUpperCase();
+                const lastMsg = g.last_message ? '<div class="c-user-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc((g.last_message.sender_name||'') + ': ' + (g.last_message.content||'image')) + '</div>' : '<div class="c-user-meta">' + g.member_count + ' members</div>';
+                h += '<div class="c-user-row' + act + '" onclick="cSelectGroup(' + g.id + ')">' +
+                    '<div class="c-group-avatar" style="background:' + (g.avatar_color||'#5a8fa8') + '">' + ini + '</div>' +
+                    '<div class="c-user-info"><div class="c-user-name">' + esc(g.name) + '</div>' +
+                    lastMsg + '</div></div>';
+            });
+        }
+        h += '<div style="border-bottom:1px solid #3a3428;margin:0.5rem 0"></div>';
         el.innerHTML = h;
     }
 
@@ -1246,8 +1272,8 @@
         $('cChatHdr').style.display = 'flex';
         const memberNames = (g.members || []).map(m => m.display_name).join(', ');
         $('cChatHdr').innerHTML =
-            '<div class="c-chat-hdr-info"><div class="c-group-avatar" style="background:' + (g.avatar_color||'#5a8fa8') + ';width:26px;height:26px;font-size:0.6rem">' + (g.name||'?')[0].toUpperCase() + '</div><div><div class="c-chat-hdr-name">' +
-            esc(g.name) + '</div><div class="gc-members-list">' + esc(memberNames) + '</div></div></div>' +
+            '<div class="c-chat-hdr-info"><div class="c-group-avatar" style="background:' + (g.avatar_color||'#5a8fa8') + ';width:28px;height:28px;font-size:0.65rem">' + (g.name||'?')[0].toUpperCase() + '</div><div><div class="c-chat-hdr-name">' +
+            esc(g.name) + '</div><div class="gc-members-list">' + g.member_count + ' members &mdash; ' + esc(memberNames) + '</div></div></div>' +
             '<button class="c-chat-hdr-btn" onclick="gcLeave(' + g.id + ')">Leave</button>';
         $('cChatPH').style.display = 'none';
         $('cChatMsgs').style.display = 'flex';
@@ -1424,7 +1450,15 @@
         const ini = (u.display_name || u.username || '?')[0].toUpperCase();
         const since = u.created_at ? new Date(u.created_at + 'Z').toLocaleDateString(undefined, {year:'numeric',month:'long'}) : '';
         let h = '<div class="pf-profile">';
-        h += '<div class="pf-avatar-lg" style="background:' + (u.avatar_color||'#c2593e') + '">' + ini + '</div>';
+        if (u.avatar_url) {
+            h += '<div class="pf-avatar-lg" style="background:none;overflow:hidden"><img src="' + u.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>';
+        } else {
+            h += '<div class="pf-avatar-lg" style="background:' + (u.avatar_color||'#c2593e') + '">' + ini + '</div>';
+        }
+        if (isOwn) {
+            h += '<input type="file" id="pfAvatarInput" accept=".jpg,.jpeg,.png,.gif,.webp" style="display:none">';
+            h += '<button onclick="document.getElementById(\'pfAvatarInput\').click()" style="background:none;border:none;color:#6a5d50;font-size:0.62rem;cursor:pointer;margin-top:0.2rem;font-family:Fira Code,monospace">change photo</button>';
+        }
         h += '<div class="pf-profile-info">';
         h += '<div class="pf-profile-name">' + esc(u.display_name) + '</div>';
         h += '<div class="pf-profile-username">@' + esc(u.username) + '</div>';
@@ -1509,6 +1543,19 @@
                 $('pfUploadTitle').value = pfFile.name.replace(/\.[^.]+$/, '');
                 $('pfUploadTitle').focus();
             });
+            // Avatar upload
+            const avInput = $('pfAvatarInput');
+            if (avInput) {
+                avInput.addEventListener('change', async function() {
+                    if (!this.files[0]) return;
+                    const fd = new FormData(); fd.append('file', this.files[0]);
+                    const r = await fetch(API + '/api/profile/avatar', {method: 'POST', body: fd});
+                    const d = await r.json();
+                    if (r.ok) { me.avatar_url = d.avatar_url; openPf(); }
+                    else { alert(d.error || 'Upload failed'); }
+                    this.value = '';
+                });
+            }
         }
     }
 
@@ -1563,6 +1610,177 @@
     };
 
     function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // ── Personal Page Builder ──
+    window.openPageBuilder = async function() {
+        const r = await fetch(API + '/api/page');
+        const d = await r.json();
+        if (d.page) {
+            // Already has a page — go view it
+            window.open('/community/p/' + d.page.slug, '_blank');
+        } else {
+            showPageQuiz();
+        }
+    };
+
+    const PAGE_QUIZ = [
+        {key:'passion', q:'What are you passionate about? (select all that apply)', type:'multi', opts:[
+            {val:'music',icon:'\u{1F3B5}',label:'Music'},{val:'art',icon:'\u{1F3A8}',label:'Art / Drawing'},
+            {val:'writing',icon:'\u{270F}\uFE0F',label:'Writing'},{val:'coding',icon:'\u{1F4BB}',label:'Coding'},
+            {val:'gaming',icon:'\u{1F3AE}',label:'Gaming'},{val:'cooking',icon:'\u{1F373}',label:'Cooking'},
+            {val:'photography',icon:'\u{1F4F7}',label:'Photography'},{val:'dance',icon:'\u{1F483}',label:'Dance'},
+            {val:'film',icon:'\u{1F3AC}',label:'Film / Video'},{val:'fitness',icon:'\u{1F3CB}\uFE0F',label:'Fitness'},
+            {val:'nature',icon:'\u{1F332}',label:'Nature / Outdoors'},{val:'travel',icon:'\u{1F30D}',label:'Travel'},
+            {val:'science',icon:'\u{1F52C}',label:'Science'},{val:'reading',icon:'\u{1F4DA}',label:'Reading'},
+            {val:'fashion',icon:'\u{1F45C}',label:'Fashion'},{val:'sports',icon:'\u{26BD}',label:'Sports'},
+            {val:'crafts',icon:'\u{1F9F5}',label:'DIY / Crafts'},{val:'animals',icon:'\u{1F43E}',label:'Animals'},
+        ]},
+        {key:'energy', q:'Words that describe your energy (pick a few)', type:'multi', opts:[
+            {val:'calm',icon:'\u{1F54A}\uFE0F',label:'Calm'},{val:'restless',icon:'\u{1F525}',label:'Restless'},
+            {val:'dreamy',icon:'\u{1F319}',label:'Dreamy'},{val:'intense',icon:'\u{26A1}',label:'Intense'},
+            {val:'playful',icon:'\u{1F3AD}',label:'Playful'},{val:'curious',icon:'\u{1F9D0}',label:'Curious'},
+            {val:'chill',icon:'\u{1F60E}',label:'Chill'},{val:'driven',icon:'\u{1F680}',label:'Driven'},
+            {val:'creative',icon:'\u{2728}',label:'Creative'},{val:'chaotic',icon:'\u{1F300}',label:'Chaotic'},
+            {val:'thoughtful',icon:'\u{1F4AD}',label:'Thoughtful'},{val:'adventurous',icon:'\u{1F3D4}\uFE0F',label:'Adventurous'},
+        ]},
+        {key:'palette', q:'Pick your color vibes (select all that feel right)', type:'multi', opts:[
+            {val:'ocean-blue',icon:'\u{1F30A}',label:'Ocean Blues'},{val:'sunset-orange',icon:'\u{1F305}',label:'Sunset Orange'},
+            {val:'forest-green',icon:'\u{1F332}',label:'Forest Green'},{val:'midnight-purple',icon:'\u{1F31C}',label:'Midnight Purple'},
+            {val:'warm-gold',icon:'\u{2728}',label:'Warm Gold'},{val:'neon-pink',icon:'\u{1F338}',label:'Neon Pink'},
+            {val:'silver-grey',icon:'\u{1F311}',label:'Silver / Grey'},{val:'earth-brown',icon:'\u{1F3DC}\uFE0F',label:'Earthy Brown'},
+            {val:'sky-cyan',icon:'\u{1F4A0}',label:'Sky Cyan'},{val:'rose',icon:'\u{1F339}',label:'Rose / Blush'},
+            {val:'black-white',icon:'\u{25FC}\uFE0F',label:'Black & White'},{val:'pastel',icon:'\u{1F308}',label:'Pastels'},
+        ]},
+        {key:'saturday', q:'What does your perfect day look like?', type:'multi', opts:[
+            {val:'reading',icon:'\u{1F4DA}',label:'Reading'},{val:'gaming',icon:'\u{1F3AE}',label:'Gaming all day'},
+            {val:'outdoors',icon:'\u{1F3D5}\uFE0F',label:'Outdoors / Hiking'},{val:'cooking',icon:'\u{1F373}',label:'Cooking a big meal'},
+            {val:'friends',icon:'\u{1F46F}',label:'Hanging with friends'},{val:'creating',icon:'\u{1F3A8}',label:'Creating something'},
+            {val:'sleeping',icon:'\u{1F634}',label:'Sleeping in'},{val:'exploring',icon:'\u{1F30D}',label:'Exploring somewhere new'},
+            {val:'music',icon:'\u{1F3B5}',label:'Playing / Listening to music'},{val:'movies',icon:'\u{1F3AC}',label:'Watching movies'},
+            {val:'working-out',icon:'\u{1F4AA}',label:'Working out'},{val:'nothing',icon:'\u{2615}',label:'Absolutely nothing'},
+        ]},
+        {key:'place', q:'Where do you feel most like yourself?', type:'multi', opts:[
+            {val:'bedroom',icon:'\u{1F6CF}\uFE0F',label:'My room'},{val:'nature',icon:'\u{1F332}',label:'In nature'},
+            {val:'city',icon:'\u{1F3D9}\uFE0F',label:'In the city'},{val:'studio',icon:'\u{1F3A4}',label:'My studio / workspace'},
+            {val:'library',icon:'\u{1F4DA}',label:'A library'},{val:'beach',icon:'\u{1F3D6}\uFE0F',label:'The beach'},
+            {val:'cafe',icon:'\u{2615}',label:'A cozy caf\u{00E9}'},{val:'rooftop',icon:'\u{1F303}',label:'A rooftop at night'},
+            {val:'road',icon:'\u{1F697}',label:'On the road'},{val:'home',icon:'\u{1F3E0}',label:'Home with family'},
+            {val:'stage',icon:'\u{1F3A4}',label:'On a stage'},{val:'mountains',icon:'\u{1F3D4}\uFE0F',label:'Mountains'},
+        ]},
+        {key:'music', q:'What kind of music do you vibe with? (select all)', type:'multi', opts:[
+            {val:'indie',icon:'\u{1F3B8}',label:'Indie / Alt'},{val:'hiphop',icon:'\u{1F399}\uFE0F',label:'Hip-Hop / Rap'},
+            {val:'electronic',icon:'\u{1F3A7}',label:'Electronic'},{val:'classical',icon:'\u{1F3BB}',label:'Classical'},
+            {val:'jazz',icon:'\u{1F3B7}',label:'Jazz'},{val:'rock',icon:'\u{1F918}',label:'Rock'},
+            {val:'pop',icon:'\u{1F3A4}',label:'Pop'},{val:'lofi',icon:'\u{2615}',label:'Lo-fi / Chill'},
+            {val:'rnb',icon:'\u{1F49C}',label:'R&B / Soul'},{val:'folk',icon:'\u{1FA95}',label:'Folk / Acoustic'},
+            {val:'metal',icon:'\u{1F525}',label:'Metal'},{val:'kpop',icon:'\u{1F49B}',label:'K-Pop'},
+            {val:'latin',icon:'\u{1F483}',label:'Latin'},{val:'ambient',icon:'\u{1F319}',label:'Ambient'},
+        ]},
+        {key:'vibe', q:'What vibe should your page have? (pick a few)', type:'multi', opts:[
+            {val:'minimal',icon:'\u{25FB}\uFE0F',label:'Minimal'},{val:'cozy',icon:'\u{2615}',label:'Cozy'},
+            {val:'bold',icon:'\u{1F525}',label:'Bold'},{val:'retro',icon:'\u{1F4FC}',label:'Retro'},
+            {val:'artistic',icon:'\u{1F3A8}',label:'Artistic'},{val:'chaotic',icon:'\u{1F300}',label:'Chaotic'},
+            {val:'dark',icon:'\u{1F311}',label:'Dark / Gothic'},{val:'cute',icon:'\u{1F33C}',label:'Cute'},
+            {val:'techy',icon:'\u{1F4BB}',label:'Techy'},{val:'nature',icon:'\u{1F33F}',label:'Nature / Organic'},
+            {val:'elegant',icon:'\u{1F48E}',label:'Elegant'},{val:'grunge',icon:'\u{26D3}\uFE0F',label:'Grunge / Raw'},
+        ]},
+        {key:'greeting', q:'What\u2019s the vibe when someone visits your page?', type:'multi', opts:[
+            {val:'welcome',icon:'\u{1F44B}',label:'Warm welcome'},{val:'mysterious',icon:'\u{1F311}',label:'Mysterious'},
+            {val:'funny',icon:'\u{1F602}',label:'Funny / Playful'},{val:'chill',icon:'\u{1F60E}',label:'Chill, come hang'},
+            {val:'professional',icon:'\u{1F454}',label:'Professional'},{val:'artistic',icon:'\u{1F3A8}',label:'Creative showcase'},
+            {val:'personal',icon:'\u{1F496}',label:'Personal / Intimate'},{val:'loud',icon:'\u{1F4E2}',label:'Loud and proud'},
+            {val:'nerdy',icon:'\u{1F913}',label:'Nerdy / Deep dive'},{val:'aesthetic',icon:'\u{2728}',label:'Pure aesthetic'},
+        ]},
+    ];
+    let pqStep = 0, pqAnswers = {};
+
+    function showPageQuiz() {
+        $('czOverlay').classList.add('active');
+        pqStep = 0; pqAnswers = {};
+        renderPageQuizStep();
+    }
+
+    function renderPageQuizStep() {
+        const q = PAGE_QUIZ[pqStep];
+        const progress = (pqStep / PAGE_QUIZ.length * 100).toFixed(0);
+        $('czTitle').textContent = 'Create Your Page';
+        let h = '<div class="cz-progress"><div class="cz-progress-fill" style="width:' + progress + '%"></div></div>';
+        h += '<div class="cz-question">' + q.q + '</div>';
+        if (q.type === 'text') {
+            h += '<input type="text" class="c-search" id="pqInput" value="' + esc(pqAnswers[q.key]||'') + '" placeholder="' + q.placeholder + '" style="font-size:0.95rem;padding:0.7rem 0.85rem;margin-bottom:0.5rem">';
+        } else if (q.type === 'multi') {
+            const selected = (pqAnswers[q.key] || '').split(',').filter(Boolean);
+            h += '<div style="font-size:0.68rem;color:#6a5d50;margin-bottom:0.5rem">Select all that apply</div>';
+            h += '<div class="cz-options" id="pqOpts" style="grid-template-columns:1fr 1fr 1fr">';
+            q.opts.forEach(o => {
+                const sel = selected.includes(o.val) ? ' selected' : '';
+                h += '<div class="cz-option' + sel + '" data-val="' + o.val + '" onclick="pqMultiPick(this)" style="padding:0.5rem 0.4rem;font-size:0.78rem"><div class="cz-option-icon" style="font-size:1.1rem">' + o.icon + '</div><div>' + o.label + '</div></div>';
+            });
+            h += '</div>';
+            const otherVal = pqAnswers[q.key + '_other'] || '';
+            h += '<div style="margin-top:0.6rem"><input type="text" class="c-search" id="pqOther" value="' + esc(otherVal) + '" placeholder="Other \u2014 type your own..." style="font-size:0.82rem;padding:0.5rem 0.7rem"></div>';
+        }
+        h += '<div class="cz-quiz-nav">';
+        h += '<button class="cz-quiz-btn cz-quiz-back" onclick="' + (pqStep > 0 ? 'pqBack()' : 'czClose()') + '">' + (pqStep > 0 ? 'Back' : 'Cancel') + '</button>';
+        if (pqStep < PAGE_QUIZ.length - 1) {
+            h += '<button class="cz-quiz-btn cz-quiz-next" onclick="pqNext()">Next</button>';
+        } else {
+            h += '<button class="cz-quiz-btn cz-quiz-next" onclick="pqGenerate()">Create Page</button>';
+        }
+        h += '</div>';
+        $('czBody').innerHTML = h;
+        if (q.type === 'text') {
+            $('pqInput').focus();
+            $('pqInput').addEventListener('keydown', e => { if (e.key === 'Enter') { pqStep < PAGE_QUIZ.length - 1 ? pqNext() : pqGenerate(); } });
+        } else if (q.type === 'multi' && $('pqOther')) {
+            $('pqOther').addEventListener('keydown', e => { if (e.key === 'Enter') { pqStep < PAGE_QUIZ.length - 1 ? pqNext() : pqGenerate(); } });
+        }
+    }
+
+    window.pqMultiPick = function(el) {
+        el.classList.toggle('selected');
+        // Collect all selected values
+        const selected = [];
+        document.querySelectorAll('#pqOpts .cz-option.selected').forEach(o => selected.push(o.dataset.val));
+        pqAnswers[PAGE_QUIZ[pqStep].key] = selected.join(',');
+    };
+    function pqSave() {
+        const q = PAGE_QUIZ[pqStep];
+        if (q.type === 'text') {
+            const v = ($('pqInput')||{}).value||'';
+            if (v.trim()) pqAnswers[q.key] = v.trim();
+        } else if (q.type === 'multi') {
+            // Save "other" text
+            const other = ($('pqOther')||{}).value||'';
+            if (other.trim()) {
+                const current = (pqAnswers[q.key] || '').split(',').filter(Boolean);
+                if (!current.includes(other.trim())) current.push(other.trim());
+                pqAnswers[q.key] = current.join(', ');
+            } else {
+                // Convert comma-joined vals to readable labels
+                const vals = (pqAnswers[q.key] || '').split(',').filter(Boolean);
+                const labels = vals.map(v => { const opt = (q.opts||[]).find(o => o.val === v); return opt ? opt.label : v; });
+                pqAnswers[q.key] = labels.join(', ');
+            }
+        }
+    }
+    window.pqNext = function() { pqSave(); pqStep++; renderPageQuizStep(); };
+    window.pqBack = function() { pqSave(); pqStep--; renderPageQuizStep(); };
+    window.pqGenerate = async function() {
+        pqSave();
+        if (!pqAnswers.passion) { alert('Answer at least the first question.'); return; }
+        $('czBody').innerHTML = '<div class="c-empty" style="padding:3rem 1rem">Creating your page with AI...<br><span style="font-size:0.72rem;color:#564c40">This takes a few seconds</span></div>';
+        try {
+            const r = await fetch(API + '/api/page/generate', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(pqAnswers)
+            });
+            const d = await r.json();
+            if (!r.ok) { alert(d.error || 'Failed'); czClose(); return; }
+            czClose();
+            window.open('/community/p/' + (d.page ? d.page.slug : me.username), '_blank');
+        } catch(e) { alert('Generation failed. Try again.'); czClose(); }
+    };
 
     // ── Customize / Backgrounds ──
     let czView = 'list';
