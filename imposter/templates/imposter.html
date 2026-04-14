@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imposter // Han Chau</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-deep: #0a0614;
+  --bg-mid: #120a22;
+  --panel: rgba(28,18,46,0.78);
+  --panel-solid: #1a1030;
+  --border: #3a2658;
+  --border-glow: rgba(158,111,212,0.35);
+  --crimson: #d43a5a;
+  --crimson-bright: #ec5575;
+  --violet: #9e6fd4;
+  --violet-soft: #7a5ab5;
+  --amber: #d4a860;
+  --mint: #6fd4b5;
+  --text: #e8dfd8;
+  --text-dim: #9a8aa8;
+  --text-mute: #6a5f80;
+}
+
+html, body { height: 100%; }
+
+body {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(212,58,90,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(158,111,212,0.07) 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 100%);
+  color: var(--text);
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  line-height: 1.5;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── Grain / fog ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: overlay;
+}
+
+/* ── Ambient vignette ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* ── Floating decorations ── */
+.decor {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 1;
+  overflow: hidden;
+}
+.decor svg { position: absolute; }
+
+@keyframes drift-slow {
+  0%, 100% { transform: translate(0,0) rotate(var(--r,0deg)); }
+  50% { transform: translate(calc(var(--dx,15px)*1), calc(var(--dy,-10px)*1)) rotate(calc(var(--r,0deg) + 4deg)); }
+}
+@keyframes pulse-fade {
+  0%, 100% { opacity: var(--o,0.15); }
+  50% { opacity: calc(var(--o,0.15) + 0.08); }
+}
+@keyframes mote-rise {
+  0% { opacity: 0; transform: translate(0,0) scale(0.4); }
+  15% { opacity: var(--o,0.35); }
+  85% { opacity: calc(var(--o,0.35)*0.6); }
+  100% { opacity: 0; transform: translate(var(--dx,10px), var(--dy,-120px)) scale(0.7); }
+}
+
+.decor .glyph {
+  animation: drift-slow var(--dur, 18s) ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+.decor .dust {
+  position: absolute;
+  border-radius: 50%;
+  animation: pulse-fade var(--dur, 5s) ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+  --o: 0.15;
+}
+.decor .mote {
+  position: absolute;
+  border-radius: 50%;
+  animation: mote-rise var(--dur, 10s) ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+
+/* ── Home button ── */
+.home-btn {
+  position: fixed; top: 1rem; left: 1rem;
+  z-index: 10000;
+  display: flex; align-items: center; gap: 0.4rem;
+  font: 500 0.75rem "Fira Code", "JetBrains Mono", monospace;
+  color: var(--text-dim); text-decoration: none;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: rgba(10,6,20,0.75);
+  backdrop-filter: blur(10px);
+  transition: all .2s;
+}
+.home-btn:hover {
+  color: var(--crimson-bright);
+  border-color: rgba(212,58,90,0.5);
+  box-shadow: 0 0 16px rgba(212,58,90,0.2);
+}
+
+/* ── Timestamp ── */
+.timestamp {
+  position: fixed; bottom: 1rem; left: 1.25rem;
+  z-index: 10000;
+  font: 0.65rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.12em;
+}
+
+/* ── Screens ── */
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+.screen.active { display: flex; }
+
+#nameScreen, #lobbyScreen, #endScreen {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 5rem;
+}
+#gameScreen {
+  flex-direction: column;
+  padding: 0;
+}
+
+/* ── Common panels ── */
+.panel {
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  position: relative;
+  z-index: 2;
+}
+.panel.glow {
+  box-shadow:
+    0 0 0 1px var(--border-glow),
+    0 8px 40px rgba(0,0,0,0.5),
+    0 0 80px rgba(158,111,212,0.08);
+}
+.panel.glow::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--crimson) 30%,
+    var(--violet) 70%,
+    transparent 100%);
+  opacity: 0.6;
+  border-radius: 6px 6px 0 0;
+}
+
+/* ── Title brand ── */
+.brand-title {
+  font: 700 2.8rem "Cinzel", Georgia, serif;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 30px rgba(212,58,90,0.15);
+}
+.brand-title .accent { color: var(--crimson); }
+.brand-sub {
+  text-align: center;
+  font: 0.72rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+/* ── Inputs ── */
+.input-row {
+  display: flex; gap: 0.5rem; margin-bottom: 0.75rem;
+  width: 100%;
+}
+.input-row input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  background: rgba(10,6,20,0.6);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: 0.95rem "Fira Code", monospace;
+  outline: none;
+  transition: all .2s;
+}
+.input-row input:focus {
+  border-color: var(--crimson);
+  box-shadow: 0 0 0 3px rgba(212,58,90,0.12);
+  background: rgba(10,6,20,0.8);
+}
+.input-row input::placeholder { color: var(--text-mute); }
+
+/* ── Buttons ── */
+.btn {
+  padding: 0.8rem 1.4rem;
+  border: 1px solid; border-radius: 4px;
+  font: 600 0.78rem "Fira Code", monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .18s;
+  background: transparent;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+.btn-primary {
+  border-color: var(--crimson);
+  color: var(--crimson-bright);
+  background: rgba(212,58,90,0.08);
+}
+.btn-primary:hover:not(:disabled) {
+  background: rgba(212,58,90,0.18);
+  box-shadow: 0 0 20px rgba(212,58,90,0.25);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+.btn-secondary:hover {
+  border-color: var(--violet);
+  color: var(--violet);
+  box-shadow: 0 0 12px rgba(158,111,212,0.15);
+}
+.btn-violet {
+  border-color: var(--violet);
+  color: var(--violet);
+  background: rgba(158,111,212,0.08);
+}
+.btn-violet:hover:not(:disabled) {
+  background: rgba(158,111,212,0.18);
+  box-shadow: 0 0 20px rgba(158,111,212,0.25);
+  transform: translateY(-1px);
+}
+.btn:disabled {
+  border-color: var(--border);
+  color: var(--text-mute);
+  background: transparent;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.btn-block { width: 100%; }
+
+/* ── Name screen ── */
+#nameScreen .panel {
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 440px;
+}
+#nameScreen .divider {
+  text-align: center;
+  font: 0.65rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.3em;
+  margin: 1.25rem 0;
+  position: relative;
+}
+#nameScreen .divider::before,
+#nameScreen .divider::after {
+  content: '';
+  position: absolute; top: 50%;
+  width: 30%; height: 1px;
+  background: var(--border);
+}
+#nameScreen .divider::before { left: 0; }
+#nameScreen .divider::after { right: 0; }
+
+.error-text {
+  color: var(--crimson-bright);
+  font: 0.75rem "Fira Code", monospace;
+  margin-top: 0.5rem;
+  min-height: 1.2em;
+  text-align: center;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  width: 100%;
+  max-width: 440px;
+}
+.info-panel {
+  padding: 1rem 1.2rem;
+  background: rgba(10,6,20,0.4);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.info-panel h3 {
+  font: 600 0.68rem "Fira Code", monospace;
+  color: var(--amber);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.info-panel ul { list-style: none; font-size: 0.75rem; color: var(--text-dim); line-height: 1.9; }
+.info-panel li::before { content: '◆ '; color: var(--violet); font-size: 0.55em; vertical-align: middle; margin-right: 0.3em; }
+.info-panel .hl { color: var(--text); }
+
+/* ── Lobby screen ── */
+#lobbyScreen .lobby-wrap {
+  width: 100%;
+  max-width: 720px;
+}
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.lobby-label {
+  font: 0.65rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.lobby-code-wrap {
+  display: flex; align-items: center; gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: all .2s;
+}
+.lobby-code-wrap:hover {
+  border-color: var(--amber);
+  box-shadow: 0 0 12px rgba(212,168,96,0.15);
+}
+.lobby-code-label {
+  font: 0.6rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.18em;
+}
+.lobby-code {
+  font: 700 1rem "Fira Code", monospace;
+  color: var(--amber);
+  letter-spacing: 0.25em;
+}
+
+.lobby-body { padding: 2rem 1.5rem; }
+
+.seats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 720px) {
+  .seats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.seat {
+  aspect-ratio: 1;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(10,6,20,0.3);
+  position: relative;
+  transition: all .3s;
+}
+.seat.filled {
+  border-style: solid;
+  border-color: var(--border);
+  background: rgba(26,16,48,0.5);
+  box-shadow: 0 0 20px rgba(158,111,212,0.06);
+}
+.seat.you { border-color: var(--crimson); box-shadow: 0 0 20px rgba(212,58,90,0.15); }
+.seat.host-seat::after {
+  content: 'HOST';
+  position: absolute;
+  top: 0.4rem; right: 0.4rem;
+  font: 0.55rem "Fira Code", monospace;
+  color: var(--amber);
+  letter-spacing: 0.15em;
+}
+
+.seat-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 1.3rem Georgia, serif;
+  color: rgba(10,6,20,0.8);
+  position: relative;
+}
+.seat-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.3;
+}
+.seat-name {
+  font-size: 0.82rem;
+  color: var(--text);
+  text-align: center;
+  word-break: break-word;
+}
+.seat-empty {
+  color: var(--text-mute);
+  font: 0.7rem "Fira Code", monospace;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.lobby-actions {
+  display: flex; gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.lobby-hint {
+  text-align: center;
+  margin-top: 1rem;
+  font: 0.72rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.1em;
+}
+
+/* ══════════ GAME SCREEN ══════════ */
+.game-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  padding: 3.5rem 1.25rem 1.25rem;
+  gap: 0.75rem;
+}
+
+/* Top HUD */
+.hud-top {
+  position: fixed;
+  top: 1rem; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.75rem;
+  z-index: 100;
+}
+.hud-pill {
+  background: rgba(10,6,20,0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font: 0.72rem "Fira Code", monospace;
+  color: var(--text);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.hud-pill.round .rlabel { color: var(--text-mute); }
+.hud-pill.round .rnum { color: var(--amber); font-weight: 700; }
+.hud-pill.phase { color: var(--crimson-bright); border-color: rgba(212,58,90,0.4); }
+.hud-pill.timer .tnum { color: var(--violet); font-weight: 700; min-width: 2.5em; text-align: right; }
+.hud-pill.timer.urgent .tnum { color: var(--crimson-bright); animation: pulse-urgent 0.7s ease-in-out infinite; }
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Word display */
+.word-display {
+  text-align: center;
+  padding: 1.25rem;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+.word-mini-label {
+  font: 0.62rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.word-main {
+  font: 700 2.4rem "Cinzel", Georgia, serif;
+  color: var(--amber);
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 30px rgba(212,168,96,0.25),
+    0 0 60px rgba(212,168,96,0.1);
+  line-height: 1.1;
+  margin-bottom: 0.3rem;
+}
+.word-category {
+  display: inline-block;
+  font: 0.7rem "Fira Code", monospace;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--violet);
+  padding: 0.3rem 0.9rem;
+  margin: 0.4rem auto;
+  border: 1px solid rgba(158,111,212,0.35);
+  border-radius: 20px;
+  background: rgba(158,111,212,0.08);
+}
+.word-category .cat-label {
+  color: var(--text-mute);
+  margin-right: 0.4em;
+}
+
+.word-role {
+  font: 0.72rem "Fira Code", monospace;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.word-role.civilian { color: var(--mint); }
+.word-role.imposter { color: var(--crimson); text-shadow: 0 0 12px rgba(212,58,90,0.3); }
+
+/* Timer bar */
+.timer-track {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  height: 3px;
+  background: rgba(26,16,48,0.6);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.timer-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--crimson), var(--violet));
+  transition: width 0.9s linear;
+  box-shadow: 0 0 8px rgba(158,111,212,0.4);
+}
+
+/* Players layout */
+.players-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pcard {
+  min-width: 130px;
+  max-width: 160px;
+  flex: 1 1 140px;
+  padding: 0.75rem;
+  background: rgba(26,16,48,0.55);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+  transition: all .3s;
+  position: relative;
+  overflow: hidden;
+}
+.pcard.active {
+  border-color: var(--crimson);
+  box-shadow:
+    0 0 0 1px var(--crimson),
+    0 0 30px rgba(212,58,90,0.3),
+    inset 0 0 30px rgba(212,58,90,0.05);
+  animation: card-pulse 1.5s ease-in-out infinite;
+}
+@keyframes card-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--crimson), 0 0 30px rgba(212,58,90,0.3), inset 0 0 30px rgba(212,58,90,0.05); }
+  50% { box-shadow: 0 0 0 1px var(--crimson), 0 0 45px rgba(212,58,90,0.45), inset 0 0 30px rgba(212,58,90,0.08); }
+}
+.pcard.done {
+  border-color: var(--violet-soft);
+  background: rgba(26,16,48,0.75);
+}
+.pcard.you { box-shadow: 0 0 0 1px var(--amber); }
+.pcard.voted { border-color: var(--mint); }
+.pcard.eliminated {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+.pavatar {
+  width: 36px; height: 36px;
+  margin: 0 auto 0.4rem;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 1rem Georgia, serif;
+  color: rgba(10,6,20,0.85);
+  position: relative;
+}
+.pavatar::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.4;
+}
+.pname {
+  font-size: 0.78rem;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  word-break: break-word;
+}
+.pstatus {
+  font: 0.62rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  min-height: 1em;
+}
+.pclue {
+  font: 0.78rem "Fira Code", monospace;
+  color: var(--amber);
+  margin-top: 0.25rem;
+  word-break: break-word;
+}
+.pclue.skipped { color: var(--text-mute); font-style: italic; }
+.pbadge {
+  position: absolute;
+  top: 0.35rem; right: 0.4rem;
+  font: 0.52rem "Fira Code", monospace;
+  letter-spacing: 0.12em;
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+}
+.pbadge.you { background: rgba(212,168,96,0.18); color: var(--amber); border: 1px solid rgba(212,168,96,0.3); }
+.pbadge.host { background: rgba(212,168,96,0.1); color: var(--amber); }
+.pbadge.vote-decision { background: rgba(212,58,90,0.18); color: var(--crimson-bright); border: 1px solid rgba(212,58,90,0.35); }
+.pbadge.continue-decision { background: rgba(111,212,181,0.12); color: var(--mint); border: 1px solid rgba(111,212,181,0.3); }
+
+/* Action panels (clue input, decision buttons, vote) */
+.action-area {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.action-panel {
+  padding: 1.25rem;
+  background: rgba(26,16,48,0.55);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  position: relative;
+}
+
+.your-turn-indicator {
+  text-align: center;
+  font: 0.75rem "Fira Code", monospace;
+  color: var(--crimson-bright);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  animation: your-turn-glow 1.5s ease-in-out infinite;
+}
+@keyframes your-turn-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(212,58,90,0.3); }
+  50% { text-shadow: 0 0 16px rgba(212,58,90,0.6); }
+}
+
+.waiting-text {
+  text-align: center;
+  font: 0.8rem "Fira Code", monospace;
+  color: var(--text-dim);
+  padding: 1rem 0;
+}
+
+/* Decision phase */
+.decision-panel {
+  text-align: center;
+}
+.decision-prompt {
+  font: 700 1.1rem Georgia, serif;
+  color: var(--text);
+  margin-bottom: 1.25rem;
+}
+.decision-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.dbtn {
+  padding: 1.25rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: rgba(10,6,20,0.5);
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  color: var(--text);
+}
+.dbtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.dbtn.choice-vote {
+  border-color: rgba(212,58,90,0.4);
+}
+.dbtn.choice-vote:hover:not(:disabled) {
+  border-color: var(--crimson);
+  background: rgba(212,58,90,0.12);
+  box-shadow: 0 0 24px rgba(212,58,90,0.3);
+}
+.dbtn.choice-vote.selected {
+  border-color: var(--crimson);
+  background: rgba(212,58,90,0.18);
+  box-shadow: 0 0 24px rgba(212,58,90,0.3);
+}
+.dbtn.choice-continue {
+  border-color: rgba(158,111,212,0.4);
+}
+.dbtn.choice-continue:hover:not(:disabled) {
+  border-color: var(--violet);
+  background: rgba(158,111,212,0.12);
+  box-shadow: 0 0 24px rgba(158,111,212,0.3);
+}
+.dbtn.choice-continue.selected {
+  border-color: var(--violet);
+  background: rgba(158,111,212,0.18);
+  box-shadow: 0 0 24px rgba(158,111,212,0.3);
+}
+.dbtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.dbtn .dicon {
+  font: 700 1.8rem Georgia, serif;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+.dbtn.choice-vote .dicon { color: var(--crimson-bright); }
+.dbtn.choice-continue .dicon { color: var(--violet); }
+.dbtn .dlabel {
+  font: 600 0.8rem "Fira Code", monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.dbtn .dsub {
+  font-size: 0.72rem;
+  color: var(--text-mute);
+  margin-top: 0.3rem;
+}
+
+.decision-status {
+  text-align: center;
+  font: 0.75rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.15em;
+  margin-top: 1rem;
+}
+
+/* Clue input */
+.clue-input-row {
+  display: flex; gap: 0.5rem;
+}
+.clue-input-row input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  background: rgba(10,6,20,0.7);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--amber);
+  font: 1rem "Fira Code", monospace;
+  outline: none;
+}
+.clue-input-row input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(212,168,96,0.15);
+}
+
+/* Chat */
+.chat-panel {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  background: rgba(10,6,20,0.5);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+.chat-messages {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.chat-messages::-webkit-scrollbar { width: 6px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.chat-msg {
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.chat-msg.system {
+  color: var(--text-mute);
+  font-style: italic;
+  font-size: 0.72rem;
+}
+.chat-msg .chat-name { font-weight: 600; margin-right: 0.3rem; }
+.chat-msg .chat-text { color: var(--text); }
+
+.chat-input-row {
+  display: flex; gap: 0.4rem;
+}
+.chat-input-row input {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  background: rgba(10,6,20,0.5);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: 0.82rem "Fira Code", monospace;
+  outline: none;
+}
+.chat-input-row input:focus { border-color: var(--violet); }
+.chat-input-row input::placeholder { color: var(--text-mute); }
+.chat-send {
+  padding: 0.55rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font: 600 0.7rem "Fira Code", monospace;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+}
+.chat-send:hover {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+
+/* ── Countdown overlay ── */
+.countdown-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,6,20,0.92);
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.countdown-label {
+  font: 0.75rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+.countdown-num {
+  font: 700 8rem "Cinzel", Georgia, serif;
+  color: var(--crimson);
+  text-shadow:
+    0 0 40px rgba(212,58,90,0.4),
+    0 0 80px rgba(212,58,90,0.2);
+  animation: count-pulse 1s ease-out;
+}
+@keyframes count-pulse {
+  0% { transform: scale(1.5); opacity: 0; }
+  40% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+/* ── Decision reveal ── */
+.decision-reveal {
+  text-align: center;
+  padding: 1.25rem;
+}
+.decision-reveal-counts {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 1rem;
+}
+.dcount {
+  text-align: center;
+}
+.dcount-num {
+  font: 700 3rem "Cinzel", Georgia, serif;
+  line-height: 1;
+}
+.dcount.vote .dcount-num { color: var(--crimson-bright); text-shadow: 0 0 20px rgba(212,58,90,0.3); }
+.dcount.continue .dcount-num { color: var(--violet); text-shadow: 0 0 20px rgba(158,111,212,0.3); }
+.dcount-label {
+  font: 0.65rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 0.4rem;
+}
+.decision-outcome {
+  font: 600 1rem Georgia, serif;
+  color: var(--text);
+  margin-top: 0.75rem;
+}
+
+/* ── Vote phase ── */
+.vote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.vcard {
+  padding: 0.9rem 0.75rem;
+  background: rgba(26,16,48,0.6);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  position: relative;
+}
+.vcard:not(.disabled):hover {
+  border-color: var(--crimson);
+  background: rgba(212,58,90,0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(212,58,90,0.2);
+}
+.vcard.selected {
+  border-color: var(--crimson);
+  background: rgba(212,58,90,0.18);
+  box-shadow: 0 0 24px rgba(212,58,90,0.3);
+}
+.vcard.disabled { opacity: 0.4; cursor: not-allowed; }
+.vcard-avatar {
+  width: 36px; height: 36px;
+  margin: 0 auto 0.4rem;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 1rem Georgia, serif;
+  color: rgba(10,6,20,0.85);
+}
+.vcard-name {
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 600;
+}
+.vcard-clue {
+  font: 0.7rem "Fira Code", monospace;
+  color: var(--amber);
+  margin-top: 0.25rem;
+  word-break: break-word;
+}
+
+.vote-progress {
+  text-align: center;
+  font: 0.75rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.18em;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Vote reveal ── */
+.reveal-container {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.25rem;
+  background: rgba(26,16,48,0.7);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+}
+.reveal-title {
+  font: 700 1.1rem Georgia, serif;
+  color: var(--text);
+  margin-bottom: 1rem;
+  letter-spacing: 0.04em;
+}
+.reveal-votes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.reveal-vote-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.7rem;
+  background: rgba(10,6,20,0.4);
+  border-radius: 4px;
+}
+.reveal-vote-row .arrow { color: var(--text-mute); }
+.reveal-vote-row .from-name { color: var(--text-dim); }
+.reveal-vote-row .to-name { color: var(--crimson-bright); font-weight: 600; }
+
+.reveal-outcome {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+}
+.reveal-outcome.tie {
+  border: 1px solid var(--violet);
+  background: rgba(158,111,212,0.08);
+}
+.reveal-outcome.eliminated {
+  border: 1px solid var(--crimson);
+  background: rgba(212,58,90,0.1);
+}
+.reveal-outcome-text {
+  font: 700 1.2rem Georgia, serif;
+}
+.reveal-outcome.eliminated .reveal-outcome-text { color: var(--crimson-bright); }
+.reveal-outcome.tie .reveal-outcome-text { color: var(--violet); }
+.reveal-outcome-sub {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+}
+
+/* ── End screen ── */
+#endScreen .end-wrap {
+  width: 100%;
+  max-width: 580px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+.end-title {
+  font: 700 2.4rem "Cinzel", Georgia, serif;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+.end-title.civilians-win { color: var(--mint); text-shadow: 0 0 30px rgba(111,212,181,0.3); }
+.end-title.imposter-wins { color: var(--crimson-bright); text-shadow: 0 0 30px rgba(212,58,90,0.3); }
+
+.end-sub {
+  font: 0.72rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.word-reveal {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.wr-item { text-align: center; }
+.wr-label {
+  font: 0.6rem "Fira Code", monospace;
+  color: var(--text-mute);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.wr-word {
+  font: 700 1.3rem Georgia, serif;
+}
+.wr-word.civ { color: var(--mint); }
+.wr-word.imp { color: var(--crimson-bright); }
+
+.imposter-reveal {
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+}
+.imposter-reveal .label { color: var(--text-dim); }
+.imposter-reveal .name {
+  color: var(--crimson-bright);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.end-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.end-pchip {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  background: rgba(10,6,20,0.5);
+  display: flex; gap: 0.4rem; align-items: center;
+}
+.end-pchip.role-imposter {
+  border-color: rgba(212,58,90,0.4);
+  background: rgba(212,58,90,0.08);
+  color: var(--crimson-bright);
+}
+.end-pchip.role-civilian {
+  border-color: rgba(111,212,181,0.3);
+  color: var(--mint);
+}
+.end-pchip.eliminated-chip {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+.end-pchip .chip-word {
+  font: 0.7rem "Fira Code", monospace;
+  opacity: 0.75;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .brand-title { font-size: 2rem; }
+  .hud-top { flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 2rem); }
+  .hud-pill { font-size: 0.65rem; padding: 0.4rem 0.7rem; }
+  .word-main { font-size: 1.7rem; }
+  .game-root { padding-top: 4.5rem; }
+  .info-grid { grid-template-columns: 1fr; }
+  .word-reveal { flex-direction: column; gap: 1rem; }
+  .pcard { min-width: 110px; max-width: 100%; }
+  .hide-mobile { display: none; }
+  .home-btn { font-size: 0.7rem; padding: 0.35rem 0.6rem; }
+  .decision-buttons { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<a href="/" class="home-btn">&larr; Home</a>
+<div class="timestamp" id="crtTimestamp"></div>
+
+<!-- ── Decorations ── -->
+<div class="decor">
+  <!-- Arcane glyphs -->
+  <svg class="glyph hide-mobile" style="top:8%;left:6%;width:70px;height:70px;--dur:22s;--d:0s;--r:0deg;--dx:10px;--dy:-8px" viewBox="0 0 70 70">
+    <circle cx="35" cy="35" r="28" stroke="#9e6fd4" stroke-width="0.5" opacity="0.14" fill="none"/>
+    <circle cx="35" cy="35" r="20" stroke="#d43a5a" stroke-width="0.4" opacity="0.1" fill="none"/>
+    <polygon points="35,12 50,52 20,52" stroke="#9e6fd4" stroke-width="0.5" opacity="0.12" fill="none"/>
+    <circle cx="35" cy="35" r="3" fill="#d43a5a" opacity="0.18"/>
+  </svg>
+  <svg class="glyph hide-mobile" style="top:70%;right:8%;width:90px;height:90px;--dur:26s;--d:3s;--r:-2deg;--dx:-12px;--dy:-10px" viewBox="0 0 90 90">
+    <polygon points="45,8 82,68 8,68" stroke="#d43a5a" stroke-width="0.5" opacity="0.12" fill="none"/>
+    <polygon points="45,82 8,22 82,22" stroke="#9e6fd4" stroke-width="0.5" opacity="0.1" fill="none"/>
+    <circle cx="45" cy="45" r="6" stroke="#d4a860" stroke-width="0.4" opacity="0.15" fill="none"/>
+  </svg>
+  <svg class="glyph" style="top:45%;left:3%;width:50px;height:50px;--dur:20s;--d:5s;--r:1deg;--dx:6px;--dy:-6px" viewBox="0 0 50 50">
+    <polygon points="25,5 45,25 25,45 5,25" stroke="#9e6fd4" stroke-width="0.5" opacity="0.13" fill="none"/>
+    <circle cx="25" cy="25" r="2" fill="#9e6fd4" opacity="0.2"/>
+  </svg>
+  <svg class="glyph hide-mobile" style="top:20%;right:5%;width:60px;height:60px;--dur:24s;--d:7s;--r:-1deg;--dx:-8px;--dy:-5px" viewBox="0 0 60 60">
+    <circle cx="30" cy="30" r="22" stroke="#d4a860" stroke-width="0.4" opacity="0.1" fill="none"/>
+    <line x1="8" y1="30" x2="52" y2="30" stroke="#d43a5a" stroke-width="0.4" opacity="0.12"/>
+    <line x1="30" y1="8" x2="30" y2="52" stroke="#d43a5a" stroke-width="0.4" opacity="0.12"/>
+  </svg>
+
+  <!-- Dust particles -->
+  <span class="dust" style="top:15%;left:22%;width:2px;height:2px;background:#d43a5a;--dur:4.5s;--d:0s;--o:0.15"></span>
+  <span class="dust" style="top:30%;left:75%;width:3px;height:3px;background:#9e6fd4;--dur:5.5s;--d:1.2s;--o:0.12"></span>
+  <span class="dust" style="top:60%;left:35%;width:2px;height:2px;background:#d4a860;--dur:4s;--d:0.8s;--o:0.18"></span>
+  <span class="dust" style="top:45%;left:88%;width:2px;height:2px;background:#d43a5a;--dur:6s;--d:2s;--o:0.12"></span>
+  <span class="dust" style="top:75%;left:55%;width:3px;height:3px;background:#9e6fd4;--dur:5s;--d:1.5s;--o:0.15"></span>
+  <span class="dust" style="top:20%;left:45%;width:2px;height:2px;background:#d4a860;--dur:3.8s;--d:0.5s;--o:0.16"></span>
+  <span class="dust" style="top:85%;left:15%;width:3px;height:3px;background:#d43a5a;--dur:5.2s;--d:2.5s;--o:0.13"></span>
+  <span class="dust" style="top:50%;left:60%;width:2px;height:2px;background:#9e6fd4;--dur:4.2s;--d:1s;--o:0.14"></span>
+  <span class="dust" style="top:10%;left:55%;width:2px;height:2px;background:#d4a860;--dur:4.8s;--d:3s;--o:0.16"></span>
+  <span class="dust hide-mobile" style="top:35%;left:12%;width:3px;height:3px;background:#d43a5a;--dur:5.6s;--d:1.8s;--o:0.13"></span>
+
+  <!-- Rising motes -->
+  <span class="mote hide-mobile" style="width:3px;height:3px;top:85%;left:25%;background:#d4a860;box-shadow:0 0 8px 2px #d4a860;--dur:11s;--d:0s;--dy:-120px;--dx:20px;--o:0.3"></span>
+  <span class="mote hide-mobile" style="width:2px;height:2px;top:75%;left:70%;background:#9e6fd4;box-shadow:0 0 6px 1px #9e6fd4;--dur:13s;--d:2s;--dy:-140px;--dx:-15px;--o:0.28"></span>
+  <span class="mote hide-mobile" style="width:4px;height:4px;top:92%;left:45%;background:#d43a5a;box-shadow:0 0 10px 2px #d43a5a;--dur:10s;--d:4s;--dy:-110px;--dx:10px;--o:0.22"></span>
+  <span class="mote" style="width:3px;height:3px;top:88%;left:82%;background:#d4a860;box-shadow:0 0 7px 1px #d4a860;--dur:12s;--d:1s;--dy:-130px;--dx:-25px;--o:0.25"></span>
+  <span class="mote" style="width:2px;height:2px;top:80%;left:8%;background:#9e6fd4;box-shadow:0 0 6px 1px #9e6fd4;--dur:14s;--d:5s;--dy:-100px;--dx:18px;--o:0.22"></span>
+</div>
+
+<!-- Countdown -->
+<div id="countdownOverlay" class="countdown-overlay" style="display:none">
+  <div class="countdown-label">Game begins in</div>
+  <div class="countdown-num" id="countdownNum"></div>
+</div>
+
+<!-- ══════════ NAME SCREEN ══════════ -->
+<div id="nameScreen" class="screen active">
+  <div class="brand-title"><span class="accent">╳</span> Imposter <span class="accent">╳</span></div>
+  <div class="brand-sub">find the one among you</div>
+
+  <div class="panel glow">
+    <div style="padding:2rem 1.75rem">
+      <div class="input-row">
+        <input type="text" id="nameInput" placeholder="Your name..." maxlength="20" autofocus>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="createLobby()">Create Game</button>
+
+      <div class="divider">OR JOIN</div>
+
+      <div class="input-row">
+        <input type="text" id="codeInput" placeholder="LOBBY CODE" maxlength="4" style="text-transform:uppercase; text-align:center; letter-spacing:0.35em;"
+               onkeydown="if(event.key==='Enter')joinLobby()">
+      </div>
+      <button class="btn btn-violet btn-block" onclick="joinLobby()">Join Lobby</button>
+
+      <div id="nameError" class="error-text"></div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-panel">
+      <h3>The game</h3>
+      <ul>
+        <li>Everyone gets a <span class="hl">secret word</span></li>
+        <li>One is <span class="hl">the imposter</span> — different word</li>
+        <li>Give <span class="hl">clues</span>, find the fraud</li>
+      </ul>
+    </div>
+    <div class="info-panel">
+      <h3>Each round</h3>
+      <ul>
+        <li><span class="hl">3–8</span> players</li>
+        <li>Vote <span class="hl">continue</span> or <span class="hl">call vote</span></li>
+        <li>Tie = another round</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ LOBBY SCREEN ══════════ -->
+<div id="lobbyScreen" class="screen">
+  <div class="lobby-wrap">
+    <div class="panel glow">
+      <div class="lobby-header">
+        <span class="lobby-label">Lobby</span>
+        <div class="lobby-code-wrap" onclick="copyCode()" title="Click to copy">
+          <span class="lobby-code-label">Code:</span>
+          <span class="lobby-code" id="lobbyCode">----</span>
+        </div>
+      </div>
+      <div class="lobby-body">
+        <div class="seats-grid" id="seatsGrid"></div>
+        <div class="lobby-actions">
+          <button class="btn btn-primary" id="startBtn" onclick="startGame()" style="display:none">Begin Game</button>
+          <button class="btn btn-secondary" onclick="copyCode()">Copy Code</button>
+          <button class="btn btn-secondary" onclick="leaveLobby()">Leave</button>
+        </div>
+        <div id="lobbyError" class="error-text"></div>
+        <div class="lobby-hint">Minimum 3 players · Share code to invite</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ GAME SCREEN ══════════ -->
+<div id="gameScreen" class="screen">
+  <!-- Top HUD -->
+  <div class="hud-top">
+    <div class="hud-pill round"><span class="rlabel">Round</span> <span class="rnum" id="roundNum">1</span></div>
+    <div class="hud-pill phase" id="phaseLabel">CLUE PHASE</div>
+    <div class="hud-pill timer" id="timerPill"><span class="tnum" id="timerText">25</span></div>
+  </div>
+
+  <div class="game-root">
+    <!-- Word display -->
+    <div class="word-display">
+      <div class="word-mini-label">Your word</div>
+      <div class="word-main" id="yourWord">——</div>
+      <div class="word-category" id="yourCategory"></div>
+      <div class="word-role" id="yourRole"></div>
+    </div>
+
+    <!-- Timer bar -->
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+
+    <!-- Players -->
+    <div class="players-row" id="playersRow"></div>
+
+    <!-- Action area -->
+    <div class="action-area" id="actionArea"></div>
+
+    <!-- Chat -->
+    <div class="chat-panel">
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="discuss..." maxlength="200"
+               onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ END SCREEN ══════════ -->
+<div id="endScreen" class="screen">
+  <div class="panel glow end-wrap">
+    <h1 class="end-title" id="endTitle"></h1>
+    <div class="end-sub" id="endSub"></div>
+
+    <div class="word-reveal" id="wordReveal"></div>
+    <div class="imposter-reveal" id="imposterReveal"></div>
+    <div class="end-players" id="endPlayers"></div>
+
+    <div class="lobby-actions">
+      <button class="btn btn-primary" id="playAgainBtn" onclick="playAgain()" style="display:none">Play Again</button>
+      <a href="/" class="btn btn-secondary">Exit</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+<script>
+const basePath = window.location.pathname.replace(/\/$/, '');
+const socket = io({ path: basePath + '/socket.io' });
+
+// ── State ──
+let mySid = null;
+let lobbyCode = null;
+let isHost = false;
+let currentPhase = null;
+let timerMax = 0;
+let timerRemaining = 0;
+let myWord = '';
+let myRole = '';
+let currentClues = [];
+let allPlayers = [];
+let hasVoted = false;
+let hasDecided = false;
+
+const PLAYER_COLORS = [
+  '#e06b56','#5b9bd5','#7bc67e','#c9a84c',
+  '#b07cc6','#d47fa6','#5cc4bf','#d49a5a',
+];
+
+function pcolor(idx) { return PLAYER_COLORS[(idx || 0) % PLAYER_COLORS.length]; }
+function getPlayer(sid) { return allPlayers.find(p => p.sid === sid); }
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function initial(name) {
+  return (name || '?').trim().charAt(0).toUpperCase();
+}
+
+// ── Screen switching ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Lobby functions ──
+function createLobby() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) { document.getElementById('nameError').textContent = 'Enter your name'; return; }
+  socket.emit('create_lobby', { name });
+}
+
+function joinLobby() {
+  const name = document.getElementById('nameInput').value.trim();
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  if (!name) { document.getElementById('nameError').textContent = 'Enter your name'; return; }
+  if (!code) { document.getElementById('nameError').textContent = 'Enter a lobby code'; return; }
+  socket.emit('join_lobby', { code, name });
+}
+
+function copyCode() {
+  if (!lobbyCode) return;
+  navigator.clipboard.writeText(lobbyCode).catch(() => {});
+  const el = document.getElementById('lobbyCode');
+  const orig = el.textContent;
+  el.textContent = 'COPIED';
+  setTimeout(() => el.textContent = orig, 1200);
+}
+
+function startGame() { socket.emit('start_game'); }
+
+function leaveLobby() {
+  socket.emit('leave_lobby');
+  lobbyCode = null;
+  showScreen('nameScreen');
+}
+
+function renderLobby(players, hostSid) {
+  const grid = document.getElementById('seatsGrid');
+  grid.innerHTML = '';
+
+  const maxSeats = 8;
+  for (let i = 0; i < maxSeats; i++) {
+    const seat = document.createElement('div');
+    seat.className = 'seat';
+    const p = players[i];
+    if (p) {
+      seat.classList.add('filled');
+      if (p.sid === mySid) seat.classList.add('you');
+      if (p.sid === hostSid) seat.classList.add('host-seat');
+
+      const color = pcolor(p.color_idx);
+      seat.innerHTML = `
+        <div class="seat-avatar" style="background:${color}">${esc(initial(p.name))}</div>
+        <div class="seat-name">${esc(p.name)}${p.sid === mySid ? ' <span style="color:var(--amber);font-size:0.7em">(you)</span>' : ''}</div>
+      `;
+    } else {
+      seat.innerHTML = '<div class="seat-empty">Empty</div>';
+    }
+    grid.appendChild(seat);
+  }
+
+  const startBtn = document.getElementById('startBtn');
+  if (mySid === hostSid) {
+    startBtn.style.display = '';
+    startBtn.disabled = players.length < 3;
+  } else {
+    startBtn.style.display = 'none';
+  }
+}
+
+// ── Game render ──
+function updateTimer(remaining, max) {
+  timerRemaining = remaining;
+  const pct = max > 0 ? Math.max(0, (remaining / max) * 100) : 0;
+  document.getElementById('timerFill').style.width = pct + '%';
+  document.getElementById('timerText').textContent = remaining;
+  const pill = document.getElementById('timerPill');
+  if (remaining <= 5) pill.classList.add('urgent');
+  else pill.classList.remove('urgent');
+}
+
+function setPhaseLabel(label, color) {
+  const el = document.getElementById('phaseLabel');
+  el.textContent = label;
+  el.style.color = color || '';
+}
+
+function renderPlayersRow(options = {}) {
+  // options: { mode: 'clue'|'decision'|'vote'|'reveal',
+  //            activeSid: sid for clue,
+  //            showDecisions: bool,
+  //            clickable: bool (for vote) }
+  const row = document.getElementById('playersRow');
+  row.innerHTML = '';
+  const mode = options.mode || 'clue';
+
+  allPlayers.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'pcard';
+    if (p.sid === mySid) card.classList.add('you');
+    if (p.eliminated) card.classList.add('eliminated');
+
+    // mode-specific classes
+    if (mode === 'clue') {
+      if (p.sid === options.activeSid) card.classList.add('active');
+      else if (p.clue != null) card.classList.add('done');
+    }
+    if (mode === 'decision' && p.decisionReceived) card.classList.add('done');
+    if (mode === 'vote' && p.voteReceived) card.classList.add('voted');
+
+    const color = pcolor(p.color_idx);
+
+    let badge = '';
+    if (p.sid === mySid) badge = '<div class="pbadge you">YOU</div>';
+
+    if (mode === 'decision' && options.showDecisions && p.decision) {
+      const cls = p.decision === 'vote' ? 'vote-decision' : 'continue-decision';
+      const txt = p.decision === 'vote' ? 'VOTE' : 'CONTINUE';
+      badge = `<div class="pbadge ${cls}">${txt}</div>`;
+    }
+
+    let status = '';
+    let clueHtml = '';
+
+    if (mode === 'clue') {
+      if (p.clue) {
+        clueHtml = `<div class="pclue${p.clue === '(skipped)' ? ' skipped' : ''}">"${esc(p.clue)}"</div>`;
+        status = '<div class="pstatus">✓ given</div>';
+      } else if (p.sid === options.activeSid) {
+        status = '<div class="pstatus" style="color:var(--crimson-bright)">' + (p.sid === mySid ? '● YOUR TURN' : '● thinking...') + '</div>';
+      } else {
+        status = '<div class="pstatus">waiting</div>';
+      }
+    } else if (mode === 'decision') {
+      if (p.clue) clueHtml = `<div class="pclue">"${esc(p.clue)}"</div>`;
+      if (p.decisionReceived) status = '<div class="pstatus" style="color:var(--mint)">✓ decided</div>';
+      else status = '<div class="pstatus">thinking...</div>';
+    } else if (mode === 'vote') {
+      if (p.clue) clueHtml = `<div class="pclue">"${esc(p.clue)}"</div>`;
+      if (p.voteReceived) status = '<div class="pstatus" style="color:var(--mint)">✓ voted</div>';
+      else status = '<div class="pstatus">thinking...</div>';
+    }
+
+    card.innerHTML = `
+      ${badge}
+      <div class="pavatar" style="background:${color}">${esc(initial(p.name))}</div>
+      <div class="pname">${esc(p.name)}</div>
+      ${status}
+      ${clueHtml}
+    `;
+    row.appendChild(card);
+  });
+}
+
+function renderClueAction(activeSid) {
+  const area = document.getElementById('actionArea');
+  if (activeSid === mySid) {
+    area.innerHTML = `
+      <div class="action-panel">
+        <div class="your-turn-indicator">✦ YOUR TURN — GIVE A CLUE ✦</div>
+        <div class="clue-input-row">
+          <input type="text" id="clueInput" placeholder="One-word clue..." maxlength="50"
+                 onkeydown="if(event.key==='Enter')submitClue()">
+          <button class="btn btn-primary" onclick="submitClue()">Submit</button>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      const inp = document.getElementById('clueInput');
+      if (inp) inp.focus();
+    }, 50);
+  } else {
+    const p = getPlayer(activeSid);
+    area.innerHTML = `
+      <div class="action-panel">
+        <div class="waiting-text">Waiting for <strong style="color:${pcolor((p || {}).color_idx)}">${esc((p || {}).name || 'player')}</strong> to give a clue...</div>
+      </div>
+    `;
+  }
+}
+
+function renderDecisionAction() {
+  const area = document.getElementById('actionArea');
+  area.innerHTML = `
+    <div class="action-panel decision-panel">
+      <div class="decision-prompt">Ready to vote for the imposter, or discuss more?</div>
+      <div class="decision-buttons">
+        <button class="dbtn choice-vote" id="btnVoteNow" onclick="submitDecision('vote')">
+          <span class="dicon">⚑</span>
+          <span class="dlabel">Vote Now</span>
+          <div class="dsub">End clue rounds · proceed to vote</div>
+        </button>
+        <button class="dbtn choice-continue" id="btnContinue" onclick="submitDecision('continue')">
+          <span class="dicon">↻</span>
+          <span class="dlabel">Continue</span>
+          <div class="dsub">Another clue round · more discussion</div>
+        </button>
+      </div>
+      <div class="decision-status" id="decisionStatus">0 of ${allPlayers.length} decided</div>
+    </div>
+  `;
+  hasDecided = false;
+}
+
+function renderDecisionReveal(data) {
+  const area = document.getElementById('actionArea');
+  area.innerHTML = `
+    <div class="action-panel decision-reveal">
+      <div class="decision-reveal-counts">
+        <div class="dcount vote">
+          <div class="dcount-num">${data.vote_count}</div>
+          <div class="dcount-label">Vote Now</div>
+        </div>
+        <div class="dcount continue">
+          <div class="dcount-num">${data.continue_count}</div>
+          <div class="dcount-label">Continue</div>
+        </div>
+      </div>
+      <div class="decision-outcome">${
+        data.go_to_vote
+          ? '<span style="color:var(--crimson-bright)">→ Proceeding to final vote</span>'
+          : '<span style="color:var(--violet)">→ Another clue round</span>'
+      }</div>
+    </div>
+  `;
+
+  // Update player cards to show their decision
+  allPlayers.forEach(p => {
+    p.decision = data.details[p.sid]?.decision || 'abstain';
+  });
+  renderPlayersRow({ mode: 'decision', showDecisions: true });
+}
+
+function renderVoteAction() {
+  const area = document.getElementById('actionArea');
+  area.innerHTML = `
+    <div class="action-panel">
+      <h2 style="text-align:center; color:var(--crimson-bright); font:700 1.1rem Georgia,serif; letter-spacing:0.06em; margin-bottom:0.3rem;">Vote the Imposter</h2>
+      <div class="vote-progress" id="voteProgress">0 of ${allPlayers.length} voted</div>
+      <div class="vote-grid" id="voteGrid"></div>
+    </div>
+  `;
+
+  const grid = document.getElementById('voteGrid');
+  hasVoted = false;
+
+  allPlayers.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'vcard';
+    if (p.sid === mySid) card.classList.add('disabled');
+    card.dataset.sid = p.sid;
+
+    const color = pcolor(p.color_idx);
+    const clue = currentClues.find(c => c.sid === p.sid);
+    card.innerHTML = `
+      <div class="vcard-avatar" style="background:${color}">${esc(initial(p.name))}</div>
+      <div class="vcard-name">${esc(p.name)}${p.sid === mySid ? ' (you)' : ''}</div>
+      ${clue ? `<div class="vcard-clue">"${esc(clue.clue)}"</div>` : ''}
+    `;
+
+    if (p.sid !== mySid) {
+      card.addEventListener('click', () => {
+        if (hasVoted) return;
+        hasVoted = true;
+        document.querySelectorAll('.vcard').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        socket.emit('submit_vote', { target: p.sid });
+      });
+    }
+    grid.appendChild(card);
+  });
+}
+
+function renderVoteReveal(data) {
+  const area = document.getElementById('actionArea');
+  let html = '<div class="reveal-container">';
+  html += '<div class="reveal-title">◈ Votes Revealed ◈</div>';
+
+  html += '<div class="reveal-votes">';
+  if (Object.keys(data.votes).length === 0) {
+    html += '<div style="color:var(--text-mute);font-size:0.85rem">No votes were cast.</div>';
+  } else {
+    for (const [sid, v] of Object.entries(data.votes)) {
+      html += `<div class="reveal-vote-row"><span class="from-name">${esc(v.name)}</span> <span class="arrow">→</span> <span class="to-name">${esc(v.target_name)}</span></div>`;
+    }
+  }
+  html += '</div>';
+
+  if (data.tie) {
+    html += '<div class="reveal-outcome tie">';
+    html += '<div class="reveal-outcome-text">Tied vote</div>';
+    html += '<div class="reveal-outcome-sub">Another round begins...</div>';
+    html += '</div>';
+  } else if (data.eliminated) {
+    html += '<div class="reveal-outcome eliminated">';
+    html += `<div class="reveal-outcome-text">${esc(data.eliminated_name)} was eliminated</div>`;
+    html += '<div class="reveal-outcome-sub">Revealing identities...</div>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function submitClue() {
+  const input = document.getElementById('clueInput');
+  if (!input) return;
+  const clue = input.value.trim();
+  if (!clue) return;
+  socket.emit('submit_clue', { clue });
+  input.value = '';
+  input.disabled = true;
+  document.getElementById('actionArea').innerHTML = `
+    <div class="action-panel">
+      <div class="waiting-text" style="color:var(--mint)">✓ Your clue was submitted</div>
+    </div>
+  `;
+}
+
+function submitDecision(choice) {
+  if (hasDecided) return;
+  hasDecided = true;
+  socket.emit('submit_decision', { choice });
+  document.querySelectorAll('.dbtn').forEach(b => {
+    b.disabled = true;
+  });
+  const btn = choice === 'vote' ? document.getElementById('btnVoteNow') : document.getElementById('btnContinue');
+  if (btn) btn.classList.add('selected');
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  socket.emit('chat_msg', { msg });
+  input.value = '';
+}
+
+function playAgain() { socket.emit('play_again'); }
+
+function addChatMsg(name, msg, isSystem, colorIdx) {
+  const area = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg' + (isSystem ? ' system' : '');
+  if (isSystem) {
+    div.textContent = '— ' + msg;
+  } else {
+    const color = pcolor(colorIdx);
+    div.innerHTML = `<span class="chat-name" style="color:${color}">${esc(name)}:</span> <span class="chat-text">${esc(msg)}</span>`;
+  }
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function renderEnd(data) {
+  const title = document.getElementById('endTitle');
+  const sub = document.getElementById('endSub');
+  if (data.winner === 'civilians') {
+    title.textContent = 'Civilians Win';
+    title.className = 'end-title civilians-win';
+    sub.textContent = 'The imposter has been unmasked';
+  } else {
+    title.textContent = 'Imposter Wins';
+    title.className = 'end-title imposter-wins';
+    sub.textContent = 'Deception prevails';
+  }
+
+  document.getElementById('wordReveal').innerHTML = `
+    <div class="wr-item"><div class="wr-label">The Secret Word Was</div><div class="wr-word civ">${esc(data.secret_word)}</div></div>
+  `;
+
+  document.getElementById('imposterReveal').innerHTML = `
+    <span class="label">The imposter was </span><span class="name">${esc(data.imposter_name)}</span>
+  `;
+
+  const pe = document.getElementById('endPlayers');
+  pe.innerHTML = '';
+  (data.players || []).forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = 'end-pchip role-' + p.role;
+    if (data.eliminated === p.sid) chip.classList.add('eliminated-chip');
+    const color = pcolor(p.color_idx);
+    chip.innerHTML = `
+      <div class="pavatar" style="background:${color};width:22px;height:22px;font-size:0.75rem;margin:0">${esc(initial(p.name))}</div>
+      <span>${esc(p.name)}</span>
+      <span class="chip-word">${p.role === 'imposter' ? '(imposter)' : esc(p.word)}</span>
+    `;
+    pe.appendChild(chip);
+  });
+
+  document.getElementById('playAgainBtn').style.display = isHost ? '' : 'none';
+}
+
+// ── Socket handlers ──
+
+socket.on('lobby_joined', data => {
+  mySid = data.you || mySid;
+  lobbyCode = data.code;
+  isHost = data.host === mySid;
+  allPlayers = data.players || [];
+  document.getElementById('lobbyCode').textContent = data.code;
+  document.getElementById('lobbyError').textContent = '';
+  document.getElementById('nameError').textContent = '';
+  renderLobby(data.players, data.host);
+  showScreen('lobbyScreen');
+});
+
+socket.on('lobby_update', data => {
+  isHost = data.host === mySid;
+  allPlayers = data.players || [];
+  renderLobby(data.players, data.host);
+});
+
+socket.on('return_to_lobby', data => {
+  isHost = data.host === mySid;
+  allPlayers = data.players || [];
+  lobbyCode = data.code;
+  document.getElementById('lobbyCode').textContent = data.code;
+  renderLobby(data.players, data.host);
+  showScreen('lobbyScreen');
+  document.getElementById('countdownOverlay').style.display = 'none';
+  document.getElementById('chatMessages').innerHTML = '';
+});
+
+socket.on('error', data => {
+  if (document.getElementById('nameScreen').classList.contains('active')) {
+    document.getElementById('nameError').textContent = data.msg;
+  } else if (document.getElementById('lobbyScreen').classList.contains('active')) {
+    document.getElementById('lobbyError').textContent = data.msg;
+  }
+});
+
+socket.on('game_started', data => {
+  myWord = data.your_word;
+  myRole = data.your_role;
+  allPlayers = (data.players || allPlayers).map(p => ({ ...p, clue: null, decision: null, voteReceived: false, decisionReceived: false, eliminated: false }));
+  currentClues = [];
+
+  const wordEl = document.getElementById('yourWord');
+  const labelEl = document.querySelector('.word-mini-label');
+  const roleEl = document.getElementById('yourRole');
+  const catEl = document.getElementById('yourCategory');
+
+  if (data.category) {
+    catEl.innerHTML = `<span class="cat-label">Hint:</span>${esc(data.category)}`;
+    catEl.style.display = '';
+  } else {
+    catEl.style.display = 'none';
+  }
+
+  if (myRole === 'imposter') {
+    labelEl.textContent = 'You are';
+    wordEl.textContent = 'THE IMPOSTER';
+    wordEl.style.color = 'var(--crimson-bright)';
+    wordEl.style.textShadow = '0 0 30px rgba(212,58,90,0.4), 0 0 60px rgba(212,58,90,0.2)';
+    roleEl.textContent = '◆ blend in · bluff your way · discover the word ◆';
+    roleEl.className = 'word-role imposter';
+  } else {
+    labelEl.textContent = 'Your word';
+    wordEl.textContent = myWord;
+    wordEl.style.color = 'var(--amber)';
+    wordEl.style.textShadow = '0 0 30px rgba(212,168,96,0.25), 0 0 60px rgba(212,168,96,0.1)';
+    roleEl.textContent = '◇ CIVILIAN';
+    roleEl.className = 'word-role civilian';
+  }
+
+  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('actionArea').innerHTML = '';
+  document.getElementById('playersRow').innerHTML = '';
+
+  showScreen('gameScreen');
+});
+
+socket.on('countdown', data => {
+  const overlay = document.getElementById('countdownOverlay');
+  overlay.style.display = 'flex';
+  const num = document.getElementById('countdownNum');
+  num.textContent = data.count;
+  num.style.animation = 'none';
+  void num.offsetWidth;
+  num.style.animation = 'count-pulse 1s ease-out';
+});
+
+socket.on('phase_change', data => {
+  document.getElementById('countdownOverlay').style.display = 'none';
+  currentPhase = data.phase;
+
+  if (data.phase === 'clue') {
+    currentClues = [];
+    allPlayers.forEach(p => { p.clue = null; p.decision = null; p.decisionReceived = false; p.voteReceived = false; });
+    document.getElementById('roundNum').textContent = data.round || 1;
+    setPhaseLabel('CLUE PHASE', 'var(--crimson-bright)');
+    timerMax = 25;
+    updateTimer(timerMax, timerMax);
+    renderPlayersRow({ mode: 'clue', activeSid: null });
+    // wait for clue_turn event
+  }
+  else if (data.phase === 'decision') {
+    setPhaseLabel('DECIDE', 'var(--amber)');
+    timerMax = data.time || 20;
+    updateTimer(timerMax, timerMax);
+    currentClues = data.clues || currentClues;
+    // ensure player clues persisted
+    allPlayers.forEach(p => {
+      const c = currentClues.find(x => x.sid === p.sid);
+      p.clue = c ? c.clue : p.clue;
+      p.decisionReceived = false;
+    });
+    renderPlayersRow({ mode: 'decision' });
+    renderDecisionAction();
+    addChatMsg(null, 'Decision time: vote now or another round?', true);
+  }
+  else if (data.phase === 'vote') {
+    setPhaseLabel('VOTE', 'var(--crimson-bright)');
+    timerMax = data.time || 30;
+    updateTimer(timerMax, timerMax);
+    allPlayers.forEach(p => { p.voteReceived = false; });
+    renderPlayersRow({ mode: 'vote' });
+    renderVoteAction();
+    addChatMsg(null, 'Vote for who you think is the imposter!', true);
+  }
+});
+
+socket.on('clue_turn', data => {
+  timerMax = data.time || 25;
+  updateTimer(timerMax, timerMax);
+  renderPlayersRow({ mode: 'clue', activeSid: data.player });
+  renderClueAction(data.player);
+});
+
+socket.on('clue_submitted', data => {
+  currentClues.push(data);
+  const p = getPlayer(data.sid);
+  if (p) p.clue = data.clue;
+  // re-render clue phase to show updated clue under their card
+  const activeSid = document.querySelector('.pcard.active') ? document.querySelector('.pcard.active').dataset.sid : null;
+  renderPlayersRow({ mode: 'clue', activeSid: null });
+});
+
+socket.on('timer_tick', data => {
+  updateTimer(data.remaining, timerMax);
+});
+
+socket.on('decision_cast', data => {
+  const p = getPlayer(data.voter);
+  if (p) p.decisionReceived = true;
+  renderPlayersRow({ mode: 'decision' });
+  const statusEl = document.getElementById('decisionStatus');
+  if (statusEl) statusEl.textContent = `${data.count} of ${data.total} decided`;
+});
+
+socket.on('decision_result', data => {
+  setPhaseLabel('DECISION', 'var(--amber)');
+  document.getElementById('timerFill').style.width = '0%';
+  document.getElementById('timerText').textContent = '—';
+  document.getElementById('timerPill').classList.remove('urgent');
+  renderDecisionReveal(data);
+});
+
+socket.on('vote_cast', data => {
+  const p = getPlayer(data.voter);
+  if (p) p.voteReceived = true;
+  renderPlayersRow({ mode: 'vote' });
+  const prog = document.getElementById('voteProgress');
+  if (prog) prog.textContent = `${data.voted_count} of ${data.total} voted`;
+});
+
+socket.on('vote_result', data => {
+  setPhaseLabel('RESULT', 'var(--violet)');
+  document.getElementById('timerFill').style.width = '0%';
+  document.getElementById('timerText').textContent = '—';
+  document.getElementById('timerPill').classList.remove('urgent');
+  renderVoteReveal(data);
+
+  if (data.eliminated) {
+    const p = getPlayer(data.eliminated);
+    if (p) p.eliminated = true;
+  }
+});
+
+socket.on('chat_message', data => {
+  addChatMsg(data.name, data.msg, false, data.color_idx);
+});
+
+socket.on('game_over', data => {
+  document.getElementById('countdownOverlay').style.display = 'none';
+  renderEnd(data);
+  showScreen('endScreen');
+});
+
+socket.on('player_left', data => {
+  addChatMsg(null, 'A player has left.', true);
+  allPlayers = data.players.map(p => {
+    const existing = allPlayers.find(ep => ep.sid === p.sid) || {};
+    return { ...existing, ...p };
+  });
+});
+
+// ── Initialization ──
+
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) document.getElementById('codeInput').value = code.toUpperCase();
+})();
+
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const code = document.getElementById('codeInput').value.trim();
+    if (code) joinLobby(); else createLobby();
+  }
+});
+
+(function() {
+  const el = document.getElementById('crtTimestamp');
+  function tick() {
+    const d = new Date();
+    el.textContent = [d.getHours(), d.getMinutes(), d.getSeconds()]
+      .map(n => String(n).padStart(2, '0')).join(':');
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

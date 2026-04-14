@@ -1,0 +1,5 @@
+flask
+gunicorn
+librosa
+soundfile
+numpy

@@ -1633,17 +1633,15 @@ function updatePlayer() {
                     break;
                 }
             }
-            /* Platform side collision — check edges of platform bodies */
-            if (!blocked) {
+            /* Platform side collision — only on airport (noPassThrough) */
+            if (!blocked && mapNoPassThrough) {
                 for (const plat of compositePlatforms) {
                     const pts = plat.points;
                     const px1 = pts[0].x, px2 = pts[pts.length-1].x;
                     const minPx = Math.min(px1, px2), maxPx = Math.max(px1, px2);
-                    /* Get min Y across all points for the top, add thickness for bottom */
                     const minPy = Math.min(...pts.map(p => p.y));
                     const maxPy = Math.max(...pts.map(p => p.y)) + plat.thickness;
                     if (rectOverlap(player.x - halfW, player.y, PLAYER_W, PLAYER_H, minPx, minPy, maxPx - minPx, maxPy - minPy)) {
-                        /* Only block if player is vertically inside the platform body */
                         if (player.y + PLAYER_H > minPy + 4 && player.y < maxPy - 4) {
                             if (stepDx > 0 && player.x + halfW > minPx && player.x < minPx + 10) {
                                 player.x = minPx - halfW; player.vx = 0; blocked = true;

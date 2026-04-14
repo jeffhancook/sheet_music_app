@@ -1,6 +1,6 @@
 # sheet_music_app Monorepo
 
-Multi-project monorepo with 6 Flask apps, 1 vanilla JS app, and a portfolio site.
+Multi-project monorepo with 7 Flask apps, 1 vanilla JS app, and a portfolio site.
 **Owner**: Han Chau | **Remote**: github.com/jeffhancook/sheet_music_app (branch: main)
 
 ## Directory Map
@@ -14,6 +14,7 @@ sheet_music_app/
 ├── sheet_music_play/         # Audio→violin PDF (Flask+basic-pitch+music21+LilyPond, port 5005)
 ├── community/                # Community system (Flask-SocketIO, port 5004) — auth, friends, chat, portfolios, AI backgrounds
 ├── tag/                      # Multiplayer tag game (Flask-SocketIO, port 5007) — platformer, lobby, real-time movement
+├── imposter/                 # Imposter word game (Flask-SocketIO, port 5008) — social deduction, clues, voting
 ├── ScienceEssence/           # Physics education app (vanilla JS, own .git repo)
 └── .claude/                  # Claude Code settings
 ```
@@ -95,6 +96,11 @@ sheet_music_app/
 - Socket.IO events: `create_lobby`, `join_lobby`, `pick_avatar`, `set_ready`, `player_move`, `leave_lobby`
 - Socket.IO broadcasts: `lobby_joined`, `lobby_update`, `game_starting`, `remote_move`, `error`
 
+### imposter (port 5008)
+- `GET /` — Game UI (name → lobby → game)
+- Socket.IO events: `create_lobby`, `join_lobby`, `start_game`, `submit_clue`, `submit_vote`, `chat_msg`, `skip_to_vote`, `play_again`, `leave_lobby`
+- Socket.IO broadcasts: `lobby_joined`, `lobby_update`, `game_started`, `countdown`, `phase_change`, `clue_turn`, `clue_submitted`, `timer_tick`, `vote_cast`, `vote_result`, `game_over`, `chat_message`
+
 ## Key Gotchas
 - **StartPage replaced DuckDuckGo** for sheet music search (DDG returned 0 results)
 - **Search interleaving**: 3 IMSLP + 2 StartPage results, repeating
@@ -111,6 +117,9 @@ sheet_music_app/
 - **Tag app port is 5007** (NOT 5006) — test-app/Pitch Straightener already uses 5006
 - **Tag nginx needs WebSocket headers** — proxy_http_version 1.1, Upgrade, Connection "upgrade"
 - **Tag uses eventlet** — gunicorn must use `--worker-class eventlet --workers 1`
+- **Imposter app port is 5008** — next available after tag (5007)
+- **Imposter uses eventlet** — same gunicorn config as tag: `--worker-class eventlet --workers 1`
+- **Imposter nginx needs WebSocket headers** — same as tag app
 - **sites-enabled/default is a file copy** on VPS, not a symlink — must update both sites-available AND sites-enabled
 - **Enhancer must use 1 gunicorn worker** — in-memory job dict not shared; has disk fallback but 1 worker avoids race
 - **Audio enhancement effects use ffmpeg subprocess** — not pydub processing; much faster for filters/noise generation

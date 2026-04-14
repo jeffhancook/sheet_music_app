@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ meta_title or "Personal Page" }}</title>
+  <meta name="description" content="{{ meta_description or '' }}">
+  <meta property="og:title" content="{{ meta_title or 'Personal Page' }}">
+  <meta property="og:description" content="{{ meta_description or '' }}">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: {{ page_data.theme.fontFamily or 'Georgia, serif' }};
+      background: {{ page_data.theme.gradient or page_data.theme.background or '#241f15' }};
+      color: {{ page_data.theme.textColor or '#d6c8b4' }};
+      min-height: 100vh;
+      position: relative;
+      line-height: 1.7;
+      {% if page_data.backgroundImage %}
+      background-image: url('{{ page_data.backgroundImage }}');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      {% endif %}
+    }
+
+    /* Paper grain */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    a { color: {{ page_data.theme.accentColor or '#c2593e' }}; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page-wrap {
+      max-width: {{ page_data.layout.maxWidth or '900px' }};
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .page-nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 0; margin-bottom: 1rem;
+    }
+    .page-nav a {
+      font-size: 0.78rem; color: {{ page_data.theme.textColor or '#d6c8b4' }};
+      opacity: 0.5; transition: opacity 0.2s;
+    }
+    .page-nav a:hover { opacity: 1; text-decoration: none; }
+    .page-views { font-size: 0.68rem; color: {{ page_data.theme.textColor or '#d6c8b4' }}; opacity: 0.3; }
+
+    /* ── Section base ── */
+    .section {
+      margin-bottom: 2.5rem;
+      padding: 2rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .section-divider {
+      display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;
+    }
+    .section-divider h2 {
+      font-family: {{ page_data.theme.headingFont or 'Georgia, serif' }};
+      font-size: 0.8rem; font-weight: 600;
+      color: {{ page_data.theme.accentColor or '#c2593e' }};
+      text-transform: uppercase; letter-spacing: 0.15em; white-space: nowrap;
+    }
+    .section-divider .line {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, {{ page_data.theme.accentColor or '#c2593e' }}40, transparent);
+    }
+
+    /* ── Hero ── */
+    .hero-section { text-align: center; padding: 4rem 2rem 3rem; background: none; border: none; }
+    .hero-avatar {
+      width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1.25rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 700; color: #241f15;
+    }
+    .hero-name {
+      font-family: {{ page_data.theme.headingFont or 'Georgia, serif' }};
+      font-size: 2.8rem; font-weight: 700; line-height: 1.1; margin-bottom: 0.75rem;
+    }
+    .hero-tagline {
+      font-size: 1.1rem; opacity: 0.6; max-width: 500px; margin: 0 auto;
+    }
+
+    /* ── About ── */
+    .about-content p { margin-bottom: 1rem; }
+    .about-content p:last-child { margin-bottom: 0; }
+
+    /* ── Quote ── */
+    .quote-section { text-align: center; padding: 2.5rem 2rem; font-style: italic; }
+    .quote-text { font-size: 1.2rem; line-height: 1.6; margin-bottom: 0.75rem; }
+    .quote-attribution { font-size: 0.82rem; opacity: 0.5; font-style: normal; }
+
+    /* ── Links ── */
+    .links-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .link-item {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1rem; border-radius: 6px;
+      border: 1px solid {{ page_data.theme.accentColor or '#c2593e' }}30;
+      background: {{ page_data.theme.accentColor or '#c2593e' }}08;
+      font-size: 0.85rem; transition: background 0.2s, border-color 0.2s;
+    }
+    .link-item:hover {
+      background: {{ page_data.theme.accentColor or '#c2593e' }}15;
+      border-color: {{ page_data.theme.accentColor or '#c2593e' }}50;
+      text-decoration: none;
+    }
+    .link-platform {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+      opacity: 0.5; font-weight: 600;
+    }
+
+    /* ── Music ── */
+    .music-desc { font-size: 0.9rem; opacity: 0.7; font-style: italic; }
+
+    /* ── Gallery ── */
+    .gallery-desc { font-size: 0.9rem; opacity: 0.7; font-style: italic; }
+
+    /* ── Guestbook ── */
+    .gb-form { margin-bottom: 1.5rem; }
+    .gb-input {
+      width: 100%; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px; color: inherit; font-size: 0.85rem; outline: none;
+      font-family: inherit;
+    }
+    .gb-input:focus { border-color: {{ page_data.theme.accentColor or '#c2593e' }}; }
+    .gb-input::placeholder { opacity: 0.3; }
+    .gb-submit {
+      padding: 0.5rem 1.2rem; border: none; border-radius: 6px;
+      background: {{ page_data.theme.accentColor or '#c2593e' }};
+      color: #fff; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .gb-submit:hover { opacity: 0.85; }
+    .gb-entry {
+      padding: 0.75rem; margin-bottom: 0.5rem;
+      border-radius: 6px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .gb-entry-header { display: flex; justify-content: space-between; margin-bottom: 0.3rem; }
+    .gb-entry-name { font-size: 0.82rem; font-weight: 600; }
+    .gb-entry-date { font-size: 0.65rem; opacity: 0.4; }
+    .gb-entry-content { font-size: 0.85rem; opacity: 0.8; }
+    .gb-empty { text-align: center; padding: 1.5rem; opacity: 0.3; font-style: italic; }
+
+    /* ── Footer ── */
+    .page-footer {
+      text-align: center; padding: 2rem 0; margin-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.7rem; opacity: 0.3;
+    }
+
+    @media (max-width: 600px) {
+      .hero-name { font-size: 2rem; }
+      .hero-section { padding: 3rem 1rem 2rem; }
+      .section { padding: 1.25rem; }
+      .page-wrap { padding: 0 1rem; }
+    }
+
+    /* Background symbols */
+    .bg-symbols { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-sym {
+      position: absolute; opacity: 0.06;
+      animation: sym-float 8s ease-in-out infinite;
+    }
+    @keyframes sym-float {
+      0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+      50% { transform: translateY(-12px) rotate(var(--r, 0deg)); }
+    }
+
+    /* Drawing canvas */
+    .draw-canvas {
+      position: fixed; inset: 0; z-index: 5; cursor: crosshair;
+      display: none;
+    }
+    .draw-canvas.active { display: block; }
+
+    /* Inserted elements */
+    .inserted-el {
+      position: absolute; z-index: 3;
+      user-select: none;
+    }
+    .inserted-el img { max-width: 100%; border-radius: 6px; pointer-events: none; }
+    .inserted-shape { border-radius: var(--br, 0); }
+    .inserted-text {
+      min-width: 60px; min-height: 1.4em; padding: 0.3rem 0.5rem;
+      font-family: inherit; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+      outline: none; cursor: text; border-radius: 4px;
+    }
+    .inserted-text:empty::before {
+      content: 'Type here...'; opacity: 0.25; pointer-events: none;
+    }
+    .inserted-text:focus {
+      background: rgba(255,255,255,0.04); box-shadow: 0 0 0 1px {{ page_data.theme.accentColor or '#c2593e' }}50;
+    }
+    .inserted-el.selected {
+      outline: 2px solid {{ page_data.theme.accentColor or '#c2593e' }};
+      outline-offset: 4px;
+    }
+    .el-controls {
+      display: none; position: absolute; top: -32px; left: 0; right: 0;
+      justify-content: center; gap: 0.3rem; z-index: 10;
+    }
+    .inserted-el.selected .el-controls { display: flex; }
+    .el-ctrl-btn {
+      width: 26px; height: 26px; border-radius: 4px; border: 1px solid #3a3428;
+      background: rgba(36,31,21,0.95); color: #b0a390; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; transition: color 0.15s;
+    }
+    .el-ctrl-btn:hover { color: {{ page_data.theme.accentColor or '#c2593e' }}; }
+    .el-resize-handle {
+      position: absolute; bottom: -6px; right: -6px;
+      width: 12px; height: 12px; border-radius: 2px;
+      background: {{ page_data.theme.accentColor or '#c2593e' }};
+      cursor: nwse-resize; display: none;
+    }
+    .inserted-el.selected .el-resize-handle { display: block; }
+
+    /* Movable sections */
+    .section.movable { cursor: move; position: relative; }
+    .section.movable.selected { outline: 2px solid {{ page_data.theme.accentColor or '#c2593e' }}; outline-offset: 4px; }
+    .section-move-hint {
+      display: none; position: absolute; top: 4px; right: 4px;
+      font-size: 0.58rem; color: #564c40; font-family: "Fira Code", monospace;
+      background: rgba(36,31,21,0.8); padding: 0.1rem 0.4rem; border-radius: 3px;
+    }
+    .section.movable:hover .section-move-hint { display: block; }
+
+    /* Insert toolbar */
+    .insert-toolbar {
+      position: fixed; top: 50%; left: 0.75rem; transform: translateY(-50%);
+      z-index: 9001; display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .tb-btn {
+      width: 38px; height: 38px; border-radius: 8px; border: 1px solid #3a3428;
+      background: rgba(36,31,21,0.9); backdrop-filter: blur(8px);
+      color: #6a5d50; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      font-size: 0.85rem;
+    }
+    .tb-btn:hover { color: {{ page_data.theme.accentColor or '#c2593e' }}; border-color: {{ page_data.theme.accentColor or '#c2593e' }}40; }
+    .tb-btn.active { color: {{ page_data.theme.accentColor or '#c2593e' }}; background: {{ page_data.theme.accentColor or '#c2593e' }}15; border-color: {{ page_data.theme.accentColor or '#c2593e' }}50; }
+    .tb-sep { height: 1px; background: #3a3428; margin: 0.1rem 0; }
+    .tb-sub {
+      position: absolute; left: 48px; top: 0; min-width: 160px;
+      background: rgba(36,31,21,0.95); border: 1px solid #3a3428; border-radius: 8px;
+      padding: 0.5rem; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .tb-sub.open { display: block; }
+    .tb-sub-item {
+      display: block; width: 100%; padding: 0.4rem 0.6rem; border: none; background: none;
+      color: #b0a390; font-size: 0.75rem; cursor: pointer; text-align: left; border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tb-sub-item:hover { background: {{ page_data.theme.accentColor or '#c2593e' }}10; color: #d6c8b4; }
+
+    /* Audio player */
+    .bg-audio-player {
+      position: fixed; bottom: 1.25rem; left: 1.25rem; z-index: 9000;
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.8rem; background: rgba(36,31,21,0.9); backdrop-filter: blur(8px);
+      border: 1px solid #3a3428; border-radius: 20px;
+    }
+    .bg-audio-btn {
+      width: 28px; height: 28px; border-radius: 50%; border: none;
+      background: {{ page_data.theme.accentColor or '#c2593e' }}; color: #fff;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+    }
+    .bg-audio-label { font-size: 0.68rem; color: #6a5d50; }
+
+    /* Inline editing */
+    .editable { cursor: text; transition: outline 0.15s; border-radius: 4px; }
+    .editable:hover { outline: 1px dashed {{ page_data.theme.accentColor or '#c2593e' }}40; outline-offset: 4px; }
+    .editable:focus { outline: 1px solid {{ page_data.theme.accentColor or '#c2593e' }}; outline-offset: 4px; }
+    .editable[data-placeholder]:empty::before {
+      content: attr(data-placeholder); opacity: 0.25; pointer-events: none;
+    }
+
+    {% if page_data.custom_css %}
+    /* User custom CSS */
+    {{ page_data.custom_css }}
+    {% endif %}
+  </style>
+</head>
+<body>
+  <!-- Background symbols -->
+  <div class="bg-symbols" id="bgSymbols">
+    {% for svg in page_data.backgroundSymbols or [] %}
+    <div class="bg-sym" style="top:{{ range(5,90)|random }}%;left:{{ range(3,95)|random }}%;--r:{{ range(-15,15)|random }}deg;animation-duration:{{ range(6,11)|random }}s;animation-delay:{{ range(0,5)|random }}s">{{ svg|safe }}</div>
+    {% endfor %}
+  </div>
+
+  <!-- Drawing canvas overlay -->
+  <canvas id="drawCanvas" class="draw-canvas"></canvas>
+
+  <!-- Saved drawings render -->
+  <canvas id="savedDrawings" style="position:fixed;inset:0;z-index:2;pointer-events:none"></canvas>
+
+  <!-- Inserted elements container -->
+  <div id="insertedElements" style="position:absolute;top:0;left:0;width:100%;min-height:100%;z-index:3;pointer-events:none"></div>
+
+  {% if page_data.backgroundAudio and page_data.backgroundAudio != 'null' and page_data.backgroundAudio != None %}
+  <div class="bg-audio-player">
+    <button class="bg-audio-btn" id="audioToggle" onclick="toggleAudio()">&#9654;</button>
+    <span class="bg-audio-label">Background Music</span>
+    <audio id="bgAudio" src="{{ page_data.backgroundAudio }}" loop preload="none"></audio>
+  </div>
+  {% endif %}
+
+  <div class="page-wrap" id="user-page">
+    <nav class="page-nav">
+      <a href="/">&larr; hanzchau.com</a>
+      <span id="regenBtn" style="display:none">
+        <button onclick="regeneratePage()" style="background:none;border:1px solid #3a3428;border-radius:4px;color:#6a5d50;font-size:0.68rem;padding:0.25rem 0.5rem;cursor:pointer;font-family:Fira Code,monospace;transition:color 0.2s">Regenerate with AI</button>
+      </span>
+      <span class="page-views">{{ page.view_count }} visits</span>
+    </nav>
+
+    {% for section in page_data.sections %}
+    {% if section.visible is not defined or section.visible %}
+
+    {% if section.type == 'hero' %}
+    <div class="section hero-section" {% if section.style and section.style.background %}style="background:{{ section.style.background }}"{% endif %}>
+      {% if section.content.showAvatar is not defined or section.content.showAvatar %}
+      {% if user.avatar_url %}
+      <div class="hero-avatar" style="background:none;overflow:hidden"><img src="{{ user.avatar_url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>
+      {% else %}
+      <div class="hero-avatar" style="background:{{ user.avatar_color or '#c2593e' }}">{{ (user.display_name or '?')[0] | upper }}</div>
+      {% endif %}
+      {% endif %}
+      <h1 class="hero-name" data-section-id="{{ section.id }}" data-field="name" data-placeholder="Your name">{{ section.content.name or user.display_name }}</h1>
+      <p class="hero-tagline" data-section-id="{{ section.id }}" data-field="tagline" data-placeholder="Add a tagline...">{{ section.content.tagline or '' }}</p>
+    </div>
+
+    {% elif section.type == 'about' %}
+    <div class="section">
+      <div class="section-divider"><h2>About</h2><div class="line"></div></div>
+      <div class="about-content" data-section-id="{{ section.id }}" data-field="html" data-html="1" data-placeholder="Write about yourself...">{{ section.content.html | safe }}</div>
+    </div>
+
+    {% elif section.type == 'quote' %}
+    <div class="section quote-section">
+      <div class="quote-text" data-section-id="{{ section.id }}" data-field="text" data-placeholder="Add a quote...">&ldquo;{{ section.content.text or '' }}&rdquo;</div>
+      <div class="quote-attribution" data-section-id="{{ section.id }}" data-field="attribution" data-placeholder="Attribution">&mdash; {{ section.content.attribution or '' }}</div>
+    </div>
+
+    {% elif section.type == 'links' %}
+    <div class="section">
+      <div class="section-divider"><h2>Links</h2><div class="line"></div></div>
+      <div class="links-grid">
+        {% for link in section.content.links or [] %}
+        {% if link.url %}
+        <a class="link-item" href="{{ link.url }}" target="_blank" rel="noopener">
+          <span class="link-platform">{{ link.platform }}</span>
+          {{ link.label or link.platform }}
+        </a>
+        {% else %}
+        <span class="link-item">
+          <span class="link-platform">{{ link.platform }}</span>
+          {{ link.label or link.platform }}
+        </span>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    {% elif section.type == 'music' %}
+    <div class="section">
+      <div class="section-divider"><h2>Music</h2><div class="line"></div></div>
+      <p class="music-desc" data-section-id="{{ section.id }}" data-field="description" data-placeholder="Describe your music...">{{ section.content.description or '' }}</p>
+    </div>
+
+    {% elif section.type == 'gallery' %}
+    <div class="section">
+      <div class="section-divider"><h2>Gallery</h2><div class="line"></div></div>
+      <p class="gallery-desc" data-section-id="{{ section.id }}" data-field="description" data-placeholder="Describe your gallery...">{{ section.content.description or '' }}</p>
+    </div>
+
+    {% elif section.type == 'featured_image' %}
+    <div class="section" style="text-align:center;padding:2rem">
+      <img src="{{ section.content.src }}" alt="{{ section.content.alt or '' }}" style="max-width:100%;max-height:500px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.3)">
+    </div>
+
+    {% elif section.type == 'guestbook' %}
+    <div class="section">
+      <div class="section-divider"><h2>Guestbook</h2><div class="line"></div></div>
+      <div class="gb-form">
+        <input class="gb-input" id="gbName" placeholder="Your name" maxlength="64">
+        <textarea class="gb-input" id="gbMsg" placeholder="Leave a message..." rows="2" maxlength="500" style="resize:vertical"></textarea>
+        <button class="gb-submit" onclick="postGb()">Sign Guestbook</button>
+      </div>
+      <div id="gbEntries"><div class="gb-empty">No entries yet. Be the first!</div></div>
+    </div>
+
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+
+    <footer class="page-footer">
+      Made on <a href="/" style="opacity:0.6">hanzchau.com</a>
+    </footer>
+
+    <!-- Insert toolbar (owner only, rendered by JS) -->
+    <div id="insertToolbar" class="insert-toolbar" style="display:none">
+      <button class="tb-btn" onclick="tbAddText()" title="Insert Text">T</button>
+      <button class="tb-btn" onclick="tbToggleSub('shapes')" title="Insert Shape">&#9632;</button>
+      <button class="tb-btn" onclick="tbInsertImage()" title="Insert Image">&#128247;</button>
+      <button class="tb-btn" onclick="tbSetAudio()" title="Background Audio">&#127925;</button>
+      <button class="tb-btn" onclick="tbSetBgImage()" title="Background Image">&#127748;</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="tbDraw" onclick="tbToggleDraw()" title="Draw">&#9998;</button>
+      <button class="tb-btn" id="tbEraser" onclick="tbToggleEraser()" title="Eraser">&#9003;</button>
+      <button class="tb-btn" onclick="tbUndo()" title="Undo">&#8617;</button>
+      <button class="tb-btn" onclick="tbRedo()" title="Redo">&#8618;</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="tbSave()" title="Save All" style="color:#6d8f5e">&#10003;</button>
+      <div id="tbShapesSub" class="tb-sub">
+        <button class="tb-sub-item" onclick="tbAddShape('circle')">&#9679; Circle</button>
+        <button class="tb-sub-item" onclick="tbAddShape('square')">&#9632; Square</button>
+        <button class="tb-sub-item" onclick="tbAddShape('rounded')">&#9635; Rounded</button>
+        <button class="tb-sub-item" onclick="tbAddShape('diamond')">&#9670; Diamond</button>
+        <button class="tb-sub-item" onclick="tbAddShape('star')">&#9733; Star</button>
+      </div>
+      <input type="file" id="tbImageInput" accept=".jpg,.jpeg,.png,.gif,.webp" style="display:none">
+      <input type="file" id="tbAudioInput" accept=".mp3,.wav,.ogg" style="display:none">
+      <input type="file" id="tbBgImageInput" accept=".jpg,.jpeg,.png,.gif,.webp" style="display:none">
+      <div style="margin-top:0.3rem">
+        <input type="color" id="tbColor" value="{{ page_data.theme.accentColor or '#c2593e' }}" style="width:38px;height:28px;border:1px solid #3a3428;border-radius:4px;cursor:pointer;background:none" title="Color">
+        <input type="range" id="tbSize" min="2" max="20" value="4" style="width:38px;margin-top:0.3rem" title="Brush Size">
+      </div>
+    </div>
+
+    <!-- Popup chat widget -->
+    <div id="chatWidget" style="display:none;position:fixed;bottom:1.25rem;right:1.25rem;z-index:9000">
+      <button id="chatToggle" onclick="toggleChat()" style="width:48px;height:48px;border-radius:50%;border:none;background:linear-gradient(135deg,{{ page_data.theme.accentColor or '#c2593e' }},{{ page_data.theme.secondaryAccent or '#b8924a' }});color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:transform 0.2s">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <div id="chatPanel" style="display:none;position:absolute;bottom:60px;right:0;width:320px;max-height:420px;background:rgba(36,31,21,0.97);border:1px solid #3a3428;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.4);overflow:hidden;flex-direction:column">
+        <div style="padding:0.6rem 0.8rem;border-bottom:1px solid #3a3428;background:rgba(40,36,28,0.6);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:Georgia,serif;font-size:0.85rem;color:#ecdfc8;font-weight:700">Chat</span>
+          <select id="chatFriendSelect" onchange="selectChatFriend(this.value)" style="background:rgba(36,31,21,0.8);border:1px solid #3a3428;border-radius:4px;color:#d6c8b4;font-size:0.72rem;padding:0.2rem 0.4rem;outline:none;max-width:160px"></select>
+        </div>
+        <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:0.6rem;min-height:200px;max-height:300px;display:flex;flex-direction:column;gap:0.3rem"></div>
+        <div style="padding:0.5rem;border-top:1px solid #3a3428;display:flex;gap:0.3rem">
+          <input id="chatMsgInput" type="text" placeholder="Type a message..." style="flex:1;padding:0.4rem 0.6rem;background:rgba(36,31,21,0.8);border:1px solid #3a3428;border-radius:6px;color:#d6c8b4;font-size:0.8rem;outline:none" onkeydown="if(event.key==='Enter')sendChatMsg()">
+          <button onclick="sendChatMsg()" style="padding:0.4rem 0.6rem;border:none;border-radius:6px;background:{{ page_data.theme.accentColor or '#c2593e' }};color:#fff;font-size:0.75rem;cursor:pointer;font-weight:600">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+(function() {
+  const slug = '{{ page.slug }}';
+  const API = '/community';
+
+  // Load guestbook
+  async function loadGb() {
+    try {
+      const r = await fetch(API + '/api/page/guestbook/' + slug);
+      const d = await r.json();
+      const el = document.getElementById('gbEntries');
+      if (!el) return;
+      const entries = d.entries || [];
+      if (!entries.length) { el.innerHTML = '<div class="gb-empty">No entries yet. Be the first!</div>'; return; }
+      el.innerHTML = entries.map(e => {
+        const dt = e.created_at ? new Date(e.created_at + 'Z').toLocaleDateString() : '';
+        return '<div class="gb-entry"><div class="gb-entry-header"><span class="gb-entry-name">' +
+          esc(e.author_name) + '</span><span class="gb-entry-date">' + dt + '</span></div>' +
+          '<div class="gb-entry-content">' + esc(e.content) + '</div></div>';
+      }).join('');
+    } catch(e) {}
+  }
+
+  window.postGb = async function() {
+    const name = (document.getElementById('gbName') || {}).value || 'Anonymous';
+    const content = (document.getElementById('gbMsg') || {}).value || '';
+    if (!content.trim()) return;
+    await fetch(API + '/api/page/guestbook/' + slug, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: name.trim(), content: content.trim()})
+    });
+    document.getElementById('gbMsg').value = '';
+    loadGb();
+  };
+
+  function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  loadGb();
+
+  let insertedEls = {{ page_data.get('insertedElements', []) | tojson }};
+  let savedDrawingData = {{ page_data.get('drawingData', '') | tojson }};
+  let isOwner = false;
+  let drawMode = false, eraserMode = false;
+  let drawCtx = null, drawHistory = [], drawHistoryIdx = -1;
+  let isDrawing = false;
+  let selectedElIdx = -1;
+
+  // Render saved drawings + elements for all visitors
+  (function() {
+    const sc = document.getElementById('savedDrawings');
+    sc.width = window.innerWidth;
+    sc.height = window.innerHeight;
+    if (savedDrawingData) {
+      const img = new Image();
+      img.onload = () => sc.getContext('2d').drawImage(img, 0, 0);
+      img.src = savedDrawingData;
+    }
+    renderInsertedElements();
+  })();
+
+  // ── Regenerate page ──
+  window.regeneratePage = function() {
+    if (confirm('This will regenerate your page from scratch. Your drawings and inserted elements will be lost. Continue?')) {
+      // Delete the page, then redirect to community to retake quiz
+      fetch(API + '/api/page', {
+        method: 'PATCH', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({page_data: null})
+      }).then(() => {
+        // Delete the page entry so quiz shows again
+        fetch(API + '/api/page/delete', {method: 'POST'}).then(() => {
+          window.location.href = '/community/';
+        });
+      });
+    }
+  };
+
+  // ── Audio player ──
+  window.toggleAudio = function() {
+    const a = document.getElementById('bgAudio');
+    const btn = document.getElementById('audioToggle');
+    if (!a) return;
+    if (a.paused) { a.play(); btn.innerHTML = '&#9646;&#9646;'; }
+    else { a.pause(); btn.innerHTML = '&#9654;'; }
+  };
+
+  // ── Insert toolbar + Drawing ──
+  const PAGE_USER_ID = {{ page.user_id }};
+  const PAGE_SLUG = '{{ page.slug }}';
+  let toolbarInited = false;
+  function initToolbar(me) {
+    if (toolbarInited) return;
+    if (!me || me.id !== PAGE_USER_ID) return;
+    toolbarInited = true;
+    isOwner = true;
+    document.getElementById('insertToolbar').style.display = 'flex';
+
+    // ── Inline editing for all text fields ──
+    let savePending = null;
+    document.querySelectorAll('[data-section-id][data-field]').forEach(el => {
+      el.classList.add('editable');
+      el.setAttribute('contenteditable', 'true');
+      el.setAttribute('spellcheck', 'false');
+
+      el.addEventListener('focus', () => {
+        // Strip quote marks for quote fields so user edits raw text
+        if (el.dataset.field === 'text' && el.closest('.quote-section')) {
+          const raw = el.textContent.replace(/^\u201c|\u201d$/g, '').trim();
+          el.textContent = raw;
+        }
+        if (el.dataset.field === 'attribution') {
+          const raw = el.textContent.replace(/^\u2014\s*/, '').trim();
+          el.textContent = raw;
+        }
+      });
+
+      el.addEventListener('blur', () => {
+        const sid = el.dataset.sectionId;
+        const field = el.dataset.field;
+        const isHtml = el.dataset.html === '1';
+        let val = isHtml ? el.innerHTML.trim() : el.textContent.trim();
+
+        // Re-add quote marks for display
+        if (field === 'text' && el.closest('.quote-section')) {
+          el.textContent = '\u201c' + val + '\u201d';
+        }
+        if (field === 'attribution') {
+          el.textContent = '\u2014 ' + val;
+        }
+
+        // Debounce saves
+        clearTimeout(savePending);
+        savePending = setTimeout(async () => {
+          const r = await fetch(API + '/api/page');
+          const d = await r.json();
+          if (!d.page) return;
+          const pd = JSON.parse(d.page.page_data);
+          const sec = (pd.sections || []).find(s => s.id === sid);
+          if (!sec) return;
+          if (!sec.content) sec.content = {};
+          sec.content[field] = val;
+          await fetch(API + '/api/page', {
+            method: 'PATCH', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({page_data: pd})
+          });
+        }, 600);
+      });
+
+      // Prevent Enter from creating new sections in single-line fields
+      if (el.dataset.html !== '1') {
+        el.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+        });
+      }
+    });
+
+    // Init canvas
+    const canvas = document.getElementById('drawCanvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drawCtx = canvas.getContext('2d');
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+
+    // Load saved drawings
+    const savedCanvas = document.getElementById('savedDrawings');
+    savedCanvas.width = window.innerWidth;
+    savedCanvas.height = window.innerHeight;
+    if (savedDrawingData) {
+      const img = new Image();
+      img.onload = () => savedCanvas.getContext('2d').drawImage(img, 0, 0);
+      img.src = savedDrawingData;
+    }
+
+    // Render inserted elements
+    renderInsertedElements();
+
+    // Drawing events
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('mouseleave', endDraw);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e.touches[0]); });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]); });
+    canvas.addEventListener('touchend', endDraw);
+
+    // Image upload handler
+    document.getElementById('tbImageInput').addEventListener('change', async function() {
+      if (!this.files[0]) return;
+      const fd = new FormData(); fd.append('file', this.files[0]);
+      const r = await fetch(API + '/api/page/image', {method: 'POST', body: fd});
+      const d = await r.json();
+      if (d.image_path) {
+        insertedEls.push({type:'image', src:d.image_path, x:200, y:200, w:200});
+        renderInsertedElements();
+      }
+      this.value = '';
+    });
+
+    // Audio upload handler
+    document.getElementById('tbAudioInput').addEventListener('change', async function() {
+      if (!this.files[0]) return;
+      const fd = new FormData(); fd.append('file', this.files[0]);
+      const r = await fetch(API + '/api/page/audio', {method: 'POST', body: fd});
+      const d = await r.json();
+      if (d.audio_path) {
+        await savePageData({backgroundAudio: d.audio_path});
+        alert('Background music set! Reload to hear it.');
+      }
+      this.value = '';
+    });
+
+    // Background image upload handler
+    document.getElementById('tbBgImageInput').addEventListener('change', async function() {
+      if (!this.files[0]) return;
+      const fd = new FormData(); fd.append('file', this.files[0]);
+      const r = await fetch(API + '/api/page/image', {method: 'POST', body: fd});
+      const d = await r.json();
+      if (d.image_path) {
+        await savePageData({backgroundImage: d.image_path});
+        document.body.style.backgroundImage = 'url(' + d.image_path + ')';
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundAttachment = 'fixed';
+      }
+      this.value = '';
+    });
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const sc = document.getElementById('savedDrawings');
+      sc.width = window.innerWidth;
+      sc.height = window.innerHeight;
+    });
+
+    // Make all sections movable — uses absolute positioning so they can go below viewport
+    document.querySelectorAll('.section, .page-footer').forEach(sec => {
+      sec.classList.add('movable');
+      sec.innerHTML += '<span class="section-move-hint">drag to move</span>';
+      let ox, oy, sl, st, dragging, rect;
+      sec.addEventListener('mousedown', e => {
+        if (e.target.closest('.gb-input, .gb-submit, a, button, input, textarea, select')) return;
+        ox = e.clientX; oy = e.clientY;
+        dragging = false;
+        rect = sec.getBoundingClientRect();
+        // Calculate position relative to page (not viewport)
+        sl = rect.left + window.scrollX;
+        st = rect.top + window.scrollY;
+        const move = e2 => {
+          const dx = e2.clientX - ox, dy = e2.clientY - oy;
+          if (!dragging && Math.abs(dx) + Math.abs(dy) < 5) return;
+          if (!dragging) {
+            dragging = true;
+            e.preventDefault();
+            sec.classList.add('selected');
+            sec.style.position = 'absolute';
+            sec.style.left = sl + 'px';
+            sec.style.top = st + 'px';
+            sec.style.width = rect.width + 'px';
+            sec.style.zIndex = '50';
+          }
+          sec.style.left = (sl + dx) + 'px';
+          sec.style.top = (st + dy) + 'px';
+          // Auto-expand page height if dragging near bottom
+          const newBottom = parseInt(sec.style.top) + sec.offsetHeight + 100;
+          if (newBottom > document.body.scrollHeight) {
+            document.body.style.minHeight = newBottom + 'px';
+          }
+        };
+        const up = () => {
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', up);
+          sec.classList.remove('selected');
+        };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+      });
+    });
+
+    // Make chat widget movable
+    const cw = document.getElementById('chatWidget');
+    if (cw) {
+      cw.style.cursor = 'move';
+      let ox, oy, sl, st;
+      cw.querySelector('#chatToggle').addEventListener('mousedown', e => {
+        if (e.detail > 1) return; // skip double-click
+        e.preventDefault();
+        ox = e.clientX; oy = e.clientY;
+        sl = parseInt(cw.style.right ? window.innerWidth - cw.offsetLeft - cw.offsetWidth : cw.offsetLeft);
+        st = cw.offsetTop;
+        cw.style.position = 'fixed';
+        cw.style.right = 'auto';
+        cw.style.left = cw.offsetLeft + 'px';
+        cw.style.top = cw.offsetTop + 'px';
+        cw.style.bottom = 'auto';
+        const move = e2 => {
+          cw.style.left = (cw.offsetLeft + e2.clientX - ox) + 'px';
+          cw.style.top = (cw.offsetTop + e2.clientY - oy) + 'px';
+          ox = e2.clientX; oy = e2.clientY;
+        };
+        const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+      });
+    }
+  }
+
+  // Drawing works directly on the savedDrawings canvas so eraser works on existing strokes
+  function startDraw(e) {
+    if (!drawMode && !eraserMode) return;
+    isDrawing = true;
+    const sc = document.getElementById('savedDrawings');
+    const sctx = sc.getContext('2d');
+    sctx.lineCap = 'round';
+    sctx.lineJoin = 'round';
+    sctx.beginPath();
+    sctx.moveTo(e.clientX, e.clientY);
+    if (eraserMode) {
+      sctx.globalCompositeOperation = 'destination-out';
+      sctx.lineWidth = parseInt(document.getElementById('tbSize').value) * 4;
+    } else {
+      sctx.globalCompositeOperation = 'source-over';
+      sctx.strokeStyle = document.getElementById('tbColor').value;
+      sctx.lineWidth = parseInt(document.getElementById('tbSize').value);
+    }
+  }
+  function draw(e) {
+    if (!isDrawing) return;
+    const sctx = document.getElementById('savedDrawings').getContext('2d');
+    sctx.lineTo(e.clientX, e.clientY);
+    sctx.stroke();
+  }
+  function endDraw() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    const sc = document.getElementById('savedDrawings');
+    const sctx = sc.getContext('2d');
+    sctx.globalCompositeOperation = 'source-over';
+    // Save to history for undo/redo
+    const data = sc.toDataURL();
+    drawHistory = drawHistory.slice(0, drawHistoryIdx + 1);
+    drawHistory.push(data);
+    drawHistoryIdx = drawHistory.length - 1;
+  }
+
+  // Toolbar actions
+  window.tbToggleDraw = function() {
+    drawMode = !drawMode; eraserMode = false;
+    const canvas = document.getElementById('drawCanvas');
+    canvas.classList.toggle('active', drawMode);
+    canvas.style.cursor = drawMode ? 'crosshair' : '';
+    document.getElementById('tbDraw').classList.toggle('active', drawMode);
+    document.getElementById('tbEraser').classList.remove('active');
+  };
+  window.tbToggleEraser = function() {
+    eraserMode = !eraserMode; drawMode = false;
+    const canvas = document.getElementById('drawCanvas');
+    canvas.classList.toggle('active', eraserMode);
+    canvas.style.cursor = eraserMode ? 'cell' : '';
+    document.getElementById('tbEraser').classList.toggle('active', eraserMode);
+    document.getElementById('tbDraw').classList.remove('active');
+  };
+  window.tbUndo = function() {
+    const sc = document.getElementById('savedDrawings');
+    const sctx = sc.getContext('2d');
+    if (drawHistoryIdx <= 0) { sctx.clearRect(0, 0, sc.width, sc.height); drawHistoryIdx = -1; return; }
+    drawHistoryIdx--;
+    const img = new Image();
+    img.onload = () => { sctx.clearRect(0, 0, sc.width, sc.height); sctx.drawImage(img, 0, 0); };
+    img.src = drawHistory[drawHistoryIdx];
+  };
+  window.tbRedo = function() {
+    if (drawHistoryIdx >= drawHistory.length - 1) return;
+    drawHistoryIdx++;
+    const sc = document.getElementById('savedDrawings');
+    const sctx = sc.getContext('2d');
+    const img = new Image();
+    img.onload = () => { sctx.clearRect(0, 0, sc.width, sc.height); sctx.drawImage(img, 0, 0); };
+    img.src = drawHistory[drawHistoryIdx];
+  };
+
+  window.tbToggleSub = function(name) {
+    const el = document.getElementById('tb' + name.charAt(0).toUpperCase() + name.slice(1) + 'Sub');
+    el.classList.toggle('open');
+  };
+  window.tbAddText = function() {
+    const color = document.getElementById('tbColor').value;
+    insertedEls.push({type:'text', text:'', color, x:200, y:200, w:200, fontSize:16});
+    renderInsertedElements();
+    // Auto-select and focus the new text box
+    selectedElIdx = insertedEls.length - 1;
+    renderInsertedElements();
+    const el = document.querySelector('.inserted-el:last-child .inserted-text');
+    if (el) el.focus();
+  };
+  window.tbAddShape = function(shape) {
+    const color = document.getElementById('tbColor').value;
+    const sz = 60;
+    insertedEls.push({type:'shape', shape, color, x:300, y:300, w:sz, h:sz});
+    renderInsertedElements();
+    document.getElementById('tbShapesSub').classList.remove('open');
+  };
+  window.tbInsertImage = function() { document.getElementById('tbImageInput').click(); };
+  window.tbSetAudio = function() { document.getElementById('tbAudioInput').click(); };
+  window.tbSetBgImage = function() { document.getElementById('tbBgImageInput').click(); };
+
+  window.tbSave = async function() {
+    const savedCanvas = document.getElementById('savedDrawings');
+    const drawingData = savedCanvas.toDataURL();
+    await savePageData({drawingData, insertedElements: insertedEls});
+    alert('Saved!');
+  };
+
+  async function savePageData(updates) {
+    const r = await fetch(API + '/api/page');
+    const d = await r.json();
+    if (!d.page) return;
+    const pd = JSON.parse(d.page.page_data);
+    Object.assign(pd, updates);
+    await fetch(API + '/api/page', {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({page_data: pd})
+    });
+  }
+
+  function renderInsertedElements() {
+    const container = document.getElementById('insertedElements');
+    container.innerHTML = '';
+    (insertedEls || []).forEach((el, i) => {
+      const div = document.createElement('div');
+      div.className = 'inserted-el' + (i === selectedElIdx ? ' selected' : '');
+      div.style.left = el.x + 'px';
+      div.style.top = el.y + 'px';
+
+      let inner = '';
+      if (el.type === 'text') {
+        const fs = el.fontSize || 16;
+        const ce = isOwner ? ' contenteditable="true" spellcheck="false"' : '';
+        inner = '<div class="inserted-text" data-el-idx="'+i+'"'+ce+' style="width:'+(el.w||200)+'px;font-size:'+fs+'px;color:'+(el.color||'inherit')+'">' + esc(el.text || '') + '</div>';
+      } else if (el.type === 'image') {
+        inner = '<img src="' + el.src + '" style="width:' + (el.w||200) + 'px">';
+      } else if (el.type === 'shape') {
+        const s = el.w || 60;
+        let style = 'width:'+s+'px;height:'+(el.h||s)+'px;background:'+el.color+';';
+        if (el.shape === 'circle') style += 'border-radius:50%;';
+        else if (el.shape === 'rounded') style += 'border-radius:12px;';
+        else if (el.shape === 'diamond') style += 'transform:rotate(45deg);';
+        inner = '<div class="inserted-shape" style="'+style+'"></div>';
+      }
+
+      if (isOwner) {
+        inner += '<div class="el-controls">' +
+          '<button class="el-ctrl-btn" onclick="event.stopPropagation();elGrow('+i+')" title="Enlarge">+</button>' +
+          '<button class="el-ctrl-btn" onclick="event.stopPropagation();elShrink('+i+')" title="Shrink">&minus;</button>' +
+          '<button class="el-ctrl-btn" onclick="event.stopPropagation();elDelete('+i+')" title="Delete" style="color:#c2593e">&times;</button>' +
+          '</div>';
+        inner += '<div class="el-resize-handle" data-idx="'+i+'"></div>';
+      }
+      div.innerHTML = inner;
+
+      if (isOwner) {
+        div.style.pointerEvents = 'auto';
+        div.style.cursor = el.type === 'text' ? 'default' : 'move';
+
+        // Save text content on blur
+        const textEl = div.querySelector('.inserted-text');
+        if (textEl) {
+          textEl.addEventListener('blur', () => {
+            insertedEls[i].text = textEl.textContent;
+          });
+          // Let clicks inside the text box focus for editing, not drag
+          textEl.addEventListener('mousedown', e => { e.stopPropagation(); });
+        }
+
+        // Click to select + drag
+        div.addEventListener('mousedown', e => {
+          if (e.target.classList.contains('el-resize-handle')) return;
+          if (e.target.classList.contains('el-ctrl-btn')) return;
+          if (e.target.classList.contains('inserted-text')) return; // text handles itself
+          e.preventDefault(); e.stopPropagation();
+          selectedElIdx = i;
+          renderInsertedElements();
+          // Start drag
+          const ox = e.clientX, oy = e.clientY;
+          const sx = insertedEls[i].x, sy = insertedEls[i].y;
+          const move = e2 => {
+            insertedEls[i].x = sx + (e2.clientX - ox);
+            insertedEls[i].y = sy + (e2.clientY - oy);
+            div.style.left = insertedEls[i].x + 'px';
+            div.style.top = insertedEls[i].y + 'px';
+          };
+          const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+          document.addEventListener('mousemove', move);
+          document.addEventListener('mouseup', up);
+        });
+
+        // Resize handle
+        const rh = div.querySelector('.el-resize-handle');
+        if (rh) {
+          rh.addEventListener('mousedown', e => {
+            e.preventDefault(); e.stopPropagation();
+            const startX = e.clientX, startW = el.w || 200, startH = el.h || (el.type === 'shape' ? el.w || 60 : 200);
+            const resize = e2 => {
+              const delta = e2.clientX - startX;
+              insertedEls[i].w = Math.max(30, startW + delta);
+              if (el.type === 'shape') insertedEls[i].h = Math.max(30, startH + delta);
+              renderInsertedElements();
+            };
+            const up = () => { document.removeEventListener('mousemove', resize); document.removeEventListener('mouseup', up); };
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', up);
+          });
+        }
+      }
+      container.appendChild(div);
+    });
+  }
+
+  // Deselect when clicking empty space
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.inserted-el') && !e.target.closest('.insert-toolbar')) {
+      if (selectedElIdx !== -1) { selectedElIdx = -1; renderInsertedElements(); }
+    }
+  });
+
+  window.elGrow = function(i) {
+    if (insertedEls[i].type === 'text') {
+      insertedEls[i].fontSize = Math.min(72, (insertedEls[i].fontSize || 16) + 2);
+    }
+    insertedEls[i].w = (insertedEls[i].w || 200) * 1.2;
+    if (insertedEls[i].type === 'shape') insertedEls[i].h = (insertedEls[i].h || 60) * 1.2;
+    renderInsertedElements();
+  };
+  window.elShrink = function(i) {
+    if (insertedEls[i].type === 'text') {
+      insertedEls[i].fontSize = Math.max(8, (insertedEls[i].fontSize || 16) - 2);
+    }
+    insertedEls[i].w = Math.max(30, (insertedEls[i].w || 200) * 0.8);
+    if (insertedEls[i].type === 'shape') insertedEls[i].h = Math.max(30, (insertedEls[i].h || 60) * 0.8);
+    renderInsertedElements();
+  };
+  window.elDelete = function(i) {
+    insertedEls.splice(i, 1);
+    selectedElIdx = -1;
+    renderInsertedElements();
+  };
+
+  // Delete key removes selected element
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Delete' && selectedElIdx >= 0 && isOwner) {
+      elDelete(selectedElIdx);
+    }
+  });
+
+  // ── Popup chat ──
+  let chatMe = null, chatSocket = null, chatFriends = [], chatActiveFriend = null;
+
+  async function initChat() {
+    try {
+      const r = await fetch(API + '/api/auth/me');
+      if (!r.ok) return;
+      chatMe = (await r.json()).user;
+      document.getElementById('chatWidget').style.display = 'block';
+      try { initToolbar(chatMe); } catch(e) { console.error('Toolbar init error:', e); }
+      // Show regenerate button for owner
+      if (chatMe.id === PAGE_USER_ID) {
+        document.getElementById('regenBtn').style.display = 'inline';
+      }
+      // Load friends
+      const fr = await (await fetch(API + '/api/friends')).json();
+      chatFriends = fr.friends || [];
+      const sel = document.getElementById('chatFriendSelect');
+      sel.innerHTML = '<option value="">Select friend...</option>' +
+        chatFriends.map(f => '<option value="' + f.id + '">' + esc(f.display_name) + '</option>').join('');
+      // Connect socket
+      chatSocket = io({ path: API + '/socket.io', transports: ['websocket', 'polling'] });
+      chatSocket.on('new_message', msg => {
+        if (chatActiveFriend && (msg.from === chatActiveFriend.id || msg.from === chatMe.id)) {
+          appendChatMsg(msg);
+        }
+      });
+    } catch(e) {}
+  }
+
+  window.toggleChat = function() {
+    const p = document.getElementById('chatPanel');
+    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+  };
+
+  window.selectChatFriend = async function(fid) {
+    if (!fid) return;
+    chatActiveFriend = chatFriends.find(f => f.id == fid);
+    if (!chatActiveFriend) return;
+    const d = await (await fetch(API + '/api/messages/' + fid + '?limit=30')).json();
+    const el = document.getElementById('chatMsgs');
+    el.innerHTML = '';
+    (d.messages || []).forEach(m => appendChatMsg(m));
+    el.scrollTop = el.scrollHeight;
+    chatSocket.emit('mark_read', {friend_id: parseInt(fid)});
+  };
+
+  function appendChatMsg(msg) {
+    const el = document.getElementById('chatMsgs');
+    const mine = msg.from === chatMe.id || msg.sender_id === chatMe.id;
+    const div = document.createElement('div');
+    div.style.cssText = 'max-width:80%;padding:0.35rem 0.6rem;border-radius:10px;font-size:0.78rem;line-height:1.4;word-wrap:break-word;' +
+      (mine ? 'align-self:flex-end;background:rgba(194,89,62,0.15);border:1px solid rgba(194,89,62,0.1);border-bottom-right-radius:3px;' :
+       'align-self:flex-start;background:rgba(58,52,40,0.8);border:1px solid #3a3428;border-bottom-left-radius:3px;');
+    div.textContent = msg.content || '';
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  window.sendChatMsg = function() {
+    if (!chatActiveFriend || !chatSocket) return;
+    const input = document.getElementById('chatMsgInput');
+    const c = (input.value || '').trim();
+    if (!c) return;
+    chatSocket.emit('send_message', {to: chatActiveFriend.id, content: c});
+    input.value = '';
+  };
+
+  // Init owner tools independently of chat
+  (async function() {
+    try {
+      const r = await fetch(API + '/api/auth/me');
+      if (r.ok) {
+        const d = await r.json();
+        if (d.user && d.user.id === PAGE_USER_ID) {
+          initToolbar(d.user);
+          document.getElementById('regenBtn').style.display = 'inline';
+        }
+      }
+    } catch(e) { console.error('Auth check failed:', e); }
+  })();
+
+  initChat();
+})();
+</script>
+</body>
+</html>

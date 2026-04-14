@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Editor // Han Chau</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+      background: #241f15; color: #d6c8b4;
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+    a { color: #c2593e; text-decoration: none; }
+
+    .ed-topbar {
+      height: 52px; display: flex; align-items: center; padding: 0 1.25rem;
+      border-bottom: 1px solid #3a3428; background: rgba(40,36,28,0.6);
+      flex-shrink: 0; gap: 1rem; position: relative; z-index: 10;
+    }
+    .ed-topbar::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5; }
+    .ed-back { font-size: 0.78rem; color: #786b5c; padding: 0.35rem 0.7rem; border: 1px solid #3f3930; border-radius: 6px; transition: color 0.2s; }
+    .ed-back:hover { color: #c2593e; }
+    .ed-title { font-family: Georgia, serif; font-size: 1.1rem; color: #ecdfc8; font-weight: 700; }
+    .ed-actions { margin-left: auto; display: flex; gap: 0.5rem; }
+    .ed-btn {
+      padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer;
+      font-family: "Fira Code", monospace; transition: opacity 0.2s;
+    }
+    .ed-btn-save { background: rgba(109,143,94,0.2); color: #6d8f5e; border: 1px solid rgba(109,143,94,0.3); }
+    .ed-btn-save:hover { background: rgba(109,143,94,0.3); }
+    .ed-btn-publish { background: linear-gradient(135deg, #c2593e, #a84a32); color: #ecdfc8; border: none; }
+    .ed-btn-publish:hover { opacity: 0.85; }
+    .ed-btn-preview { background: none; color: #b8924a; border: 1px solid #3a3428; }
+    .ed-btn-preview:hover { border-color: rgba(184,146,74,0.3); }
+
+    .ed-layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left panel — controls */
+    .ed-panel {
+      width: 340px; border-right: 1px solid #3a3428; display: flex; flex-direction: column;
+      background: rgba(40,36,28,0.3); flex-shrink: 0; overflow: hidden;
+    }
+    .ed-panel-body { flex: 1; overflow-y: auto; padding: 1rem; }
+    .ed-panel-body::-webkit-scrollbar { width: 5px; }
+    .ed-panel-body::-webkit-scrollbar-thumb { background: #3a3428; border-radius: 3px; }
+
+    .ed-section-label {
+      font-family: "Fira Code", monospace; font-size: 0.62rem; color: #564c40;
+      letter-spacing: 0.1em; text-transform: uppercase; padding: 0.5rem 0; margin-top: 0.5rem;
+    }
+
+    .ed-section-card {
+      padding: 0.6rem; margin-bottom: 0.5rem; border: 1px solid #3a3428;
+      border-radius: 6px; background: rgba(44,38,28,0.5); cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .ed-section-card:hover { border-color: #4a4238; }
+    .ed-section-card.active { border-color: #c2593e; background: rgba(194,89,62,0.06); }
+    .ed-section-card-hdr { display: flex; align-items: center; justify-content: space-between; }
+    .ed-section-card-name { font-size: 0.82rem; color: #e0d2be; font-weight: 600; text-transform: capitalize; }
+    .ed-section-card-type { font-family: "Fira Code", monospace; font-size: 0.58rem; color: #6a5d50; }
+    .ed-section-card-actions { display: flex; gap: 0.25rem; margin-top: 0.4rem; }
+    .ed-sm-btn {
+      padding: 0.15rem 0.35rem; border-radius: 3px; font-size: 0.58rem; cursor: pointer;
+      border: 1px solid #3a3428; background: none; color: #6a5d50;
+      font-family: "Fira Code", monospace; transition: color 0.2s;
+    }
+    .ed-sm-btn:hover { color: #c2593e; border-color: rgba(194,89,62,0.3); }
+    .ed-sm-btn.del { color: #c2593e; }
+
+    /* Section editor area */
+    .ed-section-editor { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #3a3428; }
+    .ed-field { margin-bottom: 0.75rem; }
+    .ed-field label {
+      display: block; margin-bottom: 0.3rem;
+      font-family: "Fira Code", monospace; font-size: 0.65rem; color: #6a5d50;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .ed-field input, .ed-field textarea, .ed-field select {
+      width: 100%; padding: 0.5rem 0.65rem;
+      background: rgba(36,31,21,0.8); border: 1px solid #3a3428; border-radius: 4px;
+      color: #d6c8b4; font-size: 0.82rem; outline: none; font-family: inherit;
+    }
+    .ed-field textarea { resize: vertical; min-height: 80px; }
+    .ed-field input:focus, .ed-field textarea:focus { border-color: #c2593e; }
+    .ed-field select { cursor: pointer; }
+
+    .ed-add-btn {
+      width: 100%; padding: 0.5rem; margin-top: 0.5rem;
+      border: 2px dashed #3a3428; border-radius: 6px; background: none;
+      color: #6a5d50; font-size: 0.75rem; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .ed-add-btn:hover { border-color: #c2593e; color: #c2593e; }
+
+    /* Right panel — preview */
+    .ed-preview { flex: 1; overflow-y: auto; background: #1a1610; }
+    .ed-preview iframe { width: 100%; height: 100%; border: none; background: #1a1610; }
+
+    /* Page settings */
+    .ed-settings { padding: 0.75rem; border-bottom: 1px solid #3a3428; background: rgba(36,31,21,0.4); flex-shrink: 0; }
+    .ed-slug-row { display: flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: #6a5d50; }
+    .ed-slug-row input { max-width: 120px; padding: 0.25rem 0.4rem; font-size: 0.72rem; }
+    .ed-status { font-size: 0.68rem; margin-top: 0.3rem; }
+    .ed-status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 0.3rem; }
+    .ed-status-pub { background: #6d8f5e; }
+    .ed-status-draft { background: #c2593e; }
+
+    @media (max-width: 768px) {
+      .ed-panel { width: 100%; position: absolute; inset: 52px 0 0 0; z-index: 5; background: #241f15; display: none; }
+      .ed-panel.mobile-show { display: flex; }
+      .ed-preview { display: none; }
+      .ed-preview.mobile-show { display: block; position: absolute; inset: 52px 0 0 0; z-index: 5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ed-topbar">
+    <a class="ed-back" href="/community/">&larr; Community</a>
+    <span class="ed-title">Page Editor</span>
+    <div class="ed-actions">
+      <button class="ed-btn ed-btn-preview" onclick="previewPage()">Preview</button>
+      <button class="ed-btn ed-btn-save" onclick="savePage()">Save</button>
+      <button class="ed-btn ed-btn-publish" id="pubBtn" onclick="togglePublish()">Publish</button>
+    </div>
+  </div>
+
+  <div class="ed-layout">
+    <div class="ed-panel" id="edPanel">
+      <div class="ed-settings" id="edSettings"></div>
+      <div class="ed-panel-body" id="edPanelBody"></div>
+    </div>
+    <div class="ed-preview" id="edPreview">
+      <iframe id="previewFrame" sandbox="allow-same-origin allow-scripts"></iframe>
+    </div>
+  </div>
+
+<script>
+(function() {
+  const API = '/community';
+  let pageData = null;
+  let pageObj = null;
+  let selectedSection = null;
+  let dirty = false;
+
+  async function init() {
+    const r = await fetch(API + '/api/page');
+    const d = await r.json();
+    if (!d.page) { window.location.href = API + '/'; return; }
+    pageObj = d.page;
+    pageData = JSON.parse(pageObj.page_data);
+    renderSettings();
+    renderSections();
+    updatePreview();
+  }
+
+  function renderSettings() {
+    const pub = pageObj.is_published;
+    document.getElementById('pubBtn').textContent = pub ? 'Unpublish' : 'Publish';
+    document.getElementById('edSettings').innerHTML =
+      '<div class="ed-slug-row">hanzchau.com/community/p/<input id="edSlug" value="' + esc(pageObj.slug) + '" onchange="updateSlug(this.value)"></div>' +
+      '<div class="ed-status"><span class="ed-status-dot ' + (pub ? 'ed-status-pub' : 'ed-status-draft') + '"></span>' +
+      (pub ? '<a href="/p/' + esc(pageObj.slug) + '" target="_blank" style="color:#6d8f5e">Live</a>' : '<span style="color:#c2593e">Draft</span>') +
+      (pageObj.view_count ? ' &middot; ' + pageObj.view_count + ' views' : '') + '</div>';
+  }
+
+  function renderSections() {
+    const body = document.getElementById('edPanelBody');
+    let h = '<div class="ed-section-label">Sections</div>';
+
+    pageData.sections.sort((a, b) => a.order - b.order).forEach((s, i) => {
+      const active = selectedSection === s.id ? ' active' : '';
+      h += '<div class="ed-section-card' + active + '" onclick="selectSection(\'' + s.id + '\')">' +
+        '<div class="ed-section-card-hdr"><span class="ed-section-card-name">' + s.type + '</span>' +
+        '<span class="ed-section-card-type">' + (s.visible ? '' : 'hidden') + '</span></div>' +
+        '<div class="ed-section-card-actions">' +
+        (i > 0 ? '<button class="ed-sm-btn" onclick="event.stopPropagation();moveSection(\'' + s.id + '\',-1)">Up</button>' : '') +
+        (i < pageData.sections.length - 1 ? '<button class="ed-sm-btn" onclick="event.stopPropagation();moveSection(\'' + s.id + '\',1)">Down</button>' : '') +
+        '<button class="ed-sm-btn" onclick="event.stopPropagation();toggleVis(\'' + s.id + '\')">' + (s.visible ? 'Hide' : 'Show') + '</button>' +
+        '<button class="ed-sm-btn del" onclick="event.stopPropagation();removeSection(\'' + s.id + '\')">Del</button>' +
+        '</div></div>';
+    });
+
+    h += '<button class="ed-add-btn" onclick="addSection()">+ Add Section</button>';
+
+    // Section editor
+    if (selectedSection) {
+      const s = pageData.sections.find(x => x.id === selectedSection);
+      if (s) h += renderSectionEditor(s);
+    }
+
+    // Theme settings
+    h += '<div class="ed-section-label" style="margin-top:1.5rem">Theme</div>';
+    const t = pageData.theme || {};
+    h += '<div class="ed-field"><label>Accent Color</label><input type="color" value="' + (t.accentColor || '#c2593e') + '" onchange="updateTheme(\'accentColor\',this.value)" style="height:32px;cursor:pointer"></div>';
+    h += '<div class="ed-field"><label>Text Color</label><input type="color" value="' + (t.textColor || '#d6c8b4') + '" onchange="updateTheme(\'textColor\',this.value)" style="height:32px;cursor:pointer"></div>';
+    h += '<div class="ed-field"><label>Font</label><select onchange="updateTheme(\'fontFamily\',this.value)">' +
+      ['Georgia, serif', 'Palatino, serif', 'system-ui, sans-serif', 'Courier New, monospace'].map(f =>
+        '<option' + (t.fontFamily === f ? ' selected' : '') + '>' + f + '</option>'
+      ).join('') + '</select></div>';
+    h += '<div class="ed-field"><label>Background Image</label>';
+    if (pageData.backgroundImage) {
+      h += '<div style="margin-bottom:0.5rem"><img src="' + esc(pageData.backgroundImage) + '" style="width:100%;max-height:80px;object-fit:cover;border-radius:6px;border:1px solid #3a3428"></div>';
+      h += '<button class="ed-sm-btn del" onclick="removeBgImage()">Remove</button> ';
+    }
+    h += '<input type="file" accept=".jpg,.jpeg,.png,.gif,.webp" onchange="uploadBgImage(this)" style="font-size:0.72rem;color:#6a5d50"></div>';
+
+    h += '<div class="ed-field"><label>Background Music</label>';
+    if (pageData.backgroundAudio) {
+      h += '<div style="margin-bottom:0.5rem"><audio controls src="' + esc(pageData.backgroundAudio) + '" style="width:100%;height:32px"></audio></div>';
+      h += '<button class="ed-sm-btn del" onclick="removeBgAudio()">Remove</button> ';
+    }
+    h += '<input type="file" accept=".mp3,.wav,.ogg" onchange="uploadBgAudio(this)" style="font-size:0.72rem;color:#6a5d50"></div>';
+
+    h += '<div class="ed-field"><label>Custom CSS</label><textarea placeholder="Advanced: add your own CSS..." onchange="updateTheme(\'customCss\',this.value)">' + esc(pageData.custom_css || '') + '</textarea></div>';
+
+    body.innerHTML = h;
+  }
+
+  function renderSectionEditor(s) {
+    let h = '<div class="ed-section-editor"><div class="ed-section-label">Edit: ' + s.type + '</div>';
+    const c = s.content || {};
+    switch (s.type) {
+      case 'hero':
+        h += field('Name', 'text', c.name || '', 'updateContent("'+s.id+'","name",this.value)');
+        h += field('Tagline', 'text', c.tagline || '', 'updateContent("'+s.id+'","tagline",this.value)');
+        break;
+      case 'about':
+        h += '<div class="ed-field"><label>About (HTML)</label><textarea onchange="updateContent(\''+s.id+'\',\'html\',this.value)">' + esc(c.html || '') + '</textarea></div>';
+        break;
+      case 'quote':
+        h += field('Quote', 'text', c.text || '', 'updateContent("'+s.id+'","text",this.value)');
+        h += field('Attribution', 'text', c.attribution || '', 'updateContent("'+s.id+'","attribution",this.value)');
+        break;
+      case 'links':
+        (c.links || []).forEach((l, i) => {
+          h += '<div style="display:flex;gap:0.3rem;margin-bottom:0.3rem">' +
+            '<input style="width:80px" value="' + esc(l.platform||'') + '" onchange="updateLink(\''+s.id+'\','+i+',\'platform\',this.value)" placeholder="platform">' +
+            '<input style="flex:1" value="' + esc(l.url||'') + '" onchange="updateLink(\''+s.id+'\','+i+',\'url\',this.value)" placeholder="URL">' +
+            '<button class="ed-sm-btn del" onclick="removeLink(\''+s.id+'\','+i+')">x</button></div>';
+        });
+        h += '<button class="ed-sm-btn" onclick="addLink(\''+s.id+'\')">+ Add Link</button>';
+        break;
+      case 'music':
+        h += '<div class="ed-field"><label>Description</label><textarea onchange="updateContent(\''+s.id+'\',\'description\',this.value)">' + esc(c.description || '') + '</textarea></div>';
+        break;
+      case 'gallery':
+        h += '<div class="ed-field"><label>Description</label><textarea onchange="updateContent(\''+s.id+'\',\'description\',this.value)">' + esc(c.description || '') + '</textarea></div>';
+        break;
+      default:
+        h += '<div style="font-size:0.75rem;color:#564c40;font-style:italic">This section has no editable fields yet.</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function field(label, type, value, onchange) {
+    return '<div class="ed-field"><label>' + label + '</label><input type="' + type + '" value="' + esc(value) + '" onchange="' + onchange + '"></div>';
+  }
+
+  // Actions
+  window.selectSection = function(id) { selectedSection = id === selectedSection ? null : id; renderSections(); };
+  window.moveSection = function(id, dir) {
+    const idx = pageData.sections.findIndex(s => s.id === id);
+    if (idx < 0) return;
+    const swap = idx + dir;
+    if (swap < 0 || swap >= pageData.sections.length) return;
+    [pageData.sections[idx].order, pageData.sections[swap].order] = [pageData.sections[swap].order, pageData.sections[idx].order];
+    dirty = true; renderSections(); updatePreview();
+  };
+  window.toggleVis = function(id) {
+    const s = pageData.sections.find(x => x.id === id);
+    if (s) { s.visible = !s.visible; dirty = true; renderSections(); updatePreview(); }
+  };
+  window.removeSection = function(id) {
+    if (!confirm('Remove this section?')) return;
+    pageData.sections = pageData.sections.filter(s => s.id !== id);
+    if (selectedSection === id) selectedSection = null;
+    dirty = true; renderSections(); updatePreview();
+  };
+  window.addSection = function() {
+    const type = prompt('Section type:\nhero, about, quote, links, music, gallery, guestbook');
+    if (!type || !['hero','about','quote','links','music','gallery','guestbook'].includes(type.trim())) return;
+    pageData.sections.push({
+      id: Math.random().toString(36).substr(2, 8),
+      type: type.trim(), order: pageData.sections.length,
+      visible: true, content: type === 'links' ? {links:[]} : {}, style: {}
+    });
+    dirty = true; renderSections(); updatePreview();
+  };
+  window.updateContent = function(id, key, val) {
+    const s = pageData.sections.find(x => x.id === id);
+    if (s) { if (!s.content) s.content = {}; s.content[key] = val; dirty = true; updatePreview(); }
+  };
+  window.updateLink = function(sid, idx, key, val) {
+    const s = pageData.sections.find(x => x.id === sid);
+    if (s && s.content && s.content.links && s.content.links[idx]) {
+      s.content.links[idx][key] = val; dirty = true; updatePreview();
+    }
+  };
+  window.addLink = function(sid) {
+    const s = pageData.sections.find(x => x.id === sid);
+    if (s) { if (!s.content.links) s.content.links = []; s.content.links.push({platform:'',url:'',label:''}); dirty = true; renderSections(); }
+  };
+  window.removeLink = function(sid, idx) {
+    const s = pageData.sections.find(x => x.id === sid);
+    if (s && s.content.links) { s.content.links.splice(idx, 1); dirty = true; renderSections(); updatePreview(); }
+  };
+  window.updateTheme = function(key, val) {
+    if (key === 'customCss') { pageData.custom_css = val; }
+    else { if (!pageData.theme) pageData.theme = {}; pageData.theme[key] = val; }
+    dirty = true; updatePreview();
+  };
+  window.uploadBgImage = async function(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const r = await fetch(API + '/api/page/image', {method: 'POST', body: fd});
+    const d = await r.json();
+    if (d.image_path) {
+      pageData.backgroundImage = d.image_path;
+      dirty = true; renderSections(); updatePreview();
+    }
+    input.value = '';
+  };
+  window.removeBgImage = function() {
+    pageData.backgroundImage = null;
+    dirty = true; renderSections(); updatePreview();
+  };
+  window.uploadBgAudio = async function(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const r = await fetch(API + '/api/page/audio', {method: 'POST', body: fd});
+    const d = await r.json();
+    if (d.audio_path) {
+      pageData.backgroundAudio = d.audio_path;
+      dirty = true; renderSections(); updatePreview();
+    }
+    input.value = '';
+  };
+  window.removeBgAudio = function() {
+    pageData.backgroundAudio = null;
+    dirty = true; renderSections(); updatePreview();
+  };
+  window.updateSlug = async function(val) {
+    const slug = val.replace(/[^a-z0-9_-]/g, '').substring(0, 32);
+    await fetch(API + '/api/page', {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({slug})
+    });
+    pageObj.slug = slug; renderSettings();
+  };
+
+  window.savePage = async function() {
+    const r = await fetch(API + '/api/page', {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({page_data: pageData})
+    });
+    if (r.ok) { dirty = false; const d = await r.json(); pageObj = d.page; alert('Saved!'); }
+    else { alert('Save failed.'); }
+  };
+  window.togglePublish = async function() {
+    const r = await fetch(API + '/api/page/publish', {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({publish: !pageObj.is_published})
+    });
+    if (r.ok) { const d = await r.json(); pageObj = d.page; renderSettings(); }
+  };
+  window.previewPage = function() {
+    if (pageObj.is_published) window.open('/community/p/' +pageObj.slug, '_blank');
+    else { savePage().then(() => { alert('Save first, then publish to preview the live page.'); }); }
+  };
+
+  function updatePreview() {
+    const frame = document.getElementById('previewFrame');
+    const t = pageData.theme || {};
+    let html = '<!DOCTYPE html><html><head><style>';
+    html += '*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }';
+    html += 'body { font-family:' + (t.fontFamily||'Georgia, serif') + '; background:' + (t.gradient||t.background||'#241f15') + '; color:' + (t.textColor||'#d6c8b4') + '; padding:2rem; line-height:1.7;';
+    if (pageData.backgroundImage) html += ' background-image:url(' + pageData.backgroundImage + '); background-size:cover; background-position:center; background-attachment:fixed;';
+    html += ' }';
+    html += 'a { color:' + (t.accentColor||'#c2593e') + '; }';
+    html += '.section { margin-bottom:1.5rem; padding:1.5rem; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); }';
+    html += '.hero { text-align:center; padding:3rem 1.5rem; background:none; border:none; }';
+    html += '.hero h1 { font-size:2.2rem; margin-bottom:0.5rem; }';
+    html += '.hero p { opacity:0.6; }';
+    html += '.divider { display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem; }';
+    html += '.divider h2 { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.12em; color:' + (t.accentColor||'#c2593e') + '; white-space:nowrap; }';
+    html += '.divider .line { flex:1; height:1px; background:' + (t.accentColor||'#c2593e') + '40; }';
+    html += '.quote { text-align:center; font-style:italic; } .quote .attr { font-size:0.8rem; opacity:0.5; font-style:normal; margin-top:0.5rem; }';
+    html += '.link { display:inline-block; padding:0.4rem 0.8rem; margin:0.2rem; border:1px solid ' + (t.accentColor||'#c2593e') + '30; border-radius:4px; font-size:0.82rem; }';
+    if (pageData.custom_css) html += pageData.custom_css;
+    html += '</style></head><body>';
+
+    pageData.sections.sort((a,b) => a.order - b.order).forEach(s => {
+      if (!s.visible) return;
+      const c = s.content || {};
+      switch (s.type) {
+        case 'hero':
+          html += '<div class="section hero"><h1>' + esc(c.name||'Your Name') + '</h1><p>' + esc(c.tagline||'') + '</p></div>';
+          break;
+        case 'about':
+          html += '<div class="section"><div class="divider"><h2>About</h2><div class="line"></div></div>' + (c.html||'<p>Write about yourself...</p>') + '</div>';
+          break;
+        case 'quote':
+          html += '<div class="section quote">&ldquo;' + esc(c.text||'') + '&rdquo;<div class="attr">&mdash; ' + esc(c.attribution||'') + '</div></div>';
+          break;
+        case 'links':
+          html += '<div class="section"><div class="divider"><h2>Links</h2><div class="line"></div></div>';
+          (c.links||[]).forEach(l => { html += '<span class="link">' + esc(l.label||l.platform||'Link') + '</span>'; });
+          html += '</div>'; break;
+        case 'music':
+          html += '<div class="section"><div class="divider"><h2>Music</h2><div class="line"></div></div><p style="opacity:0.7;font-style:italic">' + esc(c.description||'') + '</p></div>';
+          break;
+        case 'gallery':
+          html += '<div class="section"><div class="divider"><h2>Gallery</h2><div class="line"></div></div><p style="opacity:0.7;font-style:italic">' + esc(c.description||'') + '</p></div>';
+          break;
+        case 'guestbook':
+          html += '<div class="section"><div class="divider"><h2>Guestbook</h2><div class="line"></div></div><p style="opacity:0.3;font-style:italic">Guestbook appears on the live page</p></div>';
+          break;
+      }
+    });
+    html += '</body></html>';
+    frame.srcdoc = html;
+  }
+
+  function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  init();
+})();
+</script>
+</body>
+</html>

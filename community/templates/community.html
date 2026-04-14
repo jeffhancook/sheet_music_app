@@ -1180,7 +1180,7 @@
         let h = '';
         if (msg.content) h += esc(msg.content);
         if (msg.image_path) h += '<br><img class="c-msg-img" src="' + API + '/uploads/' + esc(msg.image_path) + '" onclick="window.open(this.src)">';
-        const t = msg.created_at ? new Date(msg.created_at + (msg.created_at.endsWith('Z') ? '' : 'Z')).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+        const t = formatMsgTime(msg.created_at);
         h += '<div class="c-msg-time">' + t + '</div>';
         el.innerHTML = h;
         $('cChatMsgs').appendChild(el);
@@ -1300,7 +1300,7 @@
         }
         if (msg.content) h += esc(msg.content);
         if (msg.image_path) h += '<br><img class="c-msg-img" src="' + API + '/uploads/' + esc(msg.image_path) + '" onclick="window.open(this.src)">';
-        const t = msg.created_at ? new Date(msg.created_at + (msg.created_at.endsWith('Z') ? '' : 'Z')).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+        const t = formatMsgTime(msg.created_at);
         h += '<div class="c-msg-time">' + t + '</div>';
         el.innerHTML = h;
         $('cChatMsgs').appendChild(el);
@@ -1610,6 +1610,17 @@
     };
 
     function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function formatMsgTime(created_at) {
+        if (!created_at) return '';
+        const d = new Date(created_at + (created_at.endsWith('Z') ? '' : 'Z'));
+        const today = new Date();
+        const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+        const time = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        if (d.toDateString() === today.toDateString()) return time;
+        if (d.toDateString() === yesterday.toDateString()) return 'Yesterday ' + time;
+        return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + time;
+    }
 
     // ── Personal Page Builder ──
     window.openPageBuilder = async function() {
