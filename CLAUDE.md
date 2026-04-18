@@ -15,6 +15,7 @@ sheet_music_app/
 ├── community/                # Community system (Flask-SocketIO, port 5004) — auth, friends, chat, portfolios, AI backgrounds
 ├── tag/                      # Multiplayer tag game (Flask-SocketIO, port 5007) — platformer, lobby, real-time movement
 ├── imposter/                 # Imposter word game (Flask-SocketIO, port 5008) — social deduction, clues, voting
+├── pet/                      # Virtual pet (Flask, port 5010) — egg → hatches after 3d, feed daily, walks/reacts, shares SECRET_KEY with community
 ├── ScienceEssence/           # Physics education app (vanilla JS, own .git repo)
 └── .claude/                  # Claude Code settings
 ```

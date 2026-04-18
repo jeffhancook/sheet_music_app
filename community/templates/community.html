@@ -758,6 +758,7 @@
     .gc-friend-check label { font-size: 0.82rem; color: #d6c8b4; cursor: pointer; }
     .gc-actions { display: flex; gap: 0.4rem; margin-top: 1rem; }
     .gc-members-list { font-size: 0.72rem; color: #6a5d50; margin-top: 0.2rem; }
+
   </style>
 </head>
 <body>
@@ -776,6 +777,9 @@
       <button class="topbar-action" onclick="czOpen()" title="Customize Background">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
+      <a class="topbar-action" href="/pet/" title="My Pet" style="text-decoration:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4.5 9.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM9 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM15 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM19.5 9.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM17 17.5c0 2-2.239 3-5 3s-5-1-5-3c0-1.2.5-2.5 2-3.5s2-2.5 3-2.5 1 1.5 3 2.5 2 2.3 2 3.5z"/></svg>
+      </a>
       <span class="topbar-username" id="topbarName"></span>
       <button class="topbar-logout" onclick="cLogout()">logout</button>
     </div>
@@ -879,6 +883,7 @@
     </div>
   </div>
 
+
   <!-- Mobile tab bar -->
   <div class="mobile-tabs" id="mobileTabs">
     <button class="mobile-tab active" data-panel="Friends" onclick="mobileSwitch(this)">Friends</button>
@@ -887,6 +892,7 @@
   </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script src="/pet/static/pet-widget.js" defer></script>
 <script>
 (function() {
     const API = '/community';

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Pet — Han Chau</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(184, 146, 74, 0.12), transparent 45%),
+      radial-gradient(ellipse at 85% 80%, rgba(109, 143, 94, 0.12), transparent 45%),
+      #241f15;
+    color: #d6c8b4;
+    font-family: Georgia, "Times New Roman", serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(rgba(214,200,180,0.04) 1px, transparent 1px);
+    background-size: 3px 3px; opacity: 0.5;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid #3a3428;
+    background: rgba(36, 31, 21, 0.7); backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-back, .topbar-link {
+    color: #b8924a; text-decoration: none; font-size: 0.82rem;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+  }
+  .topbar-back:hover, .topbar-link:hover { color: #c2593e; }
+  .topbar-title {
+    font-size: 1.05rem; color: #ecdfc8; font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .topbar-links { display: flex; gap: 1.1rem; align-items: center; }
+
+  /* Main column */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 520px; margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+    display: flex; flex-direction: column; align-items: center; gap: 1.2rem;
+  }
+
+  /* Cute card */
+  .card {
+    width: 100%;
+    background:
+      linear-gradient(180deg, rgba(64,54,38,0.8) 0%, rgba(44,38,28,0.85) 100%);
+    border: 1px solid #3a3428;
+    border-radius: 22px;
+    padding: 2rem 1.8rem;
+    position: relative; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    text-align: center;
+  }
+  .card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, transparent, #c2593e, #b8924a, #6d8f5e, transparent);
+    opacity: 0.55;
+  }
+  .pet-name {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2rem; color: #ecdfc8;
+    margin-bottom: 0.25rem; letter-spacing: 0.02em;
+  }
+  .pet-species {
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.78rem; color: #8a7c6a; text-transform: lowercase;
+    letter-spacing: 0.1em;
+  }
+  .pet-tag {
+    display: inline-block; margin-top: 0.2rem;
+    padding: 0.2rem 0.7rem; border-radius: 20px;
+    background: rgba(184, 146, 74, 0.12); color: #b8924a;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* Nest area */
+  .nest {
+    display: flex; align-items: flex-end; justify-content: center;
+    height: 240px; margin: 1.4rem 0 0.6rem;
+    position: relative;
+  }
+  .nest::before {
+    content: ""; position: absolute; bottom: 6%; left: 10%; right: 10%;
+    height: 18px; border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(184, 146, 74, 0.22) 0%, transparent 70%);
+    filter: blur(2px);
+  }
+
+  /* ── Egg shape (turtle, goose, chicken) ── */
+  .hero-egg {
+    width: 140px; height: 180px;
+    position: relative;
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+    animation: hero-egg-wobble 3.5s ease-in-out infinite;
+    transform-origin: 50% 95%;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+  }
+  @keyframes hero-egg-wobble {
+    0%, 100% { transform: rotate(-3deg); }
+    50%      { transform: rotate(3deg); }
+  }
+  .hero-egg::after {
+    content: ""; position: absolute;
+    top: 12%; left: 18%; width: 28%; height: 22%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.1));
+    filter: blur(2px); opacity: 0.55;
+  }
+  /* Chicken egg — warm cream with brown speckles */
+  .hero-egg[data-species="chicken"] {
+    background: radial-gradient(ellipse at 32% 26%, #fff4dc 0%, #ecd8ae 55%, #c6a277 100%);
+  }
+  .hero-egg[data-species="chicken"]::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit; opacity: 0.85;
+    background:
+      radial-gradient(circle at 28% 32%, rgba(96,60,30,0.7) 0, rgba(96,60,30,0.7) 2px, transparent 2.5px),
+      radial-gradient(circle at 62% 28%, rgba(96,60,30,0.55) 0, rgba(96,60,30,0.55) 1.8px, transparent 2.3px),
+      radial-gradient(circle at 42% 52%, rgba(96,60,30,0.65) 0, rgba(96,60,30,0.65) 2px, transparent 2.5px),
+      radial-gradient(circle at 68% 62%, rgba(96,60,30,0.55) 0, rgba(96,60,30,0.55) 1.6px, transparent 2.1px),
+      radial-gradient(circle at 30% 72%, rgba(96,60,30,0.6) 0, rgba(96,60,30,0.6) 2px, transparent 2.5px),
+      radial-gradient(circle at 52% 82%, rgba(96,60,30,0.5) 0, rgba(96,60,30,0.5) 1.7px, transparent 2.2px),
+      radial-gradient(circle at 76% 46%, rgba(96,60,30,0.55) 0, rgba(96,60,30,0.55) 1.5px, transparent 2px),
+      radial-gradient(circle at 20% 48%, rgba(96,60,30,0.55) 0, rgba(96,60,30,0.55) 1.8px, transparent 2.3px);
+  }
+  /* Turtle egg — soft leathery green */
+  .hero-egg[data-species="turtle"] {
+    background: radial-gradient(ellipse at 32% 26%, #e7efc6 0%, #a7be81 55%, #5f7848 100%);
+    border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  }
+  .hero-egg[data-species="turtle"]::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit; opacity: 0.45;
+    background:
+      radial-gradient(circle at 40% 40%, rgba(40,60,20,0.4) 0, rgba(40,60,20,0.4) 6px, transparent 8px),
+      radial-gradient(circle at 65% 55%, rgba(40,60,20,0.3) 0, rgba(40,60,20,0.3) 5px, transparent 7px),
+      radial-gradient(circle at 30% 65%, rgba(40,60,20,0.35) 0, rgba(40,60,20,0.35) 5px, transparent 7px),
+      radial-gradient(circle at 58% 78%, rgba(40,60,20,0.3) 0, rgba(40,60,20,0.3) 4px, transparent 6px);
+  }
+  /* Goose egg — smooth, slightly blue-white, larger */
+  .hero-egg[data-species="goose"] {
+    width: 150px; height: 200px;
+    background: radial-gradient(ellipse at 32% 26%, #ffffff 0%, #f0efe4 55%, #c7c5b2 100%);
+    border-radius: 50% 50% 50% 50% / 66% 66% 34% 34%;
+  }
+
+  /* ── Dog incubator ── */
+  .hero-incubator {
+    width: 200px; height: 170px;
+    position: relative;
+    margin-top: 32px;
+    background: linear-gradient(180deg, rgba(244, 232, 205, 0.22), rgba(186, 153, 100, 0.28));
+    border: 3px solid #b8924a;
+    border-radius: 18px 18px 22px 22px;
+    box-shadow:
+      inset 0 -12px 24px rgba(0,0,0,0.2),
+      inset 0 4px 10px rgba(255, 230, 180, 0.12),
+      0 12px 28px rgba(0,0,0,0.5),
+      0 0 40px rgba(255, 180, 100, 0.22);
+    overflow: hidden;
+  }
+  /* Heat lamp */
+  .hero-incubator::before {
+    content: ""; position: absolute;
+    top: -28px; left: 50%; transform: translateX(-50%);
+    width: 46px; height: 32px;
+    background: radial-gradient(ellipse at 50% 20%, #ffd78a 0%, #d09238 55%, #7a4b10 100%);
+    border-radius: 50% 50% 8px 8px / 100% 100% 8px 8px;
+    box-shadow: 0 0 28px rgba(255, 190, 90, 0.7);
+    animation: lamp-flicker 2.4s ease-in-out infinite;
+  }
+  @keyframes lamp-flicker {
+    0%, 100% { box-shadow: 0 0 28px rgba(255, 190, 90, 0.7); }
+    50%      { box-shadow: 0 0 38px rgba(255, 210, 130, 0.9); }
+  }
+  /* Base/floor */
+  .hero-incubator::after {
+    content: ""; position: absolute;
+    left: 6%; right: 6%; bottom: 6%; height: 18px;
+    background: linear-gradient(180deg, #8a6a3e, #5a4327);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 2px rgba(255,220,160,0.2);
+  }
+  /* Puppy emoji inside — sized with em so twemoji img inherits */
+  .incubator-puppy {
+    position: absolute;
+    left: 50%; bottom: 22%;
+    transform: translateX(-50%);
+    font-size: 3.6rem; line-height: 1;
+    z-index: 2;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.3));
+    animation: puppy-bob 2s ease-in-out infinite;
+  }
+  .incubator-puppy img.emoji { width: 1em; height: 1em; display: block; }
+  @keyframes puppy-bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-4px); }
+  }
+
+  /* ── Hatched pet display ── */
+  .hero-hatched {
+    font-size: 5.5rem; line-height: 1;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+    animation: hatched-bob 2.4s ease-in-out infinite;
+  }
+  .hero-hatched img.emoji { width: 1em; height: 1em; display: block; }
+  @keyframes hatched-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+  .hero-hatched.dead {
+    animation: none;
+    opacity: 0.78;
+    filter:
+      brightness(0) saturate(0) invert(0.58)
+      drop-shadow(0 0 1px rgba(150, 140, 125, 0.7))
+      drop-shadow(0 0 3px rgba(80, 72, 60, 0.5))
+      drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+  }
+
+  /* Countdowns + bar */
+  .countdown {
+    margin-top: 0.6rem;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.82rem; color: #b8924a;
+  }
+  .countdown .label { color: #6a5d50; margin-right: 0.4rem; }
+  .countdown.hatch .time { color: #6d8f5e; }
+  .alive-chip {
+    display: inline-block; margin-top: 0.9rem;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.7rem; color: #8a7c6a;
+    padding: 0.2rem 0.7rem; border-radius: 20px;
+    background: rgba(236, 223, 200, 0.04); border: 1px solid #3a3428;
+  }
+  .alive-chip .val { color: #b8924a; }
+  .bar {
+    margin: 1rem auto 0; max-width: 280px;
+    height: 8px; background: #2c2720; border-radius: 4px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    background: #6d8f5e; transition: width 0.4s, background 0.4s;
+  }
+  .bar-fill.warn { background: #b8924a; }
+  .bar-fill.danger { background: #c2593e; }
+  .bar-fill.dead { background: #564c40; }
+  .bar-sub {
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.72rem; color: #8a7c6a; margin-top: 0.4rem;
+  }
+
+  /* Action buttons */
+  .actions { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.4rem; flex-wrap: wrap; }
+  .btn {
+    padding: 0.7rem 1.4rem; border-radius: 8px; border: none; cursor: pointer;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.82rem; font-weight: 600;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.feed { background: linear-gradient(135deg, #6d8f5e, #55744a); color: #ecdfc8; }
+  .btn.food { background: linear-gradient(135deg, #b8924a, #8e6d31); color: #ecdfc8; }
+  .btn.revive { background: linear-gradient(135deg, #c2593e, #a84a32); color: #ecdfc8; }
+  .btn.cheat {
+    background: rgba(184, 146, 74, 0.12); color: #8a7c6a;
+    border: 1px dashed rgba(184, 146, 74, 0.5);
+    font-size: 0.72rem; padding: 0.5rem 1rem;
+  }
+  .btn.cheat:hover { color: #b8924a; border-color: rgba(184, 146, 74, 0.8); }
+  .btn.ghost {
+    background: transparent; color: #8a7c6a;
+    border: 1px solid #3a3428;
+  }
+  .btn.ghost:hover { color: #c2593e; border-color: rgba(194, 89, 62, 0.4); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* Adoption grid */
+  .adopt-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem;
+    margin: 1.2rem 0 0.6rem;
+  }
+  .adopt-choice {
+    border: 1px solid #3a3428; border-radius: 12px;
+    padding: 1rem 0.5rem; background: rgba(36, 31, 21, 0.55);
+    cursor: pointer; text-align: center;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .adopt-choice:hover { transform: translateY(-2px); border-color: #c2593e; background: rgba(194, 89, 62, 0.08); }
+  .adopt-choice.selected { border-color: #c2593e; box-shadow: 0 0 12px rgba(194, 89, 62, 0.3); }
+  .adopt-choice-emoji { font-size: 2.4rem; line-height: 1; }
+  .adopt-choice-emoji img.emoji { width: 1em; height: 1em; display: inline-block; vertical-align: middle; }
+  .adopt-choice-name {
+    margin-top: 0.4rem; font-size: 0.8rem; color: #d6c8b4;
+    font-family: "Fira Code", "JetBrains Mono", monospace; text-transform: lowercase;
+  }
+  .name-input {
+    width: 100%; margin-top: 0.8rem;
+    padding: 0.7rem 0.9rem;
+    background: rgba(36, 31, 21, 0.7);
+    border: 1px solid #3a3428; border-radius: 8px;
+    color: #ecdfc8; font-family: Georgia, serif; font-size: 0.95rem;
+  }
+  .name-input:focus { outline: none; border-color: rgba(194, 89, 62, 0.4); }
+  .err { margin-top: 0.6rem; color: #c2593e; font-size: 0.78rem; min-height: 1.1em; }
+  .blurb { color: #8a7c6a; font-size: 0.82rem; line-height: 1.55; margin-bottom: 0.2rem; }
+
+  /* Auth prompt */
+  .auth-prompt {
+    position: fixed; inset: 0; background: rgba(36, 31, 21, 0.95);
+    backdrop-filter: blur(12px); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .auth-card {
+    background: rgba(44, 38, 28, 0.85); border: 1px solid #3a3428;
+    border-radius: 14px; padding: 2rem; max-width: 420px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .auth-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, #c2593e, #b8924a, transparent); opacity: 0.5;
+  }
+  .auth-card h3 { font-family: Georgia, serif; color: #ecdfc8; font-size: 1.3rem; margin-bottom: 0.6rem; }
+  .auth-card p { color: #8a7c6a; font-size: 0.88rem; margin-bottom: 1.2rem; }
+  .auth-btn {
+    display: inline-block; padding: 0.7rem 1.4rem; border-radius: 8px;
+    background: linear-gradient(135deg, #c2593e, #a84a32); color: #ecdfc8;
+    text-decoration: none; font-family: "Fira Code", monospace; font-size: 0.88rem;
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="topbar-back" href="/">&larr; Home</a>
+    <span class="topbar-title">My Pet</span>
+    <div class="topbar-links">
+      <a class="topbar-link" href="/community/">&rarr; Community</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card" id="petCard">
+      <div class="blurb" id="petBlurb">Loading your pet…</div>
+    </div>
+  </div>
+
+  <div class="auth-prompt" id="authPrompt" style="display:none">
+    <div class="auth-card">
+      <h3>You're not logged in</h3>
+      <p>Log in on the community first — your session is shared across the site.</p>
+      <a class="auth-btn" href="/community/">Go to Community &rarr;</a>
+    </div>
+  </div>
+
+  <script src="/pet/static/pet-widget.js"></script>
+  <script>
+  (function () {
+    const API = '/pet';
+    const $ = (id) => document.getElementById(id);
+    const PET_EMOJI = { chicken: '🐓', goose: '🪿', dog: '🐕', turtle: '🐢' };
+    const PET_NAMES = { chicken: 'Chicken', goose: 'Goose', dog: 'Dog', turtle: 'Turtle' };
+    const PET_TYPES = ['chicken', 'goose', 'dog', 'turtle'];
+
+    function twemojifyLocal(el) {
+      if (!el || typeof window.twemoji === 'undefined') return;
+      try { window.twemoji.parse(el, { folder: 'svg', ext: '.svg' }); } catch (_) {}
+    }
+
+    function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function fmt(secs) {
+      secs = Math.max(0, Math.floor(secs));
+      const d = Math.floor(secs / 86400);
+      const h = Math.floor((secs % 86400) / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      if (d > 0) return d + 'd ' + h + 'h ' + m + 'm';
+      if (h > 0) return h + 'h ' + m + 'm ' + s + 's';
+      if (m > 0) return m + 'm ' + s + 's';
+      return s + 's';
+    }
+
+    let pet = null;
+    let pick = null;
+    let tickTimer = null;
+
+    async function load() {
+      try {
+        const r = await fetch(API + '/api/pet');
+        if (r.status === 401) { $('authPrompt').style.display = 'flex'; return; }
+        const d = await r.json();
+        pet = d.pet || null;
+      } catch (_) { pet = null; }
+      render();
+      if (window.petWidget) window.petWidget.refresh();
+    }
+
+    function renderAdopt() {
+      let h = '<div class="blurb">Every pet starts as an egg and hatches after <strong>3 days</strong>. ' +
+              'Feed it daily or it starves. Pick a companion and give it a name — the name is forever.</div>';
+      h += '<div class="adopt-grid" id="adoptGrid">';
+      PET_TYPES.forEach((t) => {
+        h += '<div class="adopt-choice" data-pet="' + t + '">' +
+               '<div class="adopt-choice-emoji">' + PET_EMOJI[t] + '</div>' +
+               '<div class="adopt-choice-name">' + t + '</div>' +
+             '</div>';
+      });
+      h += '</div>';
+      h += '<input type="text" class="name-input" id="adoptName" maxlength="32" placeholder="Name your pet (permanent)" />';
+      h += '<div class="actions"><button class="btn feed" id="adoptBtn" disabled>Adopt</button></div>';
+      h += '<div class="err" id="adoptErr"></div>';
+      $('petCard').innerHTML = h;
+      twemojifyLocal($('petCard'));
+      $('adoptGrid').querySelectorAll('.adopt-choice').forEach((el) => {
+        el.addEventListener('click', () => {
+          pick = el.dataset.pet;
+          $('adoptGrid').querySelectorAll('.adopt-choice').forEach((x) => x.classList.toggle('selected', x === el));
+          updateAdoptReady();
+        });
+      });
+      const nameEl = $('adoptName');
+      nameEl.addEventListener('input', updateAdoptReady);
+      $('adoptBtn').addEventListener('click', doAdopt);
+    }
+
+    function updateAdoptReady() {
+      const name = ($('adoptName') || {}).value || '';
+      $('adoptBtn').disabled = !(pick && name.trim().length >= 1);
+    }
+
+    async function doAdopt() {
+      const name = $('adoptName').value.trim();
+      if (!pick || !name) return;
+      const errEl = $('adoptErr'); errEl.textContent = '';
+      try {
+        const r = await fetch(API + '/api/pet', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pet_type: pick, name }),
+        });
+        const d = await r.json();
+        if (!r.ok) { errEl.textContent = d.error || 'Adoption failed.'; return; }
+        pet = d.pet; pick = null;
+        render();
+        if (window.petWidget) window.petWidget.refresh();
+      } catch (_) { errEl.textContent = 'Network error.'; }
+    }
+
+    async function doFeed() {
+      try {
+        const r = await fetch(API + '/api/pet/feed', { method: 'POST' });
+        if (!r.ok) return;
+        const d = await r.json();
+        pet = d.pet;
+        render();
+        if (window.petWidget) window.petWidget.refresh();
+      } catch (_) {}
+    }
+
+    async function doCheat() {
+      try {
+        const r = await fetch(API + '/api/pet/cheat', { method: 'POST' });
+        if (!r.ok) return;
+        const d = await r.json();
+        pet = d.pet;
+        render();
+        if (window.petWidget) window.petWidget.refresh();
+      } catch (_) {}
+    }
+
+    function doDropFood() {
+      if (window.petWidget) window.petWidget.dropFood();
+    }
+
+    async function doReviveFlow() {
+      pet = null;
+      pick = null;
+      render();
+    }
+
+    function renderAlive() {
+      const hatched = pet.is_hatched !== false;
+      const total = (pet.starve_hours || 24) * 3600;
+      const remaining = Math.max(0, pet.seconds_remaining || 0);
+      const pct = pet.alive ? Math.round(100 * remaining / total) : 0;
+      let barCls = 'bar-fill';
+      if (!pet.alive) barCls += ' dead';
+      else if (pct < 20) barCls += ' danger';
+      else if (pct < 50) barCls += ' warn';
+
+      let hero = '';
+      if (!pet.alive) {
+        hero = '<div class="hero-hatched dead">' + PET_EMOJI[pet.pet_type] + '</div>';
+      } else if (!hatched) {
+        hero = (pet.pet_type === 'dog')
+          ? '<div class="hero-incubator"><div class="incubator-puppy">🐕</div></div>'
+          : '<div class="hero-egg" data-species="' + pet.pet_type + '"></div>';
+      } else {
+        hero = '<div class="hero-hatched">' + PET_EMOJI[pet.pet_type] + '</div>';
+      }
+
+      const tag = pet.alive
+        ? (hatched ? 'hatched' : (pet.pet_type === 'dog' ? 'incubating' : 'in the egg'))
+        : 'gone';
+
+      let sub = pet.alive
+        ? ('Starves in ' + fmt(remaining))
+        : 'Starved :( Adopt a new companion to start over.';
+
+      let hatchRow = '';
+      if (pet.alive && !hatched) {
+        hatchRow = '<div class="countdown hatch">' +
+                     '<span class="label">Hatches in</span>' +
+                     '<span class="time" id="hatchText" data-base="' + (pet.seconds_to_hatch || 0) +
+                       '" data-started="' + Date.now() + '">' + fmt(pet.seconds_to_hatch || 0) + '</span>' +
+                   '</div>';
+      }
+
+      const aliveChip = '<div class="alive-chip">' +
+                         '<span>' + (pet.alive ? 'Alive for ' : 'Lived for ') + '</span>' +
+                         '<span class="val" id="aliveText" data-base="' + (pet.seconds_alive || 0) +
+                           '" data-started="' + Date.now() + '" data-alive="' + (pet.alive ? '1' : '0') +
+                           '">' + fmt(pet.seconds_alive || 0) + '</span>' +
+                       '</div>';
+
+      const barBlock = pet.alive ? (
+        '<div class="bar"><div class="' + barCls + '" style="width:' + pct + '%"></div></div>' +
+        '<div class="bar-sub" id="barSub">' + sub + '</div>'
+      ) : '<div class="bar-sub" style="margin-top:1rem">' + sub + '</div>';
+
+      let actions = '<div class="actions">';
+      if (pet.alive) {
+        actions += '<button class="btn feed" id="feedBtn">Feed 🥣</button>';
+        if (pet.pet_type === 'dog' && hatched) {
+          actions += '<button class="btn food" id="dropBtn">Drop bone 🦴</button>';
+        }
+      } else {
+        actions += '<button class="btn revive" id="reviveBtn">Adopt a new pet</button>';
+      }
+      actions += '</div>';
+      if (pet.alive) {
+        actions += '<div class="actions" style="margin-top:0.5rem">' +
+                     '<button class="btn cheat" id="cheatBtn" title="Testing: knock 18 hours off the hatch + starve timers">Cheat 18h (test)</button>' +
+                   '</div>';
+      }
+
+      let h = '';
+      h += '<div class="pet-name">' + esc(pet.name || PET_NAMES[pet.pet_type]) + '</div>';
+      h += '<div class="pet-species">' + (pet.pet_type) + '</div>';
+      h += '<div style="margin-top:0.35rem"><span class="pet-tag">' + tag + '</span></div>';
+      h += '<div class="nest">' + hero + '</div>';
+      h += hatchRow;
+      h += barBlock;
+      h += aliveChip;
+      h += actions;
+
+      $('petCard').innerHTML = h;
+      twemojifyLocal($('petCard'));
+
+      const fb = $('feedBtn');   if (fb) fb.addEventListener('click', doFeed);
+      const db = $('dropBtn');   if (db) db.addEventListener('click', doDropFood);
+      const rb = $('reviveBtn'); if (rb) rb.addEventListener('click', doReviveFlow);
+      const cb = $('cheatBtn');  if (cb) cb.addEventListener('click', doCheat);
+    }
+
+    function render() {
+      if (!pet) { renderAdopt(); ensureTick(false); return; }
+      renderAlive();
+      ensureTick(pet.alive);
+    }
+
+    function ensureTick(on) {
+      if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+      if (!on) return;
+      tickTimer = setInterval(() => {
+        if (!pet || !pet.alive) return;
+        pet.seconds_remaining = Math.max(0, (pet.seconds_remaining || 0) - 1);
+        pet.seconds_alive = (pet.seconds_alive || 0) + 1;
+        if (pet.seconds_to_hatch && pet.seconds_to_hatch > 0) {
+          pet.seconds_to_hatch -= 1;
+          if (pet.seconds_to_hatch <= 0) {
+            pet.is_hatched = true; pet.seconds_to_hatch = 0;
+            render();
+            if (window.petWidget) window.petWidget.refresh();
+            return;
+          }
+        }
+        if (pet.seconds_remaining === 0) {
+          pet.alive = false;
+          render();
+          if (window.petWidget) window.petWidget.refresh();
+          return;
+        }
+        // live text updates without re-render
+        const barSub = $('barSub');
+        if (barSub) barSub.textContent = 'Starves in ' + fmt(pet.seconds_remaining);
+        const hatchEl = $('hatchText');
+        if (hatchEl) {
+          const base = parseInt(hatchEl.dataset.base || '0', 10);
+          const started = parseInt(hatchEl.dataset.started || '0', 10);
+          const rem = Math.max(0, base - Math.floor((Date.now() - started) / 1000));
+          hatchEl.textContent = fmt(rem);
+        }
+        const aliveEl = $('aliveText');
+        if (aliveEl && aliveEl.dataset.alive === '1') {
+          const base = parseInt(aliveEl.dataset.base || '0', 10);
+          const started = parseInt(aliveEl.dataset.started || '0', 10);
+          aliveEl.textContent = fmt(base + Math.floor((Date.now() - started) / 1000));
+        }
+      }, 1000);
+    }
+
+    load();
+  })();
+  </script>
+</body>
+</html>
