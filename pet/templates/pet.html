@@ -211,9 +211,12 @@
 
   /* ── Hatched pet display ── */
   .hero-hatched {
-    font-size: 5.5rem; line-height: 1;
+    /* --growth comes from the active growth stage (set inline by renderAlive) */
+    font-size: calc(5.5rem * var(--growth, 1));
+    line-height: 1;
     filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
     animation: hatched-bob 2.4s ease-in-out infinite;
+    transition: font-size 0.4s ease;
   }
   .hero-hatched img.emoji { width: 1em; height: 1em; display: block; }
   @keyframes hatched-bob {
@@ -365,6 +368,7 @@
     </div>
   </div>
 
+  <script src="/pet/static/pet-sprites.js"></script>
   <script src="/pet/static/pet-widget.js"></script>
   <script>
   (function () {
@@ -500,19 +504,30 @@
       else if (pct < 20) barCls += ' danger';
       else if (pct < 50) barCls += ' warn';
 
+      const stage = (typeof window.PET_SPRITES_PICK === 'function')
+        ? window.PET_SPRITES_PICK(pet.pet_type, pet.seconds_alive) : null;
       let hero = '';
       if (!pet.alive) {
-        hero = '<div class="hero-hatched dead">' + PET_EMOJI[pet.pet_type] + '</div>';
+        const lastEmoji = (stage && stage.emoji) || PET_EMOJI[pet.pet_type];
+        const lastScale = (stage && stage.scale) || 1;
+        hero = '<div class="hero-hatched dead" style="--growth:' + lastScale + '">' +
+                  lastEmoji +
+               '</div>';
       } else if (!hatched) {
+        // Stage 0 keeps the cute species-themed nest / dog incubator.
         hero = (pet.pet_type === 'dog')
           ? '<div class="hero-incubator"><div class="incubator-puppy">🐕</div></div>'
           : '<div class="hero-egg" data-species="' + pet.pet_type + '"></div>';
       } else {
-        hero = '<div class="hero-hatched">' + PET_EMOJI[pet.pet_type] + '</div>';
+        const sEmoji = (stage && stage.emoji) || PET_EMOJI[pet.pet_type];
+        const sScale = (stage && stage.scale) || 1;
+        hero = '<div class="hero-hatched" style="--growth:' + sScale + '">' + sEmoji + '</div>';
       }
 
       const tag = pet.alive
-        ? (hatched ? 'hatched' : (pet.pet_type === 'dog' ? 'incubating' : 'in the egg'))
+        ? (hatched
+            ? ((stage && stage.name) || 'hatched')
+            : (pet.pet_type === 'dog' ? 'incubating' : 'in the egg'))
         : 'gone';
 
       let sub = pet.alive

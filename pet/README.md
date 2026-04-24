@@ -133,6 +133,49 @@ const MODE = window.location.pathname.startsWith('/pet/') ? 'paddock' : 'free';
   doesn't follow typing, doesn't chase. Dogs get an inline Drop bone button
   inside the paddock.
 
+### Growth stages
+
+`static/pet-sprites.js` is the single source of truth for what each pet
+looks like at any age. Each species has 8 stages (0..7); stage 0 is the
+egg, stage 7 is full adulthood. An entry looks like:
+
+```js
+{ stage, name, emoji, scale, min_age_hours }
+```
+
+`min_age_hours` is the threshold (in hours of `seconds_alive`) at which the
+stage activates. The widget uses `PET_SPRITES_PICK(pet_type, seconds_alive)`
+which returns the highest entry whose threshold has been crossed. Stage 0
+is at `0h`, stage 1 at `72h` (matches `PET_HATCH_HOURS`), then stages 2–7
+fire one per day after hatching, so the pet hits adulthood at ~216h
+(about 9 days from adoption — 6 days post-hatch).
+
+The chosen stage controls two things:
+- `emoji` — the visible sprite (rendered through Twemoji).
+- `scale` — applied via a `--growth` CSS variable set inline on
+  `.pet-sprite` (and `.hero-hatched` on the pet zone). The base font-size
+  is multiplied by `--growth`, so the same animations keep playing while
+  the sprite physically grows from baby to adult size.
+
+Stages by species:
+
+| Stage | Chicken            | Goose                | Dog                  | Turtle              |
+|-------|--------------------|----------------------|----------------------|---------------------|
+| 0     | 🥚 egg             | 🥚 egg               | 🥚 egg               | 🥚 egg              |
+| 1     | 🐣 hatchling       | 🐣 hatchling         | 🐣 newborn           | 🐣 hatchling        |
+| 2     | 🐤 chick           | 🐤 gosling           | 🐶 puppy             | 🐢 tiny             |
+| 3     | 🐥 big chick       | 🐥 fluffling         | 🐶 big puppy         | 🐢 small            |
+| 4     | 🐔 pullet          | 🪿 young goose       | 🐕 young dog         | 🐢 juvenile         |
+| 5     | 🐔 young hen       | 🪿 juvenile          | 🐕 adolescent        | 🐢 sub-adult        |
+| 6     | 🐓 cockerel        | 🪿 adolescent        | 🐕 sub-adult         | 🐢 adolescent       |
+| 7     | 🐓 rooster (adult) | 🪿 goose (adult)     | 🐕 adult dog         | 🐢 adult            |
+
+`petTick` watches for stage transitions; when `petStageFor(pet)` returns a
+new `stage` index, it re-runs `petApplyCreature` so the sprite swaps in
+without needing a page reload. The `Cheat 18h` button (which subtracts
+18h from both `last_fed_at` and `created_at`) is the easy way to fast-forward
+through stages while testing.
+
 ### Egg stage
 
 For the first 72 hours of a pet's life, `pet.is_hatched === false`:

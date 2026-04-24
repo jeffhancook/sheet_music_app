@@ -43,6 +43,29 @@
         try { window.twemoji.parse(el, { folder: 'svg', ext: '.svg' }); } catch (_) {}
     }
 
+    // ── Pet sprite stages (loaded from pet-sprites.js) ──
+    function loadSprites() {
+        return new Promise((resolve) => {
+            if (window.PET_SPRITES) return resolve(window.PET_SPRITES);
+            const existing = document.getElementById('pet-widget-sprites');
+            if (existing) {
+                existing.addEventListener('load', () => resolve(window.PET_SPRITES));
+                return;
+            }
+            const s = document.createElement('script');
+            s.id = 'pet-widget-sprites';
+            s.src = API + '/static/pet-sprites.js';
+            s.onload = () => resolve(window.PET_SPRITES);
+            s.onerror = () => resolve(null);
+            document.head.appendChild(s);
+        });
+    }
+
+    function petStageFor(p) {
+        if (!p || typeof window.PET_SPRITES_PICK !== 'function') return null;
+        return window.PET_SPRITES_PICK(p.pet_type, p.seconds_alive);
+    }
+
     // ── DOM injection ──
     function buildCreatureMarkup(inPaddock) {
         const cls = inPaddock ? 'pet-creature in-paddock' : 'pet-creature';
@@ -140,6 +163,7 @@
     let petFoodItems = [];
     let petEggPlaced = false;
     let petDeadPlaced = false;        // keeps the silhouette anchored on fresh page loads
+    let petCurrentStage = -1;         // track stage transitions for re-render
     let petMouseX = typeof window !== 'undefined' ? window.innerWidth / 2 : 0;
     let petMouseY = typeof window !== 'undefined' ? window.innerHeight / 2 : 0;
 
@@ -609,14 +633,23 @@
         if (pet.alive) petDeadPlaced = false;
         const hatched = pet.is_hatched !== false;
         el.style.display = 'block';
-        if (hatched) {
-            emoji.textContent = PET_EMOJI[pet.pet_type] || '🐾';
+        // Pick the active growth stage and apply its emoji + scale.
+        const stage = petStageFor(pet);
+        const stageEmoji = (stage && stage.emoji) ||
+            (hatched ? (PET_EMOJI[pet.pet_type] || '🐾') : '🥚');
+        const stageScale = (stage && stage.scale) || 1;
+        if (hatched && stage && stage.stage > 0) {
+            emoji.textContent = stageEmoji;
+            // Once hatched, emoji.dataset.pet stays as the species so the
+            // walking-animation (chicken-peck/dog-trot/etc.) keeps playing.
             emoji.dataset.pet = pet.pet_type;
             petEggPlaced = false;
         } else {
             emoji.textContent = '🥚';
             emoji.dataset.pet = 'egg';
         }
+        sprite.style.setProperty('--growth', stageScale);
+        petCurrentStage = stage ? stage.stage : -1;
         twemojify(emoji);
         emoji.dataset.color = pet.color || 'natural';
         sprite.classList.toggle('dead', !pet.alive);
@@ -672,6 +705,13 @@
         }
         if (pet.seconds_remaining === 0) {
             pet.alive = false;
+            petApplyCreature();
+            window.dispatchEvent(new CustomEvent('pet:update', { detail: pet }));
+            return;
+        }
+        // Crossed a growth-stage boundary? Re-render so the sprite swaps in.
+        const cur = petStageFor(pet);
+        if (cur && cur.stage !== petCurrentStage) {
             petApplyCreature();
             window.dispatchEvent(new CustomEvent('pet:update', { detail: pet }));
         }
@@ -872,7 +912,8 @@
             if (creature) creature.addEventListener('click', petOnClick);
         }
         // Paddock mode: no cursor/input reactions; pet paces and dogs eat dropped bones.
-        loadTwemoji().then(() => { checkSessionAndLoad(); });
+        Promise.all([loadTwemoji(), loadSprites()])
+            .then(() => { checkSessionAndLoad(); });
     }
 
     window.petWidget = {
