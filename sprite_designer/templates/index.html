@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pet Sprite Designer — Han Chau</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse at 18% 12%, rgba(184, 146, 74, 0.10), transparent 45%),
+      radial-gradient(ellipse at 85% 80%, rgba(109, 143, 94, 0.10), transparent 45%),
+      #241f15;
+    color: #d6c8b4;
+    font-family: Georgia, "Times New Roman", serif;
+    min-height: 100vh;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(rgba(214,200,180,0.04) 1px, transparent 1px);
+    background-size: 3px 3px; opacity: 0.45;
+  }
+  a { color: inherit; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid #3a3428;
+    background: rgba(36, 31, 21, 0.7); backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar a { text-decoration: none; color: #b8924a;
+              font-family: "Fira Code", "JetBrains Mono", monospace; font-size: 0.82rem; }
+  .topbar a:hover { color: #c2593e; }
+  .topbar .title { color: #ecdfc8; font-size: 1.05rem; font-weight: 600; }
+
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 920px; margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.9rem; color: #ecdfc8; margin-bottom: 0.3rem;
+  }
+  .blurb {
+    color: #8a7c6a; font-size: 0.9rem; line-height: 1.6;
+    margin-bottom: 1.6rem; max-width: 640px;
+  }
+
+  /* ── Form card ── */
+  .card {
+    background: linear-gradient(180deg, rgba(64,54,38,0.65), rgba(44,38,28,0.78));
+    border: 1px solid #3a3428;
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, #c2593e, #b8924a, #6d8f5e, transparent);
+    opacity: 0.55;
+  }
+
+  .row { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 200px; }
+
+  label { display: block; font-size: 0.78rem; color: #8a7c6a;
+          font-family: "Fira Code", "JetBrains Mono", monospace;
+          margin-bottom: 0.35rem; letter-spacing: 0.04em; }
+
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    background: rgba(36, 31, 21, 0.7);
+    border: 1px solid #3a3428;
+    border-radius: 8px;
+    color: #ecdfc8;
+    font-family: Georgia, serif; font-size: 0.95rem;
+    transition: border-color 0.15s;
+  }
+  textarea { resize: vertical; min-height: 64px; }
+  input[type="text"]:focus, textarea:focus, .drop:focus-within {
+    outline: none; border-color: rgba(194, 89, 62, 0.5);
+  }
+
+  /* Drop zone */
+  .drop {
+    width: 100%; min-height: 130px;
+    padding: 1rem;
+    background: rgba(36, 31, 21, 0.5);
+    border: 2px dashed #3a3428;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.35rem;
+    color: #6a5d50; font-size: 0.85rem;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    text-align: center;
+  }
+  .drop.dragover { border-color: #c2593e; background: rgba(194, 89, 62, 0.08); color: #d6c8b4; }
+  .drop.has-image { color: #d6c8b4; }
+  .drop input[type="file"] { display: none; }
+  .drop img.preview { max-width: 110px; max-height: 110px; border-radius: 6px; margin-top: 0.4rem;
+                      box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
+
+  .or-line {
+    text-align: center; color: #6a5d50; font-size: 0.72rem;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    margin: 0.4rem 0; letter-spacing: 0.2em;
+  }
+
+  /* Style + frames row */
+  .pill-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .pill {
+    flex: 1; min-width: 92px;
+    padding: 0.55rem 0.7rem;
+    background: rgba(36, 31, 21, 0.7);
+    border: 1px solid #3a3428;
+    border-radius: 8px;
+    color: #8a7c6a;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-align: center;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .pill:hover { color: #d6c8b4; border-color: rgba(194, 89, 62, 0.3); }
+  .pill.active { color: #ecdfc8; border-color: #c2593e; background: rgba(194, 89, 62, 0.12); }
+
+  .submit {
+    width: 100%; padding: 0.85rem 1rem; margin-top: 0.4rem;
+    background: linear-gradient(135deg, #c2593e, #a84a32);
+    color: #ecdfc8; border: none; border-radius: 10px;
+    font-family: "Fira Code", "JetBrains Mono", monospace; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; transition: transform 0.1s, opacity 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .submit:hover { opacity: 0.93; }
+  .submit:active { transform: scale(0.98); }
+  .submit:disabled { opacity: 0.45; cursor: default; }
+
+  .err { color: #c2593e; font-size: 0.84rem; margin-top: 0.7rem; min-height: 1.2em;
+         font-family: "Fira Code", "JetBrains Mono", monospace; }
+
+  /* ── Status / progress ── */
+  .status {
+    display: flex; flex-direction: column; gap: 0.4rem;
+    margin-bottom: 1.2rem;
+  }
+  .progress {
+    height: 8px; background: #2c2720; border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, #6d8f5e, #b8924a);
+    transition: width 0.6s ease;
+  }
+  .status-msg {
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.78rem; color: #b8924a;
+  }
+  .status-msg.error { color: #c2593e; }
+
+  /* ── Gallery ── */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .stage-card {
+    border: 1px solid #3a3428;
+    border-radius: 10px;
+    background: rgba(36, 31, 21, 0.55);
+    padding: 0.7rem;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .stage-card.done { border-color: rgba(109, 143, 94, 0.5); }
+  .stage-card .head { width: 64px; height: 64px; margin: 0 auto 0.4rem;
+                       image-rendering: pixelated; image-rendering: crisp-edges; }
+  .stage-card .stage-name {
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.74rem; color: #8a7c6a; letter-spacing: 0.05em;
+    text-transform: lowercase; margin-bottom: 0.4rem;
+  }
+  .stage-card .stage-num {
+    color: #6a5d50; font-size: 0.65rem;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+  }
+
+  /* Walk-cycle preview using sprite-sheet animation */
+  .walk-preview {
+    width: 80px; height: 80px;
+    margin: 0 auto 0.4rem;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: auto 80px;
+    --frames: 4;
+    animation: walk-strip 0.55s steps(var(--frames)) infinite;
+  }
+  @keyframes walk-strip {
+    from { background-position: 0 0; }
+    to   { background-position: calc(-80px * var(--frames)) 0; }
+  }
+
+  /* "Pending" stage placeholder */
+  .stage-card.pending .head, .stage-card.pending .walk-preview {
+    background: repeating-linear-gradient(
+      45deg, rgba(58, 52, 40, 0.4) 0 6px, rgba(36, 31, 21, 0.3) 6px 12px);
+    border-radius: 6px;
+  }
+
+  .actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
+  .btn-secondary {
+    flex: 1; min-width: 160px;
+    padding: 0.7rem 1rem;
+    background: rgba(184, 146, 74, 0.14);
+    color: #b8924a;
+    border: 1px solid rgba(184, 146, 74, 0.4);
+    border-radius: 8px;
+    font-family: "Fira Code", "JetBrains Mono", monospace; font-size: 0.84rem; font-weight: 600;
+    cursor: pointer;
+    text-decoration: none; text-align: center;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-secondary:hover { opacity: 0.92; }
+  .btn-secondary:active { transform: scale(0.98); }
+
+  .character-summary {
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.74rem; color: #8a7c6a;
+    background: rgba(36, 31, 21, 0.5);
+    border: 1px solid #3a3428;
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    line-height: 1.55;
+    margin-bottom: 0.9rem;
+  }
+  .character-summary strong { color: #b8924a; font-weight: 600; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="/">&larr; Home</a>
+    <span class="title">Pet Sprite Designer</span>
+    <span style="width:60px"></span>
+  </div>
+
+  <div class="wrap">
+    <h1>Pet Sprite Designer</h1>
+    <p class="blurb">
+      Drop in an image (or describe a creature) and get back a 10-stage life-cycle sprite
+      set — egg or newborn through elder, with a full-body still, a head close-up, and a
+      walking-cycle strip per stage. Pick pixel art for retro game vibes or cartoon for a
+      storybook look. Generation runs through Replicate's SDXL and takes 3–6 minutes.
+    </p>
+
+    <div class="card" id="formCard">
+      <form id="form" onsubmit="return false">
+        <div class="row">
+          <div>
+            <label>Set name</label>
+            <input type="text" id="name" name="name" required placeholder="e.g. fluffy, spike" maxlength="32">
+          </div>
+          <div>
+            <label>Style</label>
+            <div class="pill-group" id="styleGroup">
+              <div class="pill active" data-style="pixel">pixel art</div>
+              <div class="pill" data-style="cartoon">cartoon</div>
+            </div>
+          </div>
+          <div>
+            <label>Walk frames</label>
+            <div class="pill-group" id="framesGroup">
+              <div class="pill" data-frames="2">2</div>
+              <div class="pill active" data-frames="4">4</div>
+              <div class="pill" data-frames="6">6</div>
+              <div class="pill" data-frames="8">8</div>
+            </div>
+          </div>
+        </div>
+
+        <label>Reference image</label>
+        <label class="drop" id="drop" tabindex="0">
+          <input type="file" id="image" name="image" accept="image/png,image/jpeg,image/webp,image/gif">
+          <span id="dropLabel">drop, paste, or click to choose an image</span>
+        </label>
+
+        <div class="or-line">— OR —</div>
+
+        <label>Text description</label>
+        <textarea id="text" name="text" placeholder='e.g. "small green dragon with golden eyes, scaly tail, tiny wings"'></textarea>
+
+        <button type="submit" class="submit" id="submitBtn">Generate sprites</button>
+        <div class="err" id="err"></div>
+      </form>
+    </div>
+
+    <div id="result" hidden>
+      <div class="card">
+        <div class="status">
+          <div class="status-msg" id="statusMsg">Starting…</div>
+          <div class="progress"><div class="progress-fill" id="progressFill" style="width:0"></div></div>
+        </div>
+        <div id="characterSummary" hidden></div>
+        <div class="gallery" id="gallery"></div>
+        <div class="actions" id="actions" hidden>
+          <a class="btn-secondary" id="zipBtn" href="#" download>Download ZIP</a>
+          <button class="btn-secondary" type="button" id="newBtn">Generate another</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  // ── Form pills ──
+  function pillSelector(groupId, attr) {
+    const group = $(groupId);
+    let value = group.querySelector('.pill.active')?.dataset[attr];
+    group.querySelectorAll('.pill').forEach((p) => p.addEventListener('click', () => {
+      group.querySelectorAll('.pill').forEach((x) => x.classList.remove('active'));
+      p.classList.add('active');
+      value = p.dataset[attr];
+    }));
+    return () => value;
+  }
+  const getStyle  = pillSelector('styleGroup', 'style');
+  const getFrames = pillSelector('framesGroup', 'frames');
+
+  // ── Drop zone ──
+  const drop  = $('drop');
+  const fileEl = $('image');
+  const dropLabel = $('dropLabel');
+  function showImagePreview(file) {
+    drop.classList.add('has-image');
+    const old = drop.querySelector('img.preview');
+    if (old) old.remove();
+    dropLabel.textContent = file.name;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.className = 'preview';
+    img.src = url;
+    drop.appendChild(img);
+  }
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault(); drop.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) {
+      // Re-assign dropped file into the input via DataTransfer
+      const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]);
+      fileEl.files = dt.files;
+      showImagePreview(e.dataTransfer.files[0]);
+    }
+  });
+  fileEl.addEventListener('change', () => {
+    if (fileEl.files[0]) showImagePreview(fileEl.files[0]);
+  });
+  // Paste an image directly into the page
+  document.addEventListener('paste', (e) => {
+    const item = [...(e.clipboardData?.items || [])].find((x) => x.type.startsWith('image/'));
+    if (!item) return;
+    const file = item.getAsFile();
+    const dt = new DataTransfer(); dt.items.add(file); fileEl.files = dt.files;
+    showImagePreview(file);
+  });
+
+  // ── Submit ──
+  let pollTimer = null;
+  let currentJobId = null;
+
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('err').textContent = '';
+    const name = $('name').value.trim();
+    if (!name) { $('err').textContent = 'Set name is required.'; return; }
+    const text = $('text').value.trim();
+    if (!fileEl.files[0] && !text) {
+      $('err').textContent = 'Provide an image or a text description.';
+      return;
+    }
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('style', getStyle());
+    fd.append('frames', getFrames());
+    if (text) fd.append('text', text);
+    if (fileEl.files[0]) fd.append('image', fileEl.files[0]);
+
+    $('submitBtn').disabled = true;
+    try {
+      const r = await fetch('api/generate', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (!r.ok) {
+        $('err').textContent = d.error || 'Server error.';
+        $('submitBtn').disabled = false;
+        return;
+      }
+      startPolling(d.job_id);
+    } catch (err) {
+      $('err').textContent = 'Network error: ' + err.message;
+      $('submitBtn').disabled = false;
+    }
+  });
+
+  function startPolling(jobId) {
+    currentJobId = jobId;
+    $('result').hidden = false;
+    $('actions').hidden = true;
+    $('gallery').innerHTML = '';
+    $('characterSummary').hidden = true;
+    $('characterSummary').innerHTML = '';
+    document.querySelector('#formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(() => poll(jobId), 1500);
+    poll(jobId);
+  }
+
+  async function poll(jobId) {
+    try {
+      const r = await fetch(`api/job/${jobId}`);
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'lost the job');
+      render(j);
+      if (j.status === 'done' || j.status === 'error') {
+        clearInterval(pollTimer); pollTimer = null;
+        $('submitBtn').disabled = false;
+      }
+    } catch (e) {
+      $('statusMsg').textContent = 'Polling error: ' + e.message;
+      $('statusMsg').classList.add('error');
+    }
+  }
+
+  function render(j) {
+    const msg = $('statusMsg');
+    msg.textContent = j.message || j.status;
+    msg.classList.toggle('error', j.status === 'error');
+    $('progressFill').style.width = `${Math.round((j.progress || 0) * 100)}%`;
+
+    // Character summary (after Claude returns)
+    if (j.character && j.character.species) {
+      $('characterSummary').hidden = false;
+      const c = j.character;
+      $('characterSummary').innerHTML =
+        '<div class="character-summary">' +
+          '<strong>' + esc(c.species) + '</strong>' +
+          (c.egg_layer ? ' (egg-layer)' : ' (live birth)') +
+          ' — ' + esc(c.color) +
+          '. ' + esc(c.body) +
+          '. <em>' + esc(c.head) + '</em>' +
+          (c.features ? ' ' + esc(c.features) : '') +
+        '</div>';
+    }
+
+    // Gallery — one card per stage; pending until that stage's files exist.
+    const totalStages = 10;
+    const done = new Set(j.stages_done || []);
+    const cards = [];
+    for (let i = 0; i < totalStages; i++) {
+      const isDone = done.has(i);
+      const c = document.createElement('div');
+      c.className = 'stage-card ' + (isDone ? 'done' : 'pending');
+      const cacheBust = j.finished_at || Date.now();
+      if (isDone) {
+        const walkUrl = `api/job/${j.id}/file/${i}/walk.png?_=${cacheBust}`;
+        const headUrl = `api/job/${j.id}/file/${i}/head.png?_=${cacheBust}`;
+        c.innerHTML =
+          `<div class="walk-preview" style="background-image:url('${walkUrl}'); --frames:${j.frames};"></div>` +
+          `<img class="head" src="${headUrl}">` +
+          `<div class="stage-name">stage ${i}</div>` +
+          `<div class="stage-num">…</div>`;
+      } else {
+        c.innerHTML =
+          `<div class="walk-preview"></div>` +
+          `<div class="head" style="background:rgba(58,52,40,0.4); border-radius:6px;"></div>` +
+          `<div class="stage-name">stage ${i}</div>` +
+          `<div class="stage-num">${j.status === 'running' ? 'pending…' : '—'}</div>`;
+      }
+      cards.push(c);
+    }
+    const g = $('gallery');
+    g.innerHTML = '';
+    cards.forEach((c) => g.appendChild(c));
+
+    if (j.status === 'done') {
+      $('actions').hidden = false;
+      $('zipBtn').href = `api/job/${j.id}/zip`;
+    }
+  }
+
+  $('newBtn').addEventListener('click', () => {
+    $('result').hidden = true;
+    $('form').reset();
+    drop.classList.remove('has-image');
+    const old = drop.querySelector('img.preview');
+    if (old) old.remove();
+    dropLabel.textContent = 'drop, paste, or click to choose an image';
+    $('submitBtn').disabled = false;
+  });
+
+  function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+})();
+</script>
+</body>
+</html>

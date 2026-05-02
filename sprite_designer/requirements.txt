@@ -1,0 +1,7 @@
+flask
+werkzeug
+gunicorn
+anthropic>=0.40
+replicate>=0.34
+pillow>=10
+requests>=2.31

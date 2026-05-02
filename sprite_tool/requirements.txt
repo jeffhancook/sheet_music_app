@@ -1,0 +1,5 @@
+anthropic>=0.40
+replicate>=0.34
+pillow>=10
+rembg[cpu]>=2.0
+requests>=2.31
