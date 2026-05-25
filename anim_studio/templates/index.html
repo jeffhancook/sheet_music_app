@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>anim studio — local cartoon animator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(184, 146, 74, 0.10), transparent 45%),
+      radial-gradient(ellipse at 85% 85%, rgba(109, 143, 94, 0.10), transparent 45%),
+      #1c1810;
+    color: #d6c8b4;
+    font-family: Georgia, "Times New Roman", serif;
+    min-height: 100vh;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(rgba(214,200,180,0.04) 1px, transparent 1px);
+    background-size: 3px 3px; opacity: 0.4;
+  }
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 880px; margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #3a3428; padding-bottom: 1rem;
+  }
+  h1 {
+    font-size: 1.6rem; color: #ecdfc8; font-weight: normal;
+    letter-spacing: 0.02em;
+  }
+  .sub {
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.72rem; color: #8a7c6a; letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Form panel */
+  .panel {
+    background: linear-gradient(180deg, rgba(60,50,36,0.6), rgba(38,32,22,0.7));
+    border: 1px solid #3a3428;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  label {
+    display: block;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.72rem; color: #b8924a;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  textarea, input[type=text], input[type=number] {
+    width: 100%; padding: 0.8rem 0.9rem;
+    background: rgba(20, 16, 10, 0.6);
+    border: 1px solid #50432e;
+    border-radius: 8px;
+    color: #ecdfc8;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    resize: vertical;
+  }
+  textarea { min-height: 70px; }
+  textarea:focus, input:focus { outline: none; border-color: #c2593e; }
+
+  /* Grid for the small numeric inputs */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.8rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .grid input { margin-bottom: 0; }
+
+  /* File input */
+  .file-row {
+    display: flex; align-items: center; gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  .file-row input[type=file] {
+    flex: 1; color: #b8924a;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+  }
+  .file-row input[type=file]::file-selector-button {
+    background: #2d2418; color: #b8924a;
+    border: 1px solid #50432e; border-radius: 6px;
+    padding: 0.4rem 0.8rem; cursor: pointer;
+    font-family: inherit; font-size: 0.8rem;
+    margin-right: 0.6rem;
+  }
+  .file-row .hint { font-size: 0.75rem; color: #6e6253; }
+
+  button.generate {
+    width: 100%; padding: 0.9rem;
+    background: linear-gradient(180deg, #c2593e, #8e3e26);
+    color: #fff8ea; border: none; border-radius: 10px;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.95rem; letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(194, 89, 62, 0.3);
+  }
+  button.generate:hover { box-shadow: 0 6px 18px rgba(194, 89, 62, 0.5); }
+  button.generate:active { transform: translateY(1px); }
+  button.generate:disabled {
+    background: #3a3428; color: #6e6253;
+    cursor: not-allowed; box-shadow: none;
+  }
+
+  /* Progress panel */
+  .status-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.6rem;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+  }
+  .status-row .msg { color: #d6c8b4; }
+  .status-row .pct { color: #b8924a; }
+  .progress {
+    height: 10px;
+    background: rgba(20, 16, 10, 0.6);
+    border: 1px solid #3a3428;
+    border-radius: 5px; overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #c2593e, #b8924a);
+    transition: width 0.3s ease-out;
+  }
+
+  /* Live preview / final video */
+  .media-frame {
+    background: rgba(20, 16, 10, 0.5);
+    border: 1px solid #3a3428;
+    border-radius: 10px;
+    aspect-ratio: 1 / 1;
+    max-width: 512px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .media-frame img, .media-frame video {
+    width: 100%; height: 100%; object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+  }
+  .media-frame .empty {
+    color: #6e6253;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.78rem; letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .media-frame .badge {
+    position: absolute; top: 8px; left: 8px;
+    padding: 0.2rem 0.6rem; border-radius: 20px;
+    background: rgba(194, 89, 62, 0.85); color: #fff8ea;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .error {
+    background: rgba(180, 60, 40, 0.15);
+    border: 1px solid #c2593e;
+    color: #f0a08a;
+    padding: 0.8rem 1rem; border-radius: 8px;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.82rem;
+    margin-bottom: 1rem;
+  }
+
+  .footnote {
+    margin-top: 1.5rem;
+    font-size: 0.7rem; color: #6e6253;
+    font-family: "Fira Code", "JetBrains Mono", monospace;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>anim studio</h1>
+    <span class="sub">local · comfyui · animatediff</span>
+  </header>
+
+  <div class="panel">
+    <div class="mode-toggle">
+      <button type="button" class="mode-btn active" data-mode="animation">Animation (SD1.5)</button>
+      <button type="button" class="mode-btn" data-mode="image">Image (Z-Image)</button>
+      <button type="button" class="mode-btn" data-mode="i2v">Image → Video (Wan)</button>
+    </div>
+    <div class="i2v-only" style="margin-bottom: 1rem; padding: 0.7rem 0.9rem; border: 1px solid #50432e; border-radius: 8px; background: rgba(20, 16, 10, 0.4); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #8a7c6a;">
+      Auto-uses your <span style="color: #b8924a;">most recent Image (Z-Image) output</span> as the starting frame. Generate one in Image mode first, then come back here.
+    </div>
+
+    <label for="prompt">What should it <span id="mode-verb">animate</span>?</label>
+    <textarea id="prompt" placeholder="cute cartoon turtle walking in profile, side view, transparent background">cute cartoon turtle walking in profile, side view, soft pastel colors, muted palette, simple flat shading, white background, storybook style</textarea>
+
+    <div class="anim-only">
+    <label for="video">Optional reference video (drives motion via ControlNet)</label>
+    <div class="file-row">
+      <input type="file" id="video" accept="video/*">
+      <span class="hint">leave blank for text-only</span>
+    </div>
+    </div>
+
+    <div class="grid">
+      <div class="anim-only">
+        <label for="frames">Frames</label>
+        <input type="number" id="frames" min="8" max="32" step="1" value="16">
+      </div>
+      <div class="anim-only">
+        <label for="fps">FPS</label>
+        <input type="number" id="fps" min="6" max="30" step="1" value="15">
+      </div>
+      <div>
+        <label for="steps">Sampler steps</label>
+        <input type="number" id="steps" min="10" max="40" step="1" value="25">
+      </div>
+      <div>
+        <label for="seed">Seed (blank = random)</label>
+        <input type="number" id="seed" placeholder="random">
+      </div>
+      <div>
+        <label for="lora_strength">LoRA strength</label>
+        <input type="number" id="lora_strength" min="0" max="1.5" step="0.05" value="0.65">
+      </div>
+      <div class="anim-only">
+        <label for="cn_strength">ControlNet strength</label>
+        <input type="number" id="cn_strength" min="0" max="1.5" step="0.05" value="0.70">
+      </div>
+    </div>
+
+    <button class="generate" id="generate">Generate animation</button>
+  </div>
+
+  <style>
+    .mode-toggle {
+      display: flex; gap: 0; margin-bottom: 1.2rem;
+      border: 1px solid #50432e; border-radius: 8px; overflow: hidden;
+    }
+    .mode-btn {
+      flex: 1; padding: 0.6rem; background: rgba(20, 16, 10, 0.4);
+      color: #8a7c6a; border: none; cursor: pointer;
+      font-family: "Fira Code", "JetBrains Mono", monospace;
+      font-size: 0.78rem; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-btn:not(:last-child) { border-right: 1px solid #50432e; }
+    .mode-btn:hover { color: #d6c8b4; }
+    .mode-btn.active { background: rgba(184, 146, 74, 0.18); color: #ecdfc8; }
+    body.image-mode .anim-only { display: none; }
+    body.image-mode .i2v-only { display: none; }
+    body.i2v-mode .anim-only { display: none; }
+    body:not(.i2v-mode) .i2v-only { display: none; }
+  </style>
+
+  <div class="panel" id="status-panel" style="display:none;">
+    <div class="status-row">
+      <span class="msg" id="status-msg">Queueing…</span>
+      <span class="pct" id="status-pct">0%</span>
+    </div>
+    <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+    <div id="error-box"></div>
+    <div class="media-frame" id="media-frame">
+      <span class="empty" id="empty-msg">Waiting…</span>
+    </div>
+  </div>
+
+  <div class="footnote">
+    ComfyUI on :8188 · anim studio on :5013 · GPU: RTX 3090 · entirely local
+  </div>
+</div>
+
+<script>
+let pollTimer = null;
+let currentPromptId = null;
+
+const $ = (id) => document.getElementById(id);
+
+function showStatus() { $("status-panel").style.display = "block"; }
+function setPct(p) {
+  $("progress-fill").style.width = (p * 100).toFixed(1) + "%";
+  $("status-pct").textContent = (p * 100).toFixed(0) + "%";
+}
+function setMsg(m) { $("status-msg").textContent = m; }
+function setError(e) {
+  if (!e) { $("error-box").innerHTML = ""; return; }
+  $("error-box").innerHTML = `<div class="error">${e}</div>`;
+}
+
+function setPreview(dataUrl) {
+  const frame = $("media-frame");
+  frame.innerHTML = `<img src="${dataUrl}"><span class="badge">Live preview</span>`;
+}
+
+function setFinalMedia(filename) {
+  const frame = $("media-frame");
+  const src = `/api/file/${encodeURIComponent(filename)}`;
+  const isImage = /\.(png|jpg|jpeg|webp)$/i.test(filename);
+  const tag = isImage
+    ? `<img src="${src}">`
+    : `<video src="${src}" autoplay loop muted playsinline></video>`;
+  frame.innerHTML = `
+    ${tag}
+    <span class="badge" style="background: rgba(184, 146, 74, 0.85);">Done</span>
+  `;
+}
+
+let currentMode = "animation";
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentMode = btn.dataset.mode;
+    document.body.classList.toggle("image-mode", currentMode === "image");
+    document.body.classList.toggle("i2v-mode", currentMode === "i2v");
+    const verbs = { image: "draw", i2v: "animate from", animation: "animate" };
+    $("mode-verb").textContent = verbs[currentMode] || "animate";
+    const labels = { image: "Generate image", i2v: "Animate from last image", animation: "Generate animation" };
+    $("generate").textContent = labels[currentMode] || "Generate animation";
+  });
+});
+
+async function poll() {
+  if (!currentPromptId) return;
+  try {
+    const r = await fetch(`/api/status/${currentPromptId}`);
+    if (!r.ok) return;
+    const j = await r.json();
+    setMsg(j.message || j.status);
+    setPct(j.progress || 0);
+    if (j.preview_b64 && j.status === "running") setPreview(j.preview_b64);
+    if (j.status === "done" && j.output_filename) {
+      setFinalMedia(j.output_filename);
+      setPct(1);
+      clearInterval(pollTimer); pollTimer = null;
+      $("generate").disabled = false;
+      const labels = { image: "Generate image", i2v: "Animate from last image", animation: "Generate animation" };
+      $("generate").textContent = labels[currentMode] || "Generate animation";
+    } else if (j.status === "error") {
+      setError(j.error || "Unknown error");
+      clearInterval(pollTimer); pollTimer = null;
+      $("generate").disabled = false;
+      const labels = { image: "Generate image", i2v: "Animate from last image", animation: "Generate animation" };
+      $("generate").textContent = labels[currentMode] || "Generate animation";
+    }
+  } catch (e) { console.error(e); }
+}
+
+$("generate").addEventListener("click", async () => {
+  const prompt = $("prompt").value.trim();
+  if (!prompt) { setError("Please enter a prompt."); showStatus(); return; }
+
+  setError(null);
+  $("generate").disabled = true;
+  $("generate").textContent = "Generating…";
+  $("media-frame").innerHTML = `<span class="empty" id="empty-msg">Waiting…</span>`;
+  setPct(0); setMsg("Uploading…"); showStatus();
+
+  const fd = new FormData();
+  fd.append("prompt", prompt);
+  fd.append("mode", currentMode);
+  fd.append("frames", $("frames").value);
+  fd.append("fps", $("fps").value);
+  fd.append("steps", $("steps").value);
+  if ($("seed").value) fd.append("seed", $("seed").value);
+  fd.append("lora_strength", $("lora_strength").value);
+  fd.append("cn_strength", $("cn_strength").value);
+  const vf = $("video").files[0];
+  if (vf) fd.append("video", vf);
+
+  try {
+    const r = await fetch("/api/generate", { method: "POST", body: fd });
+    const j = await r.json();
+    if (!r.ok) {
+      setError(j.error || `HTTP ${r.status}`);
+      $("generate").disabled = false;
+      const labels = { image: "Generate image", i2v: "Animate from last image", animation: "Generate animation" };
+      $("generate").textContent = labels[currentMode] || "Generate animation";
+      return;
+    }
+    currentPromptId = j.prompt_id;
+    setMsg("Queued");
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(poll, 500);
+  } catch (e) {
+    setError(e.message);
+    $("generate").disabled = false;
+    $("generate").textContent = "Generate animation";
+  }
+});
+</script>
+</body>
+</html>
